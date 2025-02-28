@@ -1,0 +1,42 @@
+name: Deploy to Development
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-development:
+    name: Deploy development
+    environment: development
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build & tag docker image
+        uses: AplinkosMinisterija/reusable-workflows/.github/actions/docker-build-tag-push@main
+        with:
+          environment: development
+          push: true
+          build-args: |
+            VITE_NODE_ENV=development
+            VITE_HOST=https://dev.smalsuolis.lt
+            VITE_GA_ENV=development
+            VITE_SENTRY_ENV=development
+            VITE_MAPS_HOST=https://dev-maps.biip.lt
+
+      - name: Trigger deploy
+        uses: AplinkosMinisterija/reusable-workflows/.github/actions/trigger-workflow-and-wait@main
+        with:
+          application-id: ${{ secrets.SMALSUOLIS_TRIGGER_DEPLOY_APPLICATION_ID }}
+          application-private-key: ${{ secrets.SMALSUOLIS_TRIGGER_DEPLOY_APPLICATION_PRIVATE_KEY }}
+          repository: ${{ secrets.SMALSUOLIS_TRIGGER_DEPLOY_REPOSITORY }}
+          workflow-file-name: ${{ secrets.SMALSUOLIS_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME }}
+          workflow-payload: '{"environment": "development"}'
+        
+    

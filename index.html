@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#14532d" />
+    <meta property="og:logo" content="%VITE_HOST%/favicon.ico" />
+    <meta property="og:title" content="Smalsuolis" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="%VITE_HOST%" />
+    <meta
+      property="og:description"
+      content="Smalsuolis - stebėk valstybės įvykius savo teritorijoje realiu laiku"
+    />
+    <meta property="og:image" content="%VITE_HOST%/banner.jpg" />
+    <link rel="apple-touch-icon" href="/favicon.ico" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-93XVFPQQYB"></script>
+    <script type="module">
+      if (import.meta.env.VITE_GA_ENV === 'production') {
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+          dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', 'G-93XVFPQQYB');
+      }
+    </script>
+    <title>Smalsuolis</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
