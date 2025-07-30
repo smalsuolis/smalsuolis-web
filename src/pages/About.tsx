@@ -119,7 +119,7 @@ const About = () => {
           <FooterLinkContainer>
             <FooterStyledIcon name={IconName.arrowUpRight} />
             <FooterLink
-              href="https://get.data.gov.lt/datasets/gov/vtpsi/infostatyba/Statinys"
+              href="https://get.data.gov.lt/datasets/gov/ssva/infostatyba/Statinys"
               target="_blank"
             >
               Infostatyba
