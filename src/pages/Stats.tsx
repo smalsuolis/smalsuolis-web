@@ -8,6 +8,9 @@ import api from '../utils/api';
 import Loader from '../components/Loader';
 import Datepicker from '../components/Datepicker';
 import { orderBy } from 'lodash';
+import { getAllApiTrackingInfo } from '../utils/apiTracking';
+import { format } from 'date-fns';
+import { lt } from 'date-fns/locale';
 
 const bannerUrl = '/stats_banner.png';
 
@@ -194,9 +197,67 @@ const Stats = () => {
               )}
             </DetailedStatsWrapper>
           </Row>
+          <ApiTrackingSection />
         </Content>
       )}
     </MainContainer>
+  );
+};
+
+const ApiTrackingSection = () => {
+  const apiTrackingData = getAllApiTrackingInfo();
+
+  const apiInfo = [
+    {
+      name: 'Statybos leidimai (infostatyba)',
+      key: 'infostatyba',
+      data: apiTrackingData.infostatyba,
+    },
+    {
+      name: 'Žuvinimai (izuvinimas)',
+      key: 'izuvinimas',
+      data: apiTrackingData.izuvinimas,
+    },
+    {
+      name: 'Miško kirtimai (miskoKirtimai)',
+      key: 'miskoKirtimai',
+      data: apiTrackingData.miskoKirtimai,
+    },
+  ];
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Nėra duomenų';
+    try {
+      return format(new Date(dateString), 'yyyy-MM-dd HH:mm:ss', { locale: lt });
+    } catch {
+      return 'Nėra duomenų';
+    }
+  };
+
+  return (
+    <ApiTrackingContainer>
+      <ApiTrackingHeader>API Statistika</ApiTrackingHeader>
+      <ApiTrackingDescription>
+        Informacija apie paskutinius API kreipimasis ir gautų įrašų skaičių
+      </ApiTrackingDescription>
+      {apiInfo.map((api) => (
+        <ApiTrackingCard key={api.key}>
+          <ApiName>{api.name}</ApiName>
+          <ApiInfoRow>
+            <ApiInfoLabel>Paskutinis kreipimasis:</ApiInfoLabel>
+            <ApiInfoValue>{formatDate(api.data?.lastCallTime)}</ApiInfoValue>
+          </ApiInfoRow>
+          <ApiInfoRow>
+            <ApiInfoLabel>Paskutinis sėkmingas kreipimasis:</ApiInfoLabel>
+            <ApiInfoValue>{formatDate(api.data?.lastSuccessfulCall)}</ApiInfoValue>
+          </ApiInfoRow>
+          <ApiInfoRow>
+            <ApiInfoLabel>Grąžintų įrašų skaičius:</ApiInfoLabel>
+            <ApiInfoValue>{api.data?.recordCount || 0}</ApiInfoValue>
+          </ApiInfoRow>
+        </ApiTrackingCard>
+      ))}
+    </ApiTrackingContainer>
   );
 };
 
@@ -401,6 +462,77 @@ const LoaderContainer = styled.div`
   margin-top: 40px;
   justify-content: center;
   align-items: center;
+`;
+
+const ApiTrackingContainer = styled.div`
+  margin-top: 40px;
+  padding: 32px;
+  background-color: white;
+  border-radius: 32px;
+  @media ${device.tablet} {
+    padding: 24px;
+  }
+`;
+
+const ApiTrackingHeader = styled.h2`
+  color: black;
+  font-size: 2.4rem;
+  font-weight: 700;
+  line-height: 32px;
+  margin-bottom: 16px;
+`;
+
+const ApiTrackingDescription = styled.p`
+  color: #666;
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 22px;
+  margin-bottom: 32px;
+`;
+
+const ApiTrackingCard = styled.div`
+  padding: 24px;
+  background-color: #f8f9fa;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const ApiName = styled.h3`
+  color: black;
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 26px;
+  margin-bottom: 16px;
+`;
+
+const ApiInfoRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const ApiInfoLabel = styled.span`
+  color: #666;
+  font-size: 1.4rem;
+  font-weight: 500;
+  line-height: 20px;
+`;
+
+const ApiInfoValue = styled.span`
+  color: #0e0e0e;
+  font-size: 1.4rem;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: right;
 `;
 
 export default Stats;

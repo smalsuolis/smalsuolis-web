@@ -2,6 +2,7 @@ import Axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 import Cookies from 'universal-cookie';
 import { App, Event, Stats, Subscription } from './types';
+import { trackApiCall } from './apiTracking';
 const cookies = new Cookies();
 
 interface Get {
@@ -349,10 +350,25 @@ class Api {
   };
 
   getStats = async (date: { $gte: string; $lt: string }): Promise<Stats> => {
-    return this.get({
+    const result = await this.get({
       resource: Resources.STATS,
       query: JSON.stringify({ startAt: date }),
     });
+
+    // Track API calls for each app type
+    if (result?.byApp) {
+      if (result.byApp.infostatyba) {
+        trackApiCall('infostatyba', result.byApp.infostatyba.count || 0, true);
+      }
+      if (result.byApp.izuvinimas) {
+        trackApiCall('izuvinimas', result.byApp.izuvinimas.count || 0, true);
+      }
+      if (result.byApp.miskoKirtimai) {
+        trackApiCall('miskoKirtimai', result.byApp.miskoKirtimai.count || 0, true);
+      }
+    }
+
+    return result;
   };
 }
 
