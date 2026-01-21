@@ -192,3 +192,16 @@ export interface Stats {
   };
   count: number;
 }
+
+export interface LastUpdateByAppType {
+  appType: string;
+  lastUpdate: string | null;
+  eventCount: number;
+  apps: any[];
+}
+
+export interface LastUpdateResponse {
+  lastGlobalUpdate: string;
+  byAppType: LastUpdateByAppType[];
+  apps: any[];
+}

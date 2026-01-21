@@ -8,6 +8,7 @@ import api from '../utils/api';
 import Loader from '../components/Loader';
 import Datepicker from '../components/Datepicker';
 import { orderBy } from 'lodash';
+import { formatRelativeTime, getUpdateStatusColor } from '../utils/functions';
 
 const bannerUrl = '/stats_banner.png';
 
@@ -21,6 +22,11 @@ const Stats = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['stats', query],
     queryFn: () => api.getStats(query),
+  });
+
+  const { data: lastUpdateData, isLoading: isLoadingLastUpdate } = useQuery({
+    queryKey: ['lastUpdate'],
+    queryFn: () => api.getLastUpdate(),
   });
 
   const mainStatsData = [
@@ -94,6 +100,36 @@ const Stats = () => {
       }, 0)
     : 1;
 
+  // Get last update data for each app type
+  const getLastUpdateForAppType = (appType: string) => {
+    return lastUpdateData?.byAppType?.find((item) => item.appType === appType);
+  };
+
+  const miskoKirtimaiUpdate = getLastUpdateForAppType('miskoKirtimai');
+  const izuvinimasUpdate = getLastUpdateForAppType('izuvinimas');
+  const infostatybaUpdate = getLastUpdateForAppType('infostatyba');
+
+  const lastUpdateItems = [
+    {
+      label: 'Miško kirtimai',
+      lastUpdate: miskoKirtimaiUpdate?.lastUpdate || null,
+      eventCount: miskoKirtimaiUpdate?.eventCount || 0,
+      icon: IconName.forest,
+    },
+    {
+      label: 'Žuvų įveisimas',
+      lastUpdate: izuvinimasUpdate?.lastUpdate || null,
+      eventCount: izuvinimasUpdate?.eventCount || 0,
+      icon: IconName.fishThin,
+    },
+    {
+      label: 'Statybos leidimai',
+      lastUpdate: infostatybaUpdate?.lastUpdate || null,
+      eventCount: infostatybaUpdate?.eventCount || 0,
+      icon: IconName.house,
+    },
+  ];
+
   return (
     <MainContainer>
       <BannerImageContainer>
@@ -113,6 +149,38 @@ const Stats = () => {
             value={dateFilter}
             selectedDates={query}
           />
+
+          {/* Last Update Section */}
+          {!isLoadingLastUpdate && lastUpdateData && (
+            <LastUpdateSection>
+              <SectionTitle>Duomenų atnaujinimo laikas</SectionTitle>
+              <LastUpdateGrid>
+                {lastUpdateItems.map((item) => (
+                  <LastUpdateCard key={item.label}>
+                    <LastUpdateHeader>
+                      <LastUpdateIconWrapper>
+                        <LastUpdateIcon name={item.icon} />
+                      </LastUpdateIconWrapper>
+                      <LastUpdateTitle>{item.label}</LastUpdateTitle>
+                    </LastUpdateHeader>
+                    <LastUpdateInfo>
+                      <LastUpdateRow>
+                        <LastUpdateLabel>Paskutinis atnaujinimas:</LastUpdateLabel>
+                        <LastUpdateValue $color={getUpdateStatusColor(item.lastUpdate)}>
+                          {formatRelativeTime(item.lastUpdate)}
+                        </LastUpdateValue>
+                      </LastUpdateRow>
+                      <LastUpdateRow>
+                        <LastUpdateLabel>Įvykių skaičius:</LastUpdateLabel>
+                        <LastUpdateValue>{item.eventCount}</LastUpdateValue>
+                      </LastUpdateRow>
+                    </LastUpdateInfo>
+                  </LastUpdateCard>
+                ))}
+              </LastUpdateGrid>
+            </LastUpdateSection>
+          )}
+
           <Row>
             <MainStatsWrapper>
               {mainStatsData.map((item) => (
@@ -401,6 +469,96 @@ const LoaderContainer = styled.div`
   margin-top: 40px;
   justify-content: center;
   align-items: center;
+`;
+
+const LastUpdateSection = styled.div`
+  margin-top: 40px;
+  margin-bottom: 20px;
+`;
+
+const SectionTitle = styled.h2`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  @media ${device.tablet} {
+    font-size: 2rem;
+  }
+`;
+
+const LastUpdateGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  @media ${device.tablet} {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const LastUpdateCard = styled.div`
+  background-color: white;
+  border-radius: 32px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const LastUpdateHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.background};
+`;
+
+const LastUpdateIconWrapper = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 24px;
+  background-color: ${({ theme }) => theme.colors.primary};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const LastUpdateIcon = styled(Icon)`
+  height: 24px;
+  width: 24px;
+  color: ${({ theme }) => theme.colors.tertiary};
+`;
+
+const LastUpdateTitle = styled.div`
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 24px;
+`;
+
+const LastUpdateInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const LastUpdateRow = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const LastUpdateLabel = styled.div`
+  color: #6b7280;
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 18px;
+`;
+
+const LastUpdateValue = styled.div<{ $color?: string }>`
+  color: ${({ $color, theme }) => $color || theme.colors.text.secondary};
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 20px;
 `;
 
 export default Stats;
