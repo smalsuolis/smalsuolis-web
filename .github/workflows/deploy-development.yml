@@ -1,9 +1,7 @@
 name: Deploy to Development
 
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   deploy-development:
@@ -38,5 +36,3 @@ jobs:
           repository: ${{ secrets.SMALSUOLIS_TRIGGER_DEPLOY_REPOSITORY }}
           workflow-file-name: ${{ secrets.SMALSUOLIS_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME }}
           workflow-payload: '{"environment": "development"}'
-        
-    

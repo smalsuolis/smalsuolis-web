@@ -1,0 +1,118 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main  # Deploys staging/development to VPS
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'  # Deploys production releases to VPS
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "vite_host=${{ secrets.VPS_PROD_VITE_HOST }}" >> $GITHUB_OUTPUT
+            echo "vite_ga_env=production" >> $GITHUB_OUTPUT
+            echo "vite_sentry_env=production" >> $GITHUB_OUTPUT
+            echo "vite_maps_host=${{ secrets.VPS_PROD_VITE_MAPS_HOST }}" >> $GITHUB_OUTPUT
+            echo "container_name=smalsuolis-web-prod" >> $GITHUB_OUTPUT
+            echo "port=80" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "vite_host=${{ secrets.VPS_STAGING_VITE_HOST }}" >> $GITHUB_OUTPUT
+            echo "vite_ga_env=staging" >> $GITHUB_OUTPUT
+            echo "vite_sentry_env=staging" >> $GITHUB_OUTPUT
+            echo "vite_maps_host=${{ secrets.VPS_STAGING_VITE_MAPS_HOST }}" >> $GITHUB_OUTPUT
+            echo "container_name=smalsuolis-web-staging" >> $GITHUB_OUTPUT
+            echo "port=8080" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=production,enable=${{ startsWith(github.ref, 'refs/tags/') }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VITE_HOST=${{ steps.env.outputs.vite_host }}
+            VITE_GA_ENV=${{ steps.env.outputs.vite_ga_env }}
+            VITE_SENTRY_ENV=${{ steps.env.outputs.vite_sentry_env }}
+            VITE_MAPS_HOST=${{ steps.env.outputs.vite_maps_host }}
+            VITE_SENTRY_DSN=${{ secrets.VPS_VITE_SENTRY_DSN }}
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          CONTAINER_NAME: ${{ steps.env.outputs.container_name }}
+          PORT: ${{ steps.env.outputs.port }}
+          IMAGE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && 'production' || 'latest' }}
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || 22 }}
+          envs: CONTAINER_NAME,PORT,IMAGE_TAG
+          script: |
+            # Login to GitHub Container Registry
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Pull the image
+            docker pull ghcr.io/${{ github.repository }}:${IMAGE_TAG}
+            
+            # Stop and remove old container if it exists
+            docker stop ${CONTAINER_NAME} || true
+            docker rm ${CONTAINER_NAME} || true
+            
+            # Run new container
+            docker run -d \
+              --name ${CONTAINER_NAME} \
+              --restart unless-stopped \
+              -p ${PORT}:80 \
+              ghcr.io/${{ github.repository }}:${IMAGE_TAG}
+            
+            # Clean up old images
+            docker image prune -af
+            
+            # Logout
+            docker logout ghcr.io
