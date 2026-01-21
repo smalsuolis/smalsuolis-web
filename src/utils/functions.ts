@@ -105,3 +105,49 @@ export const displayCustomDateFilterLabel = (date: { start?: Date; end?: Date } 
     return `${format(start, 'yyyy-MM-dd')}  -  ${format(end, 'yyyy-MM-dd')}`;
   }
 };
+
+export const formatRelativeTime = (dateString: string | null): string => {
+  if (!dateString) {
+    return 'Nėra duomenų';
+  }
+
+  const date = parseISO(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays === 0) {
+    return 'Šiandien';
+  } else if (diffInDays === 1) {
+    return 'Vakar';
+  } else if (diffInDays < 7) {
+    return `Prieš ${diffInDays} d.`;
+  } else if (diffInDays < 30) {
+    const weeks = Math.floor(diffInDays / 7);
+    return `Prieš ${weeks} sav.`;
+  } else if (diffInDays < 365) {
+    const months = Math.floor(diffInDays / 30);
+    return `Prieš ${months} mėn.`;
+  } else {
+    return formatDate(date);
+  }
+};
+
+export const getUpdateStatusColor = (dateString: string | null): string => {
+  if (!dateString) {
+    return '#EF4444'; // red
+  }
+
+  const date = parseISO(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInDays < 7) {
+    return '#10B981'; // green
+  } else if (diffInDays < 30) {
+    return '#F59E0B'; // yellow/orange
+  } else {
+    return '#EF4444'; // red
+  }
+};

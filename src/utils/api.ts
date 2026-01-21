@@ -1,7 +1,7 @@
 import Axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 import Cookies from 'universal-cookie';
-import { App, Event, Stats, Subscription } from './types';
+import { App, Event, LastUpdateResponse, Stats, Subscription } from './types';
 const cookies = new Cookies();
 
 interface Get {
@@ -353,6 +353,10 @@ class Api {
       resource: Resources.STATS,
       query: JSON.stringify({ startAt: date }),
     });
+  };
+
+  getLastUpdate = async (): Promise<LastUpdateResponse> => {
+    return this.errorWrapper(() => this.AuthApiAxios.get('/integrations/last-update'));
   };
 }
 
