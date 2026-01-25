@@ -86,34 +86,29 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         env:
           CONTAINER_NAME: ${{ steps.env.outputs.container_name }}
-          PORT: ${{ steps.env.outputs.port }}
           IMAGE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && 'production' || 'latest' }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_SSH_PORT || 22 }}
-          envs: CONTAINER_NAME,PORT,IMAGE_TAG
+          envs: CONTAINER_NAME,IMAGE_TAG
           script: |
-            # Login to GitHub Container Registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # 1. Ensure the shared proxy network exists
+            docker network create web_proxy || true
             
-            # Pull the image
+            # 2. Login and Pull
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             docker pull ghcr.io/${{ github.repository }}:${IMAGE_TAG}
             
-            # Stop and remove old container if it exists
+            # 3. Stop/Remove old container
             docker stop ${CONTAINER_NAME} || true
             docker rm ${CONTAINER_NAME} || true
             
-            # Run new container
+            # 4. Run container WITHOUT public ports, but ON the shared network
             docker run -d \
               --name ${CONTAINER_NAME} \
+              --network web_proxy \
               --restart unless-stopped \
-              -p ${PORT}:80 \
               ghcr.io/${{ github.repository }}:${IMAGE_TAG}
             
-            # Clean up old images
             docker image prune -af
-            
-            # Logout
-            docker logout ghcr.io
