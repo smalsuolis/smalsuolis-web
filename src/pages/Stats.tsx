@@ -79,8 +79,8 @@ const Stats = () => {
       (acc: Array<{ label: string; count: number; area: number }>, key) => {
         acc.push({
           label: key,
-          count: deforestationStatsByTag[key].count,
-          area: deforestationStatsByTag[key].area,
+          count: deforestationStatsByTag[key].count || 0,
+          area: deforestationStatsByTag[key].area || 0,
         });
         return acc;
       },
@@ -113,19 +113,19 @@ const Stats = () => {
     {
       label: 'Miško kirtimai',
       lastUpdate: miskoKirtimaiUpdate?.lastUpdate || null,
-      eventCount: miskoKirtimaiUpdate?.eventCount || 0,
+      eventCount: data?.byApp?.miskoKirtimai?.count || 0,
       icon: IconName.forest,
     },
     {
       label: 'Žuvų įveisimas',
       lastUpdate: izuvinimasUpdate?.lastUpdate || null,
-      eventCount: izuvinimasUpdate?.eventCount || 0,
+      eventCount: data?.byApp?.izuvinimas?.count || 0,
       icon: IconName.fishThin,
     },
     {
       label: 'Statybos leidimai',
       lastUpdate: infostatybaUpdate?.lastUpdate || null,
-      eventCount: infostatybaUpdate?.eventCount || 0,
+      eventCount: data?.byApp?.infostatyba?.count || 0,
       icon: IconName.house,
     },
   ];
@@ -149,37 +149,6 @@ const Stats = () => {
             value={dateFilter}
             selectedDates={query}
           />
-
-          {/* Last Update Section */}
-          {!isLoadingLastUpdate && lastUpdateData && (
-            <LastUpdateSection>
-              <SectionTitle>Duomenų atnaujinimo laikas</SectionTitle>
-              <LastUpdateGrid>
-                {lastUpdateItems.map((item) => (
-                  <LastUpdateCard key={item.label}>
-                    <LastUpdateHeader>
-                      <LastUpdateIconWrapper>
-                        <LastUpdateIcon name={item.icon} />
-                      </LastUpdateIconWrapper>
-                      <LastUpdateTitle>{item.label}</LastUpdateTitle>
-                    </LastUpdateHeader>
-                    <LastUpdateInfo>
-                      <LastUpdateRow>
-                        <LastUpdateLabel>Paskutinis atnaujinimas:</LastUpdateLabel>
-                        <LastUpdateValue $color={getUpdateStatusColor(item.lastUpdate)}>
-                          {formatRelativeTime(item.lastUpdate)}
-                        </LastUpdateValue>
-                      </LastUpdateRow>
-                      <LastUpdateRow>
-                        <LastUpdateLabel>Įvykių skaičius:</LastUpdateLabel>
-                        <LastUpdateValue>{item.eventCount}</LastUpdateValue>
-                      </LastUpdateRow>
-                    </LastUpdateInfo>
-                  </LastUpdateCard>
-                ))}
-              </LastUpdateGrid>
-            </LastUpdateSection>
-          )}
 
           <Row>
             <MainStatsWrapper>
@@ -240,19 +209,20 @@ const Stats = () => {
               </RowContainer>
               {deforestationStatsByTag ? (
                 sortedDeforestationStatsArray?.map(({ label, count, area }) => {
+                  const safeArea = area || 0;
                   const statsPercentage =
-                    ((deforestationStatsFilter === 'count' ? count : area) * 100) /
+                    ((deforestationStatsFilter === 'count' ? count : safeArea) * 100) /
                     highestDeforestationStatsNumber;
                   return (
                     <div key={label}>
                       <DetailedStatsRow>
                         <InfoLabel>{label}</InfoLabel>
                         <AmountLabel>
-                          {deforestationStatsFilter === 'count' ? count : `${area} ha`}
+                          {deforestationStatsFilter === 'count' ? count : `${safeArea} ha`}
                         </AmountLabel>
                       </DetailedStatsRow>
                       <InfoBarWrapper>
-                        <InfoBar $percentage={statsPercentage} />
+                        <InfoBar $percentage={statsPercentage || 0} />
                       </InfoBarWrapper>
                     </div>
                   );
@@ -262,6 +232,40 @@ const Stats = () => {
               )}
             </DetailedStatsWrapper>
           </Row>
+
+          {/* Last Update Section */}
+          {!isLoadingLastUpdate && lastUpdateData && (
+            <>
+              <Separator />
+              <LastUpdateSection>
+                <SectionTitle>Duomenų atnaujinimo laikas</SectionTitle>
+                <LastUpdateGrid>
+                  {lastUpdateItems.map((item) => (
+                    <LastUpdateCard key={item.label}>
+                      <LastUpdateHeader>
+                        <LastUpdateIconWrapper>
+                          <LastUpdateIcon name={item.icon} />
+                        </LastUpdateIconWrapper>
+                        <LastUpdateTitle>{item.label}</LastUpdateTitle>
+                      </LastUpdateHeader>
+                      <LastUpdateInfo>
+                        <LastUpdateRow>
+                          <LastUpdateLabel>Paskutinis atnaujinimas:</LastUpdateLabel>
+                          <LastUpdateValue $color={getUpdateStatusColor(item.lastUpdate)}>
+                            {formatRelativeTime(item.lastUpdate)}
+                          </LastUpdateValue>
+                        </LastUpdateRow>
+                        <LastUpdateRow>
+                          <LastUpdateLabel>Įvykių skaičius:</LastUpdateLabel>
+                          <LastUpdateValue>{item.eventCount}</LastUpdateValue>
+                        </LastUpdateRow>
+                      </LastUpdateInfo>
+                    </LastUpdateCard>
+                  ))}
+                </LastUpdateGrid>
+              </LastUpdateSection>
+            </>
+          )}
         </Content>
       )}
     </MainContainer>
@@ -393,7 +397,9 @@ const InfoLabel = styled.div`
   color: #0e0e0e;
   font-size: 1.6rem;
   font-weight: 500;
-  line-height: 18px;
+  line-height: 20px;
+  word-wrap: break-word;
+  padding-right: 16px;
 `;
 
 const AmountLabel = styled.div`
@@ -430,6 +436,7 @@ const DetailedStatsRow = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 8px;
   margin-top: 12px;
 `;
@@ -469,6 +476,13 @@ const LoaderContainer = styled.div`
   margin-top: 40px;
   justify-content: center;
   align-items: center;
+`;
+
+const Separator = styled.hr`
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 64px 0 40px 0;
+  width: 100%;
 `;
 
 const LastUpdateSection = styled.div`
