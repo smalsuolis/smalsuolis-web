@@ -3,7 +3,7 @@ import { AxiosError } from 'axios';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
-import { ThemeProvider } from 'styled-components';
+import { DefaultTheme, ThemeProvider } from 'styled-components';
 import Cookies from 'universal-cookie';
 import App from './App';
 import { UserProvider } from './components/UserProvider';
@@ -67,7 +67,7 @@ const queryClient: any = new QueryClient({
 
 root.render(
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme as DefaultTheme}>
       <GlobalStyle />
       <BrowserRouter>
         <UserProvider>
