@@ -114,19 +114,16 @@ const Stats = () => {
     {
       label: 'Miško kirtimai',
       lastUpdate: miskoKirtimaiUpdate?.lastUpdate || null,
-      eventCount: data?.byApp?.miskoKirtimai?.count || 0,
       icon: IconName.forest,
     },
     {
       label: 'Žuvų įveisimas',
       lastUpdate: izuvinimasUpdate?.lastUpdate || null,
-      eventCount: data?.byApp?.izuvinimas?.count || 0,
       icon: IconName.fishThin,
     },
     {
       label: 'Statybos leidimai',
       lastUpdate: infostatybaUpdate?.lastUpdate || null,
-      eventCount: data?.byApp?.infostatyba?.count || 0,
       icon: IconName.house,
     },
   ];
@@ -255,10 +252,13 @@ const Stats = () => {
                           <LastUpdateValue $color={getUpdateStatusColor(item.lastUpdate)}>
                             {formatRelativeTime(item.lastUpdate)}
                           </LastUpdateValue>
-                        </LastUpdateRow>
-                        <LastUpdateRow>
-                          <LastUpdateLabel>Įvykių skaičius:</LastUpdateLabel>
-                          <LastUpdateValue>{item.eventCount}</LastUpdateValue>
+                          {item.lastUpdate && (
+                            <LastUpdateValue
+                              style={{ fontSize: '1.4rem', color: '#6b7280', fontWeight: 400 }}
+                            >
+                              {new Date(item.lastUpdate).toLocaleString('lt-LT')}
+                            </LastUpdateValue>
+                          )}
                         </LastUpdateRow>
                       </LastUpdateInfo>
                     </LastUpdateCard>
