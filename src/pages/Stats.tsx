@@ -94,6 +94,20 @@ const Stats = () => {
     'desc',
   );
 
+  if (sortedDeforestationStatsArray && sortedDeforestationStatsArray.length > 0) {
+    const totalCount = sortedDeforestationStatsArray.reduce((acc, item) => acc + item.count, 0);
+    const totalArea = sortedDeforestationStatsArray.reduce((acc, item) => acc + item.area, 0);
+
+    sortedDeforestationStatsArray.unshift({
+      label:
+        deforestationStatsFilter === 'count'
+          ? 'Bendras leidimų skaičius'
+          : 'Bendras kertamas plotas',
+      count: totalCount,
+      area: totalArea,
+    });
+  }
+
   const highestDeforestationStatsNumber = deforestationStatsByTag
     ? Object.keys(deforestationStatsByTag).reduce((acc, key) => {
         const amount = deforestationStatsByTag[key][deforestationStatsFilter];
@@ -208,15 +222,49 @@ const Stats = () => {
               {deforestationStatsByTag ? (
                 sortedDeforestationStatsArray?.map(({ label, count, area }) => {
                   const safeArea = area || 0;
+
+                  if (label === 'Bendras leidimų skaičius' || label === 'Bendras kertamas plotas') {
+                    return (
+                      <div key={label}>
+                        <DetailedStatsRow
+                          style={{ alignItems: 'center', justifyContent: 'space-between' }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <StyledIcon
+                              name={IconName.forest}
+                              style={{ color: '#000000', width: '20px', height: '20px' }}
+                            />
+                            <InfoLabel>{label}</InfoLabel>
+                          </div>
+                          <AmountLabel style={{ fontSize: '1.8rem' }}>
+                            {deforestationStatsFilter === 'count'
+                              ? count
+                              : `${safeArea.toFixed(2)} ha`}
+                          </AmountLabel>
+                        </DetailedStatsRow>
+                        <hr
+                          style={{
+                            border: 'none',
+                            borderTop: '2px solid #e5e7eb',
+                            margin: '16px 0 8px 0',
+                          }}
+                        />
+                      </div>
+                    );
+                  }
+
                   const statsPercentage =
                     ((deforestationStatsFilter === 'count' ? count : safeArea) * 100) /
                     highestDeforestationStatsNumber;
+
                   return (
                     <div key={label}>
                       <DetailedStatsRow>
                         <InfoLabel>{label}</InfoLabel>
                         <AmountLabel>
-                          {deforestationStatsFilter === 'count' ? count : `${safeArea} ha`}
+                          {deforestationStatsFilter === 'count'
+                            ? count
+                            : `${safeArea.toFixed(2)} ha`}
                         </AmountLabel>
                       </DetailedStatsRow>
                       <InfoBarWrapper>
