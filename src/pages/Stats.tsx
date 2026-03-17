@@ -15,6 +15,7 @@ const bannerUrl = '/stats_banner.png';
 
 const Stats = () => {
   const [deforestationStatsFilter, setDeforestationStatsFilter] = useState('count');
+  const [showAllDeforestationStats, setShowAllDeforestationStats] = useState(false);
   const [query, setQuery] = useState<{ $gte: string; $lt: string }>(
     timeRangeQuery[TimeRanges.LAST_7_DAYS],
   );
@@ -220,10 +221,9 @@ const Stats = () => {
                 )}
               </RowContainer>
               {deforestationStatsByTag ? (
-                sortedDeforestationStatsArray?.map(({ label, count, area }) => {
-                  const safeArea = area || 0;
-
-                  if (label === 'Bendras leidimų skaičius' || label === 'Bendras kertamas plotas') {
+                <>
+                  {sortedDeforestationStatsArray?.slice(0, 1).map(({ label, count, area }) => {
+                    const safeArea = area || 0;
                     return (
                       <div key={label}>
                         <DetailedStatsRow
@@ -251,28 +251,45 @@ const Stats = () => {
                         />
                       </div>
                     );
-                  }
+                  })}
 
-                  const statsPercentage =
-                    ((deforestationStatsFilter === 'count' ? count : safeArea) * 100) /
-                    highestDeforestationStatsNumber;
+                  <CollapsibleContainer $isExpanded={showAllDeforestationStats}>
+                    {sortedDeforestationStatsArray?.slice(1).map(({ label, count, area }) => {
+                      const safeArea = area || 0;
+                      const statsPercentage =
+                        ((deforestationStatsFilter === 'count' ? count : safeArea) * 100) /
+                        highestDeforestationStatsNumber;
 
-                  return (
-                    <div key={label}>
-                      <DetailedStatsRow>
-                        <InfoLabel>{label}</InfoLabel>
-                        <AmountLabel>
-                          {deforestationStatsFilter === 'count'
-                            ? count
-                            : `${safeArea.toFixed(2)} ha`}
-                        </AmountLabel>
-                      </DetailedStatsRow>
-                      <InfoBarWrapper>
-                        <InfoBar $percentage={statsPercentage || 0} />
-                      </InfoBarWrapper>
-                    </div>
-                  );
-                })
+                      return (
+                        <div key={label}>
+                          <DetailedStatsRow>
+                            <InfoLabel>{label}</InfoLabel>
+                            <AmountLabel>
+                              {deforestationStatsFilter === 'count'
+                                ? count
+                                : `${safeArea.toFixed(2)} ha`}
+                            </AmountLabel>
+                          </DetailedStatsRow>
+                          <InfoBarWrapper>
+                            <InfoBar $percentage={statsPercentage || 0} />
+                          </InfoBarWrapper>
+                        </div>
+                      );
+                    })}
+                  </CollapsibleContainer>
+
+                  {sortedDeforestationStatsArray && sortedDeforestationStatsArray.length > 5 && (
+                    <ShowMoreButton
+                      onClick={() => setShowAllDeforestationStats(!showAllDeforestationStats)}
+                    >
+                      {showAllDeforestationStats ? 'Rodyti mažiau' : 'Rodyti daugiau'}
+                      <ChevronIcon
+                        name={IconName.dropdownArrow}
+                        $isExpanded={showAllDeforestationStats}
+                      />
+                    </ShowMoreButton>
+                  )}
+                </>
               ) : (
                 <InfoLabel>Nėra duomenų</InfoLabel>
               )}
@@ -622,6 +639,41 @@ const LastUpdateValue = styled.div<{ $color?: string }>`
   font-size: 1.6rem;
   font-weight: 600;
   line-height: 20px;
+`;
+
+const CollapsibleContainer = styled.div<{ $isExpanded: boolean }>`
+  max-height: ${({ $isExpanded }) => ($isExpanded ? '2000px' : '220px')};
+  overflow: hidden;
+  transition: max-height 0.4s ease-in-out;
+`;
+
+const ShowMoreButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 16px;
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+`;
+
+const ChevronIcon = styled(Icon)<{ $isExpanded: boolean }>`
+  width: 24px;
+  height: 24px;
+  color: currentColor;
+  transform: ${({ $isExpanded }) => ($isExpanded ? 'rotate(180deg)' : 'rotate(0deg)')};
+  transition: transform 0.4s ease-in-out;
+  margin-top: 3px;
 `;
 
 export default Stats;
