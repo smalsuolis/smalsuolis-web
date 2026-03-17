@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Icon from '../components/Icons';
 import { device } from '../styles';
 import { Frequency, IconName, timeRangeQuery } from '../utils';
+import { TimeRanges } from '../utils/types';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/api';
 import Loader from '../components/Loader';
@@ -15,9 +16,9 @@ const bannerUrl = '/stats_banner.png';
 const Stats = () => {
   const [deforestationStatsFilter, setDeforestationStatsFilter] = useState('count');
   const [query, setQuery] = useState<{ $gte: string; $lt: string }>(
-    timeRangeQuery[Frequency.MONTH],
+    timeRangeQuery[TimeRanges.LAST_7_DAYS],
   );
-  const [dateFilter, setDateFilter] = useState<string>(Frequency.WEEK);
+  const [dateFilter, setDateFilter] = useState<string>(TimeRanges.LAST_7_DAYS);
 
   const { data, isLoading } = useQuery({
     queryKey: ['stats', query],
@@ -359,14 +360,14 @@ const StatsInfoContainer = styled.div`
 `;
 
 const StatsNumber = styled.div`
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text?.secondary};
   font-size: 2rem;
   font-weight: 800;
   line-height: 40px;
 `;
 
 const StatsLabel = styled.div`
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text?.secondary};
   font-size: 1.6rem;
   font-weight: 400;
   line-height: 22px;
@@ -491,7 +492,7 @@ const LastUpdateSection = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text?.secondary};
   font-size: 2.4rem;
   font-weight: 700;
   margin-bottom: 24px;
@@ -543,7 +544,7 @@ const LastUpdateIcon = styled(Icon)`
 `;
 
 const LastUpdateTitle = styled.div`
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text?.secondary};
   font-size: 1.8rem;
   font-weight: 600;
   line-height: 24px;
@@ -569,7 +570,7 @@ const LastUpdateLabel = styled.div`
 `;
 
 const LastUpdateValue = styled.div<{ $color?: string }>`
-  color: ${({ $color, theme }) => $color || theme.colors.text.secondary};
+  color: ${({ $color, theme }) => $color || theme.colors.text?.secondary};
   font-size: 1.6rem;
   font-weight: 600;
   line-height: 20px;

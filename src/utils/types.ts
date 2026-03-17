@@ -2,7 +2,7 @@ import { flow } from 'lodash';
 import { AppType } from './constants';
 
 import { Frequency } from './constants';
-import { subMonths, subWeeks } from 'date-fns/fp';
+import { subMonths, subWeeks, subDays } from 'date-fns/fp';
 import { formatDateAndTime, formatDateFrom, formatDateTo, formatToZonedDate } from './functions';
 import { FeatureCollection } from '@aplinkosministerija/design-system';
 
@@ -89,6 +89,10 @@ export enum TimeRanges {
   MONTH = 'MONTH',
   FUTURE = 'FUTURE',
   CUSTOM = 'CUSTOM',
+  LAST_7_DAYS = 'LAST_7_DAYS',
+  LAST_28_DAYS = 'LAST_28_DAYS',
+  LAST_90_DAYS = 'LAST_90_DAYS',
+  LAST_365_DAYS = 'LAST_365_DAYS',
 }
 
 export interface TimeRangeItem {
@@ -115,6 +119,22 @@ export const timeRangeQuery = {
   },
   [TimeRanges.CUSTOM]: {
     $gte: flow(formatDateFrom, formatDateAndTime)(new Date()),
+    $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
+  },
+  [TimeRanges.LAST_7_DAYS]: {
+    $gte: flow(formatDateFrom, subDays(7), formatDateAndTime)(new Date()),
+    $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
+  },
+  [TimeRanges.LAST_28_DAYS]: {
+    $gte: flow(formatDateFrom, subDays(28), formatDateAndTime)(new Date()),
+    $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
+  },
+  [TimeRanges.LAST_90_DAYS]: {
+    $gte: flow(formatDateFrom, subDays(90), formatDateAndTime)(new Date()),
+    $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
+  },
+  [TimeRanges.LAST_365_DAYS]: {
+    $gte: flow(formatDateFrom, subDays(365), formatDateAndTime)(new Date()),
     $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
   },
 };
@@ -149,23 +169,28 @@ export const timeRangeItems: TimeRangeItem[] = [
 
 export const statsTimeRangeItems: TimeRangeItem[] = [
   {
-    key: TimeRanges.DAY,
-    query: timeRangeQuery[TimeRanges.DAY],
-    name: 'Šiandienos',
+    key: TimeRanges.LAST_7_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_7_DAYS],
+    name: 'Paskutinės 7 dienos',
   },
   {
-    key: TimeRanges.WEEK,
-    query: timeRangeQuery[TimeRanges.WEEK],
-    name: 'Savaitės',
+    key: TimeRanges.LAST_28_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_28_DAYS],
+    name: 'Paskutinės 28 dienos',
   },
   {
-    key: TimeRanges.MONTH,
-    query: timeRangeQuery[TimeRanges.MONTH],
-    name: 'Mėnesio',
+    key: TimeRanges.LAST_90_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_90_DAYS],
+    name: 'Paskutinės 90 dienų',
+  },
+  {
+    key: TimeRanges.LAST_365_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_365_DAYS],
+    name: 'Paskutinės 365 dienos',
   },
   {
     key: TimeRanges.CUSTOM,
-    query: timeRangeQuery[TimeRanges.FUTURE],
+    query: timeRangeQuery[TimeRanges.CUSTOM],
     name: 'Pasirinkite datą',
   },
 ];

@@ -5,20 +5,24 @@ import Icon from './Icons';
 import {
   Frequency,
   IconName,
-  TimeRanges,
   displayCustomDateFilterLabel,
   formatDateAndTime,
   formatDateFrom,
   formatDateTo,
   statsTimeRangeItems,
 } from '../utils';
+import { TimeRanges } from '../utils/types';
 import DateRangePickerModal from './DateRangePickerModal';
 
-const frequencyLabels = {
+const frequencyLabels: Record<string, string> = {
   [Frequency.DAY]: 'Šiandienos',
   [Frequency.WEEK]: 'Savaitės',
   [Frequency.MONTH]: 'Mėnesio',
   [Frequency.CUSTOM]: 'Pasirinkite datą',
+  [TimeRanges.LAST_7_DAYS]: 'Paskutinės 7 dienos',
+  [TimeRanges.LAST_28_DAYS]: 'Paskutinės 28 dienos',
+  [TimeRanges.LAST_90_DAYS]: 'Paskutinės 90 dienų',
+  [TimeRanges.LAST_365_DAYS]: 'Paskutinės 365 dienos',
 };
 
 export interface DatepickerProps {
@@ -59,7 +63,7 @@ const Datepicker = ({ value, onChange, selectedDates }: DatepickerProps) => {
                 start: new Date(selectedDates.$gte),
                 end: new Date(selectedDates.$lt),
               })
-            : frequencyLabels[value]}
+            : frequencyLabels[value] || value}
         </SelectedDateLabel>
         <Icon name={IconName.dropdownArrow} />
       </FilterButton>
@@ -154,7 +158,7 @@ const FilterButton = styled.div`
 `;
 
 const SelectedDateLabel = styled.div`
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.text?.secondary};
   font-size: 1.6rem;
   font-weight: 400;
   line-height: 22px;

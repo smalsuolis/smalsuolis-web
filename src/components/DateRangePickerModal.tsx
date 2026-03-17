@@ -52,7 +52,11 @@ const DateRangePickerModal = ({
           selectsRange
           onClickOutside={() => setOpen(false)}
           inline
-        />
+        >
+          <OkButtonContainer>
+            <OkButton onClick={() => setOpen(false)}>Pasirinkti</OkButton>
+          </OkButtonContainer>
+        </Datepicker>
       </DateContainer>
     </Container>
   );
@@ -101,16 +105,24 @@ const Container = styled.div`
     opacity: 0.6;
   }
   .react-datepicker__day {
-    padding: 12px 32px 12px 20px;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    padding: 0;
     margin: auto;
     font-size: 1.5rem;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
     &:hover {
       background-color: ${({ theme }) => theme.colors.tertiary} !important;
       color: white;
-      border-radius: 50%;
     }
     @media ${device.mobileL} {
-      padding: 12px 30px 12px 18px;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
     }
   }
   .react-datepicker {
@@ -159,10 +171,14 @@ const Container = styled.div`
   .react-datepicker__day-name {
     font-size: 1.5rem;
     color: ${({ theme }) => theme.colors.tertiary};
-    padding: 12px 32px 12px 20px;
+    width: 44px;
+    padding: 0;
     margin: 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
     @media ${device.mobileL} {
-      padding: 12px 30px 12px 18px;
+      width: 40px;
     }
   }
   .react-datepicker__navigation {
@@ -230,6 +246,34 @@ const Container = styled.div`
     background-color: #dff9e5 !important;
     color: #101828;
     border-radius: 50% !important;
+  }
+`;
+
+const OkButtonContainer = styled.div`
+  display: flex;
+  justify-content: flex-start;
+  padding: 16px 0 0 0;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 16px;
+  width: 320px;
+  @media ${device.mobileL} {
+    width: 100%;
+  }
+`;
+
+const OkButton = styled.button`
+  background-color: ${({ theme }) => theme.colors.primary};
+  color: ${({ theme }) => theme.colors.tertiary};
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1.4rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
   }
 `;
 
