@@ -152,11 +152,9 @@ const Stats = () => {
         }>,
         key,
       ) => {
-        // @ts-expect-error type missing calculatedArea
-        const calculatedArea = deforestationStatsByTag[key].calculatedArea || 0;
-        // @ts-expect-error type missing calculatedArea
+        const calculatedArea = (deforestationStatsByTag[key] as any).calculatedArea || 0;
         const previousCalculatedArea =
-          previousData?.byApp?.miskoKirtimai?.byTag?.[key]?.calculatedArea || 0;
+          (previousData?.byApp?.miskoKirtimai?.byTag?.[key] as any)?.calculatedArea || 0;
         acc.push({
           label: key,
           count: deforestationStatsByTag[key].count || 0,
