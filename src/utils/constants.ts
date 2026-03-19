@@ -1,4 +1,5 @@
 export enum IconName {
+  info = 'info',
   book = 'book',
   map = 'map',
   airBallon = 'airBallon',

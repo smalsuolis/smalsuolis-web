@@ -10,6 +10,7 @@ import Loader from '../components/Loader';
 import Datepicker from '../components/Datepicker';
 import { orderBy } from 'lodash';
 import { formatRelativeTime, getUpdateStatusColor } from '../utils/functions';
+import Tooltip from '../components/Tooltip';
 
 const bannerUrl = '/stats_banner.png';
 
@@ -78,11 +79,14 @@ const Stats = () => {
   const deforestationStatsArray =
     deforestationStatsByTag &&
     Object.keys(deforestationStatsByTag).reduce(
-      (acc: Array<{ label: string; count: number; area: number }>, key) => {
+      (acc: Array<{ label: string; count: number; area: number; calculatedArea: number }>, key) => {
+        // @ts-expect-error type missing calculatedArea
+        const calculatedArea = deforestationStatsByTag[key].calculatedArea || 0;
         acc.push({
           label: key,
           count: deforestationStatsByTag[key].count || 0,
           area: deforestationStatsByTag[key].area || 0,
+          calculatedArea,
         });
         return acc;
       },
@@ -91,13 +95,23 @@ const Stats = () => {
 
   const sortedDeforestationStatsArray = orderBy(
     deforestationStatsArray,
-    (item) => Number(item[deforestationStatsFilter]),
+    (item) => Number(item[deforestationStatsFilter as keyof typeof item] || 0),
     'desc',
   );
 
   if (sortedDeforestationStatsArray && sortedDeforestationStatsArray.length > 0) {
-    const totalCount = sortedDeforestationStatsArray.reduce((acc, item) => acc + item.count, 0);
-    const totalArea = sortedDeforestationStatsArray.reduce((acc, item) => acc + item.area, 0);
+    const totalCount = sortedDeforestationStatsArray.reduce(
+      (acc, item) => acc + Number(item.count || 0),
+      0,
+    );
+    const totalArea = sortedDeforestationStatsArray.reduce(
+      (acc, item) => acc + Number(item.area || 0),
+      0,
+    );
+    const totalCalculatedArea = sortedDeforestationStatsArray.reduce(
+      (acc, item) => acc + Number(item.calculatedArea || 0),
+      0,
+    );
 
     sortedDeforestationStatsArray.unshift({
       label:
@@ -106,6 +120,7 @@ const Stats = () => {
           : 'Bendras kertamas plotas',
       count: totalCount,
       area: totalArea,
+      calculatedArea: totalCalculatedArea,
     });
   }
 
@@ -239,9 +254,91 @@ const Stats = () => {
                           <AmountLabel style={{ fontSize: '1.8rem' }}>
                             {deforestationStatsFilter === 'count'
                               ? count
-                              : `${safeArea.toFixed(2)} ha`}
+                              : `${Number(safeArea).toFixed(2)} ha`}
                           </AmountLabel>
                         </DetailedStatsRow>
+                        {deforestationStatsFilter === 'area' &&
+                          label === 'Bendras kertamas plotas' && (
+                            <DetailedStatsRow
+                              style={{
+                                alignItems: 'flex-start',
+                                justifyContent: 'space-between',
+                                marginTop: 0,
+                                flexWrap: 'wrap',
+                                gap: '8px',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  flex: 1,
+                                  minWidth: '200px',
+                                }}
+                              >
+                                <InfoLabel
+                                  style={{ fontSize: '1.4rem', color: '#6b7280', paddingRight: 0 }}
+                                >
+                                  Preliminarus iškirstas plotas pagal kirtimo intensyvumą
+                                </InfoLabel>
+                              </div>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  marginLeft: 'auto',
+                                  justifyContent: 'flex-end',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <AmountLabel
+                                  style={{
+                                    fontSize: '1.4rem',
+                                    color: '#6b7280',
+                                    minWidth: 'auto',
+                                    textAlign: 'right',
+                                    whiteSpace: 'nowrap',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {Number(
+                                    sortedDeforestationStatsArray[0]?.calculatedArea || 0,
+                                  ).toFixed(2)}{' '}
+                                  ha
+                                </AmountLabel>
+                                <div style={{ paddingRight: '2px' }}>
+                                  <Tooltip
+                                    content={
+                                      <div>
+                                        Apskaičiuojama pagal kirtimo leidimų tipus ir jiems
+                                        priskirtą procentinę dalį nuo numatomo ploto.
+                                        <br />
+                                        <br />
+                                        Plynas, Plynas sanitarinis, Lydimo - 100%
+                                        <br />
+                                        Atvejiniai - 50%
+                                        <br />
+                                        Kiti - 25%
+                                      </div>
+                                    }
+                                  >
+                                    <Icon
+                                      name={IconName.info}
+                                      style={{
+                                        color: '#6b7280',
+                                        fontSize: '1.6rem',
+                                        marginTop: '2px',
+                                        display: 'flex',
+                                      }}
+                                    />
+                                  </Tooltip>
+                                </div>
+                              </div>
+                            </DetailedStatsRow>
+                          )}
                         <hr
                           style={{
                             border: 'none',
@@ -267,7 +364,7 @@ const Stats = () => {
                             <AmountLabel>
                               {deforestationStatsFilter === 'count'
                                 ? count
-                                : `${safeArea.toFixed(2)} ha`}
+                                : `${Number(safeArea).toFixed(2)} ha`}
                             </AmountLabel>
                           </DetailedStatsRow>
                           <InfoBarWrapper>

@@ -4,6 +4,7 @@ import { FaChevronRight } from 'react-icons/fa6';
 import { FiArrowLeft, FiClock, FiDownload, FiMail, FiMenu, FiArrowUpRight } from 'react-icons/fi';
 import { HiOutlineUsers } from 'react-icons/hi';
 import { IoMdCalendar, IoMdHeartEmpty } from 'react-icons/io';
+import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { IoLocationOutline, IoPersonOutline, IoSearch, IoFilter } from 'react-icons/io5';
 import { LiaBalanceScaleSolid } from 'react-icons/lia';
 import { PiMapTrifoldBold } from 'react-icons/pi';
@@ -405,6 +406,8 @@ const Icon = ({ name, className, ...rest }: IconProps) => {
       return <MdOutlineVisibilityOff className={className} />;
     case IconName.arrowUpRight:
       return <FiArrowUpRight className={className} {...rest} />;
+    case IconName.info:
+      return <AiOutlineInfoCircle className={className} />;
     case IconName.eGate:
       return (
         <svg
