@@ -9,8 +9,47 @@ import api from '../utils/api';
 import Loader from '../components/Loader';
 import Datepicker from '../components/Datepicker';
 import { orderBy } from 'lodash';
-import { formatRelativeTime, getUpdateStatusColor } from '../utils/functions';
+import {
+  formatRelativeTime,
+  getUpdateStatusColor,
+  calculatePreviousPeriod,
+} from '../utils/functions';
 import Tooltip from '../components/Tooltip';
+
+const StatDelta = ({
+  current,
+  previous = 0,
+  isFetching,
+}: {
+  current?: number;
+  previous?: number;
+  isFetching?: boolean;
+}) => {
+  if (isFetching) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+        <MiniSpinner />
+      </span>
+    );
+  }
+
+  if (current === undefined) return null;
+  const diff = current - previous;
+  // Fix floating point errors by rounding to 2 decimal places if it has fractional parts
+  const formattedDiff = diff % 1 !== 0 ? parseFloat(diff.toFixed(2)) : diff;
+  if (formattedDiff === 0) return null;
+
+  const isPositive = formattedDiff > 0;
+  const color = isPositive ? '#10B981' : '#EF4444';
+  const sign = isPositive ? '+' : '';
+
+  return (
+    <span style={{ color, fontSize: '1.4rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
+      {sign}
+      {formattedDiff}
+    </span>
+  );
+};
 
 const bannerUrl = '/stats_banner.png';
 
@@ -21,10 +60,20 @@ const Stats = () => {
     timeRangeQuery[TimeRanges.LAST_7_DAYS],
   );
   const [dateFilter, setDateFilter] = useState<string>(TimeRanges.LAST_7_DAYS);
+  const [isComparisonEnabled, setIsComparisonEnabled] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['stats', query],
     queryFn: () => api.getStats(query),
+    refetchOnWindowFocus: false,
+  });
+
+  const previousQuery = calculatePreviousPeriod(query);
+  const { data: previousData, isFetching: isPreviousFetching } = useQuery({
+    queryKey: ['stats', previousQuery],
+    queryFn: () => api.getStats(previousQuery),
+    enabled: isComparisonEnabled && !!previousQuery,
+    refetchOnWindowFocus: false,
   });
 
   const { data: lastUpdateData, isLoading: isLoadingLastUpdate } = useQuery({
@@ -33,20 +82,28 @@ const Stats = () => {
   });
 
   const mainStatsData = [
-    { label: 'Įvykių', count: data?.count, icon: IconName.heart },
+    {
+      label: 'Įvykių',
+      count: data?.count,
+      previousCount: previousData?.count,
+      icon: IconName.heart,
+    },
     {
       label: 'Kirtimų leidimų',
       count: data?.byApp?.miskoKirtimai?.count,
+      previousCount: previousData?.byApp?.miskoKirtimai?.count,
       icon: IconName.forest,
     },
     {
       label: 'Žuvinimų',
       count: data?.byApp?.izuvinimas?.count,
+      previousCount: previousData?.byApp?.izuvinimas?.count,
       icon: IconName.fishThin,
     },
     {
       label: 'Statybos leidimų',
       count: data?.byApp?.infostatyba?.count,
+      previousCount: previousData?.byApp?.infostatyba?.count,
       icon: IconName.house,
     },
   ];
@@ -57,8 +114,12 @@ const Stats = () => {
   const constructionsStatsArray =
     constructionsStatsByTag &&
     Object.keys(constructionsStatsByTag).reduce(
-      (acc: Array<{ label: string; count: number }>, key) => {
-        acc.push({ label: key, count: constructionsStatsByTag[key].count });
+      (acc: Array<{ label: string; count: number; previousCount?: number }>, key) => {
+        acc.push({
+          label: key,
+          count: constructionsStatsByTag[key].count,
+          previousCount: previousData?.byApp?.infostatyba?.byTag?.[key]?.count,
+        });
         return acc;
       },
       [],
@@ -79,14 +140,31 @@ const Stats = () => {
   const deforestationStatsArray =
     deforestationStatsByTag &&
     Object.keys(deforestationStatsByTag).reduce(
-      (acc: Array<{ label: string; count: number; area: number; calculatedArea: number }>, key) => {
+      (
+        acc: Array<{
+          label: string;
+          count: number;
+          previousCount?: number;
+          area: number;
+          previousArea?: number;
+          calculatedArea: number;
+          previousCalculatedArea?: number;
+        }>,
+        key,
+      ) => {
         // @ts-expect-error type missing calculatedArea
         const calculatedArea = deforestationStatsByTag[key].calculatedArea || 0;
+        // @ts-expect-error type missing calculatedArea
+        const previousCalculatedArea =
+          previousData?.byApp?.miskoKirtimai?.byTag?.[key]?.calculatedArea || 0;
         acc.push({
           label: key,
           count: deforestationStatsByTag[key].count || 0,
+          previousCount: previousData?.byApp?.miskoKirtimai?.byTag?.[key]?.count,
           area: deforestationStatsByTag[key].area || 0,
+          previousArea: previousData?.byApp?.miskoKirtimai?.byTag?.[key]?.area,
           calculatedArea,
+          previousCalculatedArea,
         });
         return acc;
       },
@@ -104,12 +182,24 @@ const Stats = () => {
       (acc, item) => acc + Number(item.count || 0),
       0,
     );
+    const totalPreviousCount = sortedDeforestationStatsArray.reduce(
+      (acc, item) => acc + Number(item.previousCount || 0),
+      0,
+    );
     const totalArea = sortedDeforestationStatsArray.reduce(
       (acc, item) => acc + Number(item.area || 0),
       0,
     );
+    const totalPreviousArea = sortedDeforestationStatsArray.reduce(
+      (acc, item) => acc + Number(item.previousArea || 0),
+      0,
+    );
     const totalCalculatedArea = sortedDeforestationStatsArray.reduce(
       (acc, item) => acc + Number(item.calculatedArea || 0),
+      0,
+    );
+    const totalPreviousCalculatedArea = sortedDeforestationStatsArray.reduce(
+      (acc, item) => acc + Number(item.previousCalculatedArea || 0),
       0,
     );
 
@@ -119,8 +209,11 @@ const Stats = () => {
           ? 'Bendras leidimų skaičius'
           : 'Bendras kertamas plotas',
       count: totalCount,
+      previousCount: totalPreviousCount,
       area: totalArea,
+      previousArea: totalPreviousArea,
       calculatedArea: totalCalculatedArea,
+      previousCalculatedArea: totalPreviousCalculatedArea,
     });
   }
 
@@ -169,14 +262,30 @@ const Stats = () => {
         </LoaderContainer>
       ) : (
         <Content>
-          <Datepicker
-            onChange={(filterValue, date) => {
-              setDateFilter(filterValue);
-              setQuery(date);
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '16px',
             }}
-            value={dateFilter}
-            selectedDates={query}
-          />
+          >
+            <Datepicker
+              onChange={(filterValue, date) => {
+                setDateFilter(filterValue);
+                setQuery(date);
+              }}
+              value={dateFilter}
+              selectedDates={query}
+            />
+            <ToggleContainer onClick={() => setIsComparisonEnabled(!isComparisonEnabled)}>
+              <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
+              <ToggleSwitch $isActive={isComparisonEnabled}>
+                <ToggleCircle $isActive={isComparisonEnabled} />
+              </ToggleSwitch>
+            </ToggleContainer>
+          </div>
 
           <Row>
             <MainStatsWrapper>
@@ -186,7 +295,16 @@ const Stats = () => {
                     <StyledIcon name={item.icon} />
                   </IconWrapper>
                   <StatsInfoContainer>
-                    <StatsNumber>{item.count || '0'}</StatsNumber>
+                    <StatsNumber style={{ gap: '4px' }}>
+                      <span style={{ whiteSpace: 'nowrap' }}>{item.count || '0'}</span>
+                      {isComparisonEnabled && (
+                        <StatDelta
+                          current={item.count}
+                          previous={item.previousCount}
+                          isFetching={isPreviousFetching}
+                        />
+                      )}
+                    </StatsNumber>
                     <StatsLabel>{item.label}</StatsLabel>
                   </StatsInfoContainer>
                 </MainStatsItem>
@@ -196,13 +314,38 @@ const Stats = () => {
               <StatsHeader>Statybų leidimai</StatsHeader>
 
               {constructionsStatsByTag ? (
-                sortedConstructionsStatsArray?.map(({ label, count }) => {
+                sortedConstructionsStatsArray?.map(({ label, count, previousCount }) => {
                   const statsPercentage = (count * 100) / highestConstructionsStatsNumber;
                   return (
                     <>
-                      <DetailedStatsRow key={label}>
-                        <InfoLabel>{label}</InfoLabel>
-                        <AmountLabel>{count}</AmountLabel>
+                      <DetailedStatsRow
+                        key={label}
+                        style={{
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                        }}
+                      >
+                        <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
+                          {label}
+                        </InfoLabel>
+                        <AmountLabel
+                          style={{
+                            flexShrink: 0,
+                            minWidth: 'auto',
+                            gap: '4px',
+                            marginLeft: 'auto',
+                          }}
+                        >
+                          <span style={{ whiteSpace: 'nowrap' }}>{count}</span>
+                          {isComparisonEnabled && (
+                            <StatDelta
+                              current={count}
+                              previous={previousCount}
+                              isFetching={isPreviousFetching}
+                            />
+                          )}
+                        </AmountLabel>
                       </DetailedStatsRow>
                       <InfoBarWrapper>
                         <InfoBar $percentage={statsPercentage} />
@@ -237,142 +380,249 @@ const Stats = () => {
               </RowContainer>
               {deforestationStatsByTag ? (
                 <>
-                  {sortedDeforestationStatsArray?.slice(0, 1).map(({ label, count, area }) => {
-                    const safeArea = area || 0;
-                    return (
-                      <div key={label}>
-                        <DetailedStatsRow
-                          style={{ alignItems: 'center', justifyContent: 'space-between' }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <StyledIcon
-                              name={IconName.forest}
-                              style={{ color: '#000000', width: '20px', height: '20px' }}
-                            />
-                            <InfoLabel>{label}</InfoLabel>
-                          </div>
-                          <AmountLabel style={{ fontSize: '1.8rem' }}>
-                            {deforestationStatsFilter === 'count'
-                              ? count
-                              : `${Number(safeArea).toFixed(2)} ha`}
-                          </AmountLabel>
-                        </DetailedStatsRow>
-                        {deforestationStatsFilter === 'area' &&
-                          label === 'Bendras kertamas plotas' && (
-                            <DetailedStatsRow
+                  {sortedDeforestationStatsArray
+                    ?.slice(0, 1)
+                    .map(({ label, count, area, previousCount, previousArea }) => {
+                      const safeArea = area || 0;
+                      const safePreviousArea = previousArea || 0;
+                      return (
+                        <div key={label}>
+                          <DetailedStatsRow
+                            style={{
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '8px',
+                            }}
+                          >
+                            <div
                               style={{
-                                alignItems: 'flex-start',
-                                justifyContent: 'space-between',
-                                marginTop: 0,
-                                flexWrap: 'wrap',
+                                display: 'flex',
+                                alignItems: 'center',
                                 gap: '8px',
+                                flex: 1,
+                                minWidth: '200px',
                               }}
                             >
-                              <div
+                              <StyledIcon
+                                name={IconName.forest}
                                 style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '8px',
-                                  flex: 1,
-                                  minWidth: '200px',
-                                }}
-                              >
-                                <InfoLabel
-                                  style={{ fontSize: '1.4rem', color: '#6b7280', paddingRight: 0 }}
-                                >
-                                  Preliminarus iškirstas plotas pagal kirtimo intensyvumą
-                                </InfoLabel>
-                              </div>
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '4px',
-                                  marginLeft: 'auto',
-                                  justifyContent: 'flex-end',
-                                  whiteSpace: 'nowrap',
+                                  color: '#000000',
+                                  width: '20px',
+                                  height: '20px',
                                   flexShrink: 0,
                                 }}
+                              />
+                              <InfoLabel style={{ paddingRight: 0 }}>{label}</InfoLabel>
+                            </div>
+                            <AmountLabel
+                              style={{
+                                fontSize: '1.8rem',
+                                flexShrink: 0,
+                                minWidth: 'auto',
+                                gap: '4px',
+                                marginLeft: 'auto',
+                              }}
+                            >
+                              <span style={{ whiteSpace: 'nowrap' }}>
+                                {deforestationStatsFilter === 'count'
+                                  ? count
+                                  : `${Number(safeArea).toFixed(2)} ha`}
+                              </span>
+                              {isComparisonEnabled && !isPreviousFetching && (
+                                <StatDelta
+                                  current={
+                                    deforestationStatsFilter === 'count'
+                                      ? count
+                                      : Number(safeArea.toFixed(2))
+                                  }
+                                  previous={
+                                    deforestationStatsFilter === 'count'
+                                      ? previousCount
+                                      : Number(safePreviousArea.toFixed(2))
+                                  }
+                                  isFetching={isPreviousFetching}
+                                />
+                              )}
+                            </AmountLabel>
+                          </DetailedStatsRow>
+                          {deforestationStatsFilter === 'area' &&
+                            label === 'Bendras kertamas plotas' && (
+                              <DetailedStatsRow
+                                style={{
+                                  alignItems: 'flex-start',
+                                  justifyContent: 'space-between',
+                                  marginTop: 0,
+                                  flexWrap: 'wrap',
+                                  gap: '8px',
+                                }}
                               >
-                                <AmountLabel
+                                <div
                                   style={{
-                                    fontSize: '1.4rem',
-                                    color: '#6b7280',
-                                    minWidth: 'auto',
-                                    textAlign: 'right',
-                                    whiteSpace: 'nowrap',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    flex: 1,
+                                    minWidth: '200px',
+                                  }}
+                                >
+                                  <InfoLabel
+                                    style={{
+                                      fontSize: '1.4rem',
+                                      color: '#6b7280',
+                                      paddingRight: 0,
+                                    }}
+                                  >
+                                    Preliminarus iškirstas plotas pagal kirtimo intensyvumą
+                                  </InfoLabel>
+                                </div>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    marginLeft: 'auto',
+                                    justifyContent: 'flex-end',
                                     flexShrink: 0,
                                   }}
                                 >
-                                  {Number(
-                                    sortedDeforestationStatsArray[0]?.calculatedArea || 0,
-                                  ).toFixed(2)}{' '}
-                                  ha
-                                </AmountLabel>
-                                <div style={{ paddingRight: '2px' }}>
-                                  <Tooltip
-                                    content={
-                                      <div>
-                                        Apskaičiuojama pagal kirtimo leidimų tipus ir jiems
-                                        priskirtą procentinę dalį nuo numatomo ploto.
-                                        <br />
-                                        <br />
-                                        Plynas, Plynas sanitarinis, Lydimo - 100%
-                                        <br />
-                                        Atvejiniai - 50%
-                                        <br />
-                                        Kiti - 25%
-                                      </div>
-                                    }
+                                  <AmountLabel
+                                    style={{
+                                      fontSize: '1.4rem',
+                                      color: '#6b7280',
+                                      minWidth: 'auto',
+                                      textAlign: 'right',
+                                      flexShrink: 0,
+                                      gap: '4px',
+                                    }}
                                   >
-                                    <Icon
-                                      name={IconName.info}
-                                      style={{
-                                        color: '#6b7280',
-                                        fontSize: '1.6rem',
-                                        marginTop: '2px',
-                                        display: 'flex',
-                                      }}
-                                    />
-                                  </Tooltip>
+                                    <span style={{ whiteSpace: 'nowrap' }}>
+                                      {Number(
+                                        sortedDeforestationStatsArray[0]?.calculatedArea || 0,
+                                      ).toFixed(2)}{' '}
+                                      ha
+                                    </span>
+                                    {isComparisonEnabled && (
+                                      <StatDelta
+                                        current={Number(
+                                          Number(
+                                            sortedDeforestationStatsArray[0]?.calculatedArea || 0,
+                                          ).toFixed(2),
+                                        )}
+                                        previous={Number(
+                                          Number(
+                                            sortedDeforestationStatsArray[0]
+                                              ?.previousCalculatedArea || 0,
+                                          ).toFixed(2),
+                                        )}
+                                        isFetching={isPreviousFetching}
+                                      />
+                                    )}
+                                  </AmountLabel>
+                                  <div
+                                    style={{
+                                      paddingRight: '2px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                    }}
+                                  >
+                                    <Tooltip
+                                      content={
+                                        <div>
+                                          Apskaičiuojama pagal kirtimo leidimų tipus ir jiems
+                                          priskirtą procentinę dalį nuo numatomo ploto.
+                                          <br />
+                                          <br />
+                                          Plynas, Plynas sanitarinis, Lydimo - 100%
+                                          <br />
+                                          Atvejiniai - 50%
+                                          <br />
+                                          Kiti - 25%
+                                        </div>
+                                      }
+                                    >
+                                      <Icon
+                                        name={IconName.info}
+                                        style={{
+                                          color: '#6b7280',
+                                          fontSize: '1.6rem',
+                                          marginTop: '2px',
+                                          display: 'flex',
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  </div>
                                 </div>
-                              </div>
-                            </DetailedStatsRow>
-                          )}
-                        <hr
-                          style={{
-                            border: 'none',
-                            borderTop: '2px solid #e5e7eb',
-                            margin: '16px 0 8px 0',
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-
-                  <CollapsibleContainer $isExpanded={showAllDeforestationStats}>
-                    {sortedDeforestationStatsArray?.slice(1).map(({ label, count, area }) => {
-                      const safeArea = area || 0;
-                      const statsPercentage =
-                        ((deforestationStatsFilter === 'count' ? count : safeArea) * 100) /
-                        highestDeforestationStatsNumber;
-
-                      return (
-                        <div key={label}>
-                          <DetailedStatsRow>
-                            <InfoLabel>{label}</InfoLabel>
-                            <AmountLabel>
-                              {deforestationStatsFilter === 'count'
-                                ? count
-                                : `${Number(safeArea).toFixed(2)} ha`}
-                            </AmountLabel>
-                          </DetailedStatsRow>
-                          <InfoBarWrapper>
-                            <InfoBar $percentage={statsPercentage || 0} />
-                          </InfoBarWrapper>
+                              </DetailedStatsRow>
+                            )}
+                          <hr
+                            style={{
+                              border: 'none',
+                              borderTop: '2px solid #e5e7eb',
+                              margin: '16px 0 8px 0',
+                            }}
+                          />
                         </div>
                       );
                     })}
+
+                  <CollapsibleContainer $isExpanded={showAllDeforestationStats}>
+                    {sortedDeforestationStatsArray
+                      ?.slice(1)
+                      .map(({ label, count, area, previousCount, previousArea }) => {
+                        const safeArea = area || 0;
+                        const safePreviousArea = previousArea || 0;
+                        const statsPercentage =
+                          ((deforestationStatsFilter === 'count' ? count : safeArea) * 100) /
+                          highestDeforestationStatsNumber;
+
+                        return (
+                          <div key={label}>
+                            <DetailedStatsRow
+                              style={{
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '8px',
+                              }}
+                            >
+                              <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
+                                {label}
+                              </InfoLabel>
+                              <AmountLabel
+                                style={{
+                                  flexShrink: 0,
+                                  minWidth: 'auto',
+                                  gap: '4px',
+                                  marginLeft: 'auto',
+                                }}
+                              >
+                                <span style={{ whiteSpace: 'nowrap' }}>
+                                  {deforestationStatsFilter === 'count'
+                                    ? count
+                                    : `${Number(safeArea).toFixed(2)} ha`}
+                                </span>
+                                {isComparisonEnabled && !isPreviousFetching && (
+                                  <StatDelta
+                                    current={
+                                      deforestationStatsFilter === 'count'
+                                        ? count
+                                        : Number(safeArea.toFixed(2))
+                                    }
+                                    previous={
+                                      deforestationStatsFilter === 'count'
+                                        ? previousCount
+                                        : Number(safePreviousArea.toFixed(2))
+                                    }
+                                    isFetching={isPreviousFetching}
+                                  />
+                                )}
+                              </AmountLabel>
+                            </DetailedStatsRow>
+                            <InfoBarWrapper>
+                              <InfoBar $percentage={statsPercentage || 0} />
+                            </InfoBarWrapper>
+                          </div>
+                        );
+                      })}
                   </CollapsibleContainer>
 
                   {sortedDeforestationStatsArray && sortedDeforestationStatsArray.length > 5 && (
@@ -526,6 +776,9 @@ const StatsNumber = styled.div`
   font-size: 2rem;
   font-weight: 800;
   line-height: 40px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 `;
 
 const StatsLabel = styled.div`
@@ -572,6 +825,10 @@ const AmountLabel = styled.div`
   line-height: 18px;
   min-width: 100px;
   text-align: end;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
 `;
 
 const SwitchLabel = styled.div`
@@ -602,6 +859,8 @@ const DetailedStatsRow = styled.div`
   align-items: flex-start;
   margin-bottom: 8px;
   margin-top: 12px;
+  width: 100%;
+  flex-wrap: wrap;
 `;
 
 const SliderWrapper = styled.div`
@@ -771,6 +1030,58 @@ const ChevronIcon = styled(Icon)<{ $isExpanded: boolean }>`
   transform: ${({ $isExpanded }) => ($isExpanded ? 'rotate(180deg)' : 'rotate(0deg)')};
   transition: transform 0.4s ease-in-out;
   margin-top: 3px;
+`;
+
+const ToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+`;
+
+const ToggleLabel = styled.span`
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: ${({ theme }) => theme.colors.text?.secondary || '#374151'};
+`;
+
+const ToggleSwitch = styled.div<{ $isActive: boolean }>`
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: ${({ $isActive, theme }) => ($isActive ? theme.colors.primary : '#D1D5DB')};
+  position: relative;
+  transition: background-color 0.3s ease;
+`;
+
+const ToggleCircle = styled.div<{ $isActive: boolean }>`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  position: absolute;
+  top: 2px;
+  left: ${({ $isActive }) => ($isActive ? '22px' : '2px')};
+  transition: left 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+`;
+
+const MiniSpinner = styled.div`
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: ${({ theme }) => theme.colors.primary};
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
 export default Stats;

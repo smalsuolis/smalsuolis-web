@@ -133,6 +133,22 @@ export const formatRelativeTime = (dateString: string | null): string => {
   }
 };
 
+export const calculatePreviousPeriod = (query: { $gte: string; $lt: string }) => {
+  const gte = new Date(query.$gte);
+  const lt = new Date(query.$lt);
+
+  const diffInMs = lt.getTime() - gte.getTime();
+  const diffInDays = Math.round(diffInMs / (1000 * 60 * 60 * 24));
+
+  const previousGte = new Date(gte.getTime() - diffInDays * 24 * 60 * 60 * 1000);
+  const previousLt = new Date(lt.getTime() - diffInDays * 24 * 60 * 60 * 1000);
+
+  return {
+    $gte: previousGte.toISOString(),
+    $lt: previousLt.toISOString(),
+  };
+};
+
 export const getUpdateStatusColor = (dateString: string | null): string => {
   if (!dateString) {
     return '#EF4444'; // red
