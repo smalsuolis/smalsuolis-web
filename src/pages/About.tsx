@@ -98,7 +98,7 @@ const About = () => {
           </FooterContentSubTitle>
           <ButtonContainer>
             <Button
-              onClick={() => openLinkInNewTab('https://startupgov.lt')}
+              onClick={() => openLinkInNewTab('https://govstartup.lt')}
               right={<StyledIcon name={IconName.arrowUpRight} />}
             >
               {buttonsTitles.ourTeam}
