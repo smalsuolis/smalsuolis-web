@@ -214,6 +214,9 @@ export interface Stats {
       count: number;
       byTag: Record<string, { count: number; area: number }>;
     };
+    zemetvarkosPlanavimas: {
+      count: number;
+    };
   };
   count: number;
 }

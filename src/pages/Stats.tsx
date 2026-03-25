@@ -106,6 +106,12 @@ const Stats = () => {
       previousCount: previousData?.byApp?.infostatyba?.count,
       icon: IconName.house,
     },
+    {
+      label: 'Žemėtvarkos planavimų',
+      count: data?.byApp?.zemetvarkosPlanavimas?.count,
+      previousCount: previousData?.byApp?.zemetvarkosPlanavimas?.count,
+      icon: IconName.map,
+    },
   ];
 
   const constructionsStatsByTag = data?.byApp?.infostatyba?.byTag;
@@ -230,6 +236,7 @@ const Stats = () => {
   const miskoKirtimaiUpdate = getLastUpdateForAppType('miskoKirtimai');
   const izuvinimasUpdate = getLastUpdateForAppType('izuvinimas');
   const infostatybaUpdate = getLastUpdateForAppType('infostatyba');
+  const zemetvarkosPlanavimasUpdate = getLastUpdateForAppType('zemetvarkosPlanavimas');
 
   const lastUpdateItems = [
     {
@@ -246,6 +253,11 @@ const Stats = () => {
       label: 'Statybos leidimai',
       lastUpdate: infostatybaUpdate?.lastUpdate || null,
       icon: IconName.house,
+    },
+    {
+      label: 'Žemėtvarkos planavimas',
+      lastUpdate: zemetvarkosPlanavimasUpdate?.lastUpdate || null,
+      icon: IconName.map,
     },
   ];
 
@@ -922,7 +934,7 @@ const SectionTitle = styled.h2`
 
 const LastUpdateGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
   @media ${device.tablet} {
     grid-template-columns: 1fr;
