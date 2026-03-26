@@ -225,6 +225,7 @@ export interface LastUpdateByAppType {
   appType: string;
   lastUpdate: string | null;
   eventCount: number;
+  lastUpdateCount: number;
   apps: any[];
 }
 

@@ -242,21 +242,25 @@ const Stats = () => {
     {
       label: 'Miško kirtimai',
       lastUpdate: miskoKirtimaiUpdate?.lastUpdate || null,
+      lastUpdateCount: miskoKirtimaiUpdate?.lastUpdateCount || 0,
       icon: IconName.forest,
     },
     {
       label: 'Žuvų įveisimas',
       lastUpdate: izuvinimasUpdate?.lastUpdate || null,
+      lastUpdateCount: izuvinimasUpdate?.lastUpdateCount || 0,
       icon: IconName.fishThin,
     },
     {
       label: 'Statybos leidimai',
       lastUpdate: infostatybaUpdate?.lastUpdate || null,
+      lastUpdateCount: infostatybaUpdate?.lastUpdateCount || 0,
       icon: IconName.house,
     },
     {
       label: 'Žemėtvarkos planavimas',
       lastUpdate: zemetvarkosPlanavimasUpdate?.lastUpdate || null,
+      lastUpdateCount: zemetvarkosPlanavimasUpdate?.lastUpdateCount || 0,
       icon: IconName.map,
     },
   ];
@@ -668,21 +672,32 @@ const Stats = () => {
                         </LastUpdateIconWrapper>
                         <LastUpdateTitle>{item.label}</LastUpdateTitle>
                       </LastUpdateHeader>
-                      <LastUpdateInfo>
-                        <LastUpdateRow>
-                          <LastUpdateLabel>Paskutinis atnaujinimas:</LastUpdateLabel>
-                          <LastUpdateValue $color={getUpdateStatusColor(item.lastUpdate)}>
-                            {formatRelativeTime(item.lastUpdate)}
-                          </LastUpdateValue>
-                          {item.lastUpdate && (
-                            <LastUpdateValue
-                              style={{ fontSize: '1.4rem', color: '#6b7280', fontWeight: 400 }}
-                            >
-                              {new Date(item.lastUpdate).toLocaleString('lt-LT')}
+                      <LastUpdateBody>
+                        <LastUpdateInfo>
+                          <LastUpdateRow>
+                            <LastUpdateLabel>Paskutinis atnaujinimas:</LastUpdateLabel>
+                            <LastUpdateValue $color={getUpdateStatusColor(item.lastUpdate)}>
+                              {formatRelativeTime(item.lastUpdate)}
                             </LastUpdateValue>
-                          )}
-                        </LastUpdateRow>
-                      </LastUpdateInfo>
+                            {item.lastUpdate && (
+                              <LastUpdateValue
+                                style={{ fontSize: '1.4rem', color: '#6b7280', fontWeight: 400 }}
+                              >
+                                {new Date(item.lastUpdate).toLocaleString('lt-LT')}
+                              </LastUpdateValue>
+                            )}
+                          </LastUpdateRow>
+                        </LastUpdateInfo>
+                        {item.lastUpdateCount > 0 && (
+                          <LastUpdateCountBox>
+                            <LastUpdateCountTitle>Gauti</LastUpdateCountTitle>
+                            <LastUpdateCountNumber>
+                              {item.lastUpdateCount.toLocaleString('lt-LT')}
+                            </LastUpdateCountNumber>
+                            <LastUpdateCountLabel>nauji įvykiai</LastUpdateCountLabel>
+                          </LastUpdateCountBox>
+                        )}
+                      </LastUpdateBody>
                     </LastUpdateCard>
                   ))}
                 </LastUpdateGrid>
@@ -981,16 +996,64 @@ const LastUpdateTitle = styled.div`
   line-height: 24px;
 `;
 
+const LastUpdateBody = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
 const LastUpdateInfo = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  flex: 1;
+  min-width: 0;
 `;
 
 const LastUpdateRow = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
+`;
+
+const LastUpdateCountBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({ theme }) => theme.colors.background};
+  border-radius: 16px;
+  padding: 12px 16px;
+  min-width: 80px;
+  flex-shrink: 0;
+`;
+
+const LastUpdateCountTitle = styled.div`
+  color: ${({ theme }) => theme.colors.text?.secondary};
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+`;
+
+const LastUpdateCountNumber = styled.div`
+  color: ${({ theme }) => theme.colors.text?.secondary};
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  @media ${device.tablet} {
+    font-size: 1.8rem;
+  }
+`;
+
+const LastUpdateCountLabel = styled.div`
+  color: #6b7280;
+  font-size: 1.2rem;
+  font-weight: 400;
+  text-align: center;
+  margin-top: 2px;
 `;
 
 const LastUpdateLabel = styled.div`
