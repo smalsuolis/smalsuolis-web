@@ -1,6 +1,7 @@
 import { Button, useStorage } from '@aplinkosministerija/design-system';
 import { useQuery } from '@tanstack/react-query';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { ButtonVariants, device } from '../styles';
 import {
@@ -8,6 +9,7 @@ import {
   Event,
   Filters,
   IconName,
+  inputLabels,
   isEmpty,
   Subscription,
   subtitle,
@@ -43,6 +45,27 @@ const EventsContainer = ({
   const filters = useStorage<Filters>('filters', {}, true);
   const { value: isListView, setValue } = useStorage<boolean>('isListView', false, true);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
+  const [search, setSearch] = useState(searchInput);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput);
+      setSearchParams(
+        (prev) => {
+          if (searchInput) {
+            prev.set('q', searchInput);
+          } else {
+            prev.delete('q');
+          }
+          return prev;
+        },
+        { replace: true },
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const { loggedIn } = useContext<UserContextType>(UserContext);
   const currentRoute = useGetCurrentRoute();
@@ -66,6 +89,14 @@ const EventsContainer = ({
       ...(apps ? { app: { $in: apps.map((app) => app.id) } } : null),
       ...(filterSubs.length ? { subscription: { $in: filterSubs.map((sub) => sub.id) } } : null),
       ...(timeRange ? { startAt: timeRange.query } : null),
+      ...(search
+        ? {
+            $raw: {
+              condition: '(events.name ilike ? OR events.body ilike ?)',
+              bindings: [`%${search}%`, `%${search}%`],
+            },
+          }
+        : null),
     };
   };
 
@@ -92,7 +123,7 @@ const EventsContainer = ({
     isFetching,
     isLoading,
   } = useInfinityLoad(
-    [queryKey, filters],
+    [queryKey, filters, search],
     apiEndpoint,
     observerRef,
     { query: getFilter() },
@@ -158,6 +189,24 @@ const EventsContainer = ({
           <FilterText>{buttonsTitles.filter}</FilterText>
         </FilterButton>
       </FilterRow>
+      <SearchRow>
+        <SearchInputWrapper>
+          <SearchIcon>
+            <Icon name={IconName.search} size={18} color={'#9AA4B2'} />
+          </SearchIcon>
+          <SearchInput
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder={inputLabels.searchEvents}
+          />
+          {searchInput && (
+            <ClearButton onClick={() => setSearchInput('')}>
+              <Icon name={IconName.close} size={16} color={'#9AA4B2'} />
+            </ClearButton>
+          )}
+        </SearchInputWrapper>
+      </SearchRow>
       <Container>{renderListOrMap()}</Container>
       <MapAndListButton
         variant={ButtonVariants.TERTIARY}
@@ -276,5 +325,55 @@ const MapAndListButton = styled(Button)`
   width: auto;
   @media ${device.mobileL} {
     bottom: 15px;
+  }
+`;
+
+const SearchRow = styled.div`
+  width: 100%;
+  padding: 8px 12px 0;
+`;
+
+const SearchInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0 12px;
+  gap: 8px;
+  transition: border-color 0.15s;
+  &:focus-within {
+    border-color: ${({ theme }) => theme.colors.primary};
+    background: #fff;
+  }
+`;
+
+const SearchIcon = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+`;
+
+const SearchInput = styled.input`
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  color: #1a2a1a;
+  padding: 10px 0;
+  outline: none;
+  &::placeholder {
+    color: #9aa4b2;
+  }
+`;
+
+const ClearButton = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0.7;
+  &:hover {
+    opacity: 1;
   }
 `;

@@ -36,6 +36,7 @@ export const inputLabels = {
   firstName: 'Vardas',
   email: 'Elektroninis paštas',
   noOptions: 'Nėra pasirinkimų',
+  searchEvents: 'Ieškoti įvykių...',
 };
 
 export const titles = {
