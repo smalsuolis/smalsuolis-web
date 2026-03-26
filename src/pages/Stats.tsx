@@ -75,23 +75,28 @@ const Stats = () => {
   const [dateFilter, setDateFilter] = useState<string>(initialRange);
   const [isComparisonEnabled, setIsComparisonEnabled] = useState(false);
 
+  const { data: lastUpdateData, isLoading: isLoadingLastUpdate } = useQuery({
+    queryKey: ['lastUpdate'],
+    queryFn: () => api.getLastUpdate(),
+  });
+
+  const effectiveQuery =
+    dateFilter === TimeRanges.ALL_TIME && lastUpdateData?.firstGlobalEvent
+      ? { ...query, $gte: lastUpdateData.firstGlobalEvent.slice(0, 16) }
+      : query;
+
   const { data, isLoading } = useQuery({
-    queryKey: ['stats', query],
-    queryFn: () => api.getStats(query),
+    queryKey: ['stats', effectiveQuery],
+    queryFn: () => api.getStats(effectiveQuery),
     refetchOnWindowFocus: false,
   });
 
-  const previousQuery = calculatePreviousPeriod(query);
+  const previousQuery = calculatePreviousPeriod(effectiveQuery);
   const { data: previousData, isFetching: isPreviousFetching } = useQuery({
     queryKey: ['stats', previousQuery],
     queryFn: () => api.getStats(previousQuery),
     enabled: isComparisonEnabled && !!previousQuery,
     refetchOnWindowFocus: false,
-  });
-
-  const { data: lastUpdateData, isLoading: isLoadingLastUpdate } = useQuery({
-    queryKey: ['lastUpdate'],
-    queryFn: () => api.getLastUpdate(),
   });
 
   const mainStatsData = [
@@ -314,12 +319,9 @@ const Stats = () => {
             <DateRangeLabel>
               {(() => {
                 const today = new Date().toISOString().slice(0, 10);
-                const start =
-                  dateFilter === TimeRanges.ALL_TIME && lastUpdateData?.firstGlobalEvent
-                    ? lastUpdateData.firstGlobalEvent.slice(0, 10)
-                    : query.$gte.slice(0, 10);
-                const end = query.$lt.slice(0, 10) > today ? today : query.$lt.slice(0, 10);
-                return `${start} – ${end}`;
+                const end =
+                  effectiveQuery.$lt.slice(0, 10) > today ? today : effectiveQuery.$lt.slice(0, 10);
+                return `${effectiveQuery.$gte.slice(0, 10)} – ${end}`;
               })()}
             </DateRangeLabel>
             <ToggleContainer onClick={() => setIsComparisonEnabled(!isComparisonEnabled)}>

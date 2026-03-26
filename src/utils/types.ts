@@ -141,7 +141,7 @@ export const timeRangeQuery = {
     $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
   },
   [TimeRanges.ALL_TIME]: {
-    $gte: `${firstDataYear}-01-01 00:00`,
+    $gte: '2000-01-01 00:00',
     $lt: '2099-12-31 23:59',
   },
 };
