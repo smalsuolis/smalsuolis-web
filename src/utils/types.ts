@@ -89,6 +89,7 @@ export enum TimeRanges {
   MONTH = 'MONTH',
   FUTURE = 'FUTURE',
   CUSTOM = 'CUSTOM',
+  ALL_TIME = 'ALL_TIME',
   LAST_7_DAYS = 'LAST_7_DAYS',
   LAST_28_DAYS = 'LAST_28_DAYS',
   LAST_90_DAYS = 'LAST_90_DAYS',
@@ -96,10 +97,12 @@ export enum TimeRanges {
 }
 
 export interface TimeRangeItem {
-  key: TimeRanges;
+  key: string;
   query: any;
   name: string;
 }
+
+export const firstDataYear = 2023;
 
 export const timeRangeQuery = {
   [TimeRanges.FUTURE]: {
@@ -137,7 +140,16 @@ export const timeRangeQuery = {
     $gte: flow(formatDateFrom, subDays(365), formatDateAndTime)(new Date()),
     $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
   },
+  [TimeRanges.ALL_TIME]: {
+    $gte: `${firstDataYear}-01-01 00:00`,
+    $lt: '2099-12-31 23:59',
+  },
 };
+
+export const yearQuery = (year: number): { $gte: string; $lt: string } => ({
+  $gte: `${year}-01-01 00:00`,
+  $lt: `${year}-12-31 23:59`,
+});
 
 export const timeRangeItems: TimeRangeItem[] = [
   {
@@ -167,6 +179,15 @@ export const timeRangeItems: TimeRangeItem[] = [
   },
 ];
 
+const currentYear = new Date().getFullYear();
+const yearItems: TimeRangeItem[] = Array.from(
+  { length: currentYear - firstDataYear + 1 },
+  (_, i) => {
+    const year = currentYear - i;
+    return { key: String(year), query: yearQuery(year), name: String(year) };
+  },
+);
+
 export const statsTimeRangeItems: TimeRangeItem[] = [
   {
     key: TimeRanges.LAST_7_DAYS,
@@ -188,6 +209,12 @@ export const statsTimeRangeItems: TimeRangeItem[] = [
     query: timeRangeQuery[TimeRanges.LAST_365_DAYS],
     name: 'Paskutinės 365 dienos',
   },
+  {
+    key: TimeRanges.ALL_TIME,
+    query: timeRangeQuery[TimeRanges.ALL_TIME],
+    name: 'Visi laikai',
+  },
+  ...yearItems,
   {
     key: TimeRanges.CUSTOM,
     query: timeRangeQuery[TimeRanges.CUSTOM],
@@ -231,6 +258,7 @@ export interface LastUpdateByAppType {
 
 export interface LastUpdateResponse {
   lastGlobalUpdate: string;
+  firstGlobalEvent: string | null;
   byAppType: LastUpdateByAppType[];
   apps: any[];
 }

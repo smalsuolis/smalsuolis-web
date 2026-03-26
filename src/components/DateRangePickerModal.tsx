@@ -52,6 +52,27 @@ const DateRangePickerModal = ({
           selectsRange
           onClickOutside={() => setOpen(false)}
           inline
+          renderCustomHeader={({
+            date,
+            decreaseMonth,
+            increaseMonth,
+            decreaseYear,
+            increaseYear,
+          }) => (
+            <CustomHeader>
+              <YearNavButton onClick={decreaseYear} title="Ankstesni metai">
+                ‹‹
+              </YearNavButton>
+              <MonthNavButton onClick={decreaseMonth}>‹</MonthNavButton>
+              <MonthLabel>
+                {date.toLocaleString('lt', { month: 'long', year: 'numeric' })}
+              </MonthLabel>
+              <MonthNavButton onClick={increaseMonth}>›</MonthNavButton>
+              <YearNavButton onClick={increaseYear} title="Kiti metai">
+                ››
+              </YearNavButton>
+            </CustomHeader>
+          )}
         >
           <OkButtonContainer>
             <OkButton onClick={() => setOpen(false)}>Pasirinkti</OkButton>
@@ -182,27 +203,10 @@ const Container = styled.div`
     }
   }
   .react-datepicker__navigation {
-    top: 20px;
+    display: none;
   }
   .react-datepicker__current-month {
-    text-align: center;
-    font-size: 1.5rem;
-    color: black;
-    margin-top: 13px;
-    margin-bottom: 16px;
-    text-transform: capitalize;
-  }
-  .react-datepicker__navigation--previous {
-    left: 34px;
-    @media ${device.mobileL} {
-      left: 24px;
-    }
-  }
-  .react-datepicker__navigation-icon::before {
-    border-color: ${({ theme }) => theme.colors.tertiary} !important;
-  }
-  .react-datepicker__navigation--next {
-    right: 17px;
+    display: none;
   }
   .react-datepicker__day--in-range {
     background-color: ${({ theme }) => theme.colors.tertiary} !important;
@@ -247,6 +251,48 @@ const Container = styled.div`
     color: #101828;
     border-radius: 50% !important;
   }
+`;
+
+const CustomHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 13px 0 16px;
+`;
+
+const MonthLabel = styled.span`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: black;
+  text-transform: capitalize;
+  flex: 1;
+  text-align: center;
+`;
+
+const NavButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.8rem;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: ${({ theme }) => theme.colors.tertiary};
+  transition: background-color 0.15s ease;
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.primary}40;
+  }
+`;
+
+const MonthNavButton = styled(NavButton)``;
+const YearNavButton = styled(NavButton)`
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -1px;
 `;
 
 const OkButtonContainer = styled.div`

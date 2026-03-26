@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import Icon from '../components/Icons';
 import { device } from '../styles';
 import { Frequency, IconName, timeRangeQuery } from '../utils';
-import { TimeRanges } from '../utils/types';
+import { TimeRanges, yearQuery } from '../utils/types';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/api';
 import Loader from '../components/Loader';
@@ -53,13 +54,25 @@ const StatDelta = ({
 
 const bannerUrl = '/stats_banner.png';
 
+const resolveQueryFromKey = (key: string): { $gte: string; $lt: string } => {
+  if (/^\d{4}$/.test(key)) return yearQuery(Number(key));
+  const q = timeRangeQuery[key as TimeRanges] ?? timeRangeQuery[TimeRanges.LAST_7_DAYS];
+  return q as { $gte: string; $lt: string };
+};
+
 const Stats = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [deforestationStatsFilter, setDeforestationStatsFilter] = useState('count');
   const [showAllDeforestationStats, setShowAllDeforestationStats] = useState(false);
-  const [query, setQuery] = useState<{ $gte: string; $lt: string }>(
-    timeRangeQuery[TimeRanges.LAST_7_DAYS],
-  );
-  const [dateFilter, setDateFilter] = useState<string>(TimeRanges.LAST_7_DAYS);
+
+  const initialRange = searchParams.get('range') ?? TimeRanges.LAST_7_DAYS;
+  const initialQuery: { $gte: string; $lt: string } =
+    initialRange === TimeRanges.CUSTOM && searchParams.get('from') && searchParams.get('to')
+      ? { $gte: searchParams.get('from')!, $lt: searchParams.get('to')! }
+      : resolveQueryFromKey(initialRange);
+
+  const [query, setQuery] = useState<{ $gte: string; $lt: string }>(initialQuery);
+  const [dateFilter, setDateFilter] = useState<string>(initialRange);
   const [isComparisonEnabled, setIsComparisonEnabled] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -289,10 +302,26 @@ const Stats = () => {
               onChange={(filterValue, date) => {
                 setDateFilter(filterValue);
                 setQuery(date);
+                if (filterValue === TimeRanges.CUSTOM) {
+                  setSearchParams({ range: filterValue, from: date.$gte, to: date.$lt });
+                } else {
+                  setSearchParams({ range: filterValue });
+                }
               }}
               value={dateFilter}
               selectedDates={query}
             />
+            <DateRangeLabel>
+              {(() => {
+                const today = new Date().toISOString().slice(0, 10);
+                const start =
+                  dateFilter === TimeRanges.ALL_TIME && lastUpdateData?.firstGlobalEvent
+                    ? lastUpdateData.firstGlobalEvent.slice(0, 10)
+                    : query.$gte.slice(0, 10);
+                const end = query.$lt.slice(0, 10) > today ? today : query.$lt.slice(0, 10);
+                return `${start} – ${end}`;
+              })()}
+            </DateRangeLabel>
             <ToggleContainer onClick={() => setIsComparisonEnabled(!isComparisonEnabled)}>
               <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
               <ToggleSwitch $isActive={isComparisonEnabled}>
@@ -1103,6 +1132,13 @@ const ChevronIcon = styled(Icon)<{ $isExpanded: boolean }>`
   transform: ${({ $isExpanded }) => ($isExpanded ? 'rotate(180deg)' : 'rotate(0deg)')};
   transition: transform 0.4s ease-in-out;
   margin-top: 3px;
+`;
+
+const DateRangeLabel = styled.div`
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text?.secondary};
+  margin-top: 4px;
 `;
 
 const ToggleContainer = styled.div`

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import styled from 'styled-components';
 import Icon from './Icons';
@@ -23,6 +23,7 @@ const frequencyLabels: Record<string, string> = {
   [TimeRanges.LAST_28_DAYS]: 'Paskutinės 28 dienos',
   [TimeRanges.LAST_90_DAYS]: 'Paskutinės 90 dienų',
   [TimeRanges.LAST_365_DAYS]: 'Paskutinės 365 dienos',
+  [TimeRanges.ALL_TIME]: 'Visi laikai',
 };
 
 export interface DatepickerProps {
@@ -45,8 +46,9 @@ const Datepicker = ({ value, onChange, selectedDates }: DatepickerProps) => {
     }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (value === TimeRanges.CUSTOM && selectedDates) {
+    if (selectedDates) {
       setDate({
         start: new Date(selectedDates.$gte),
         end: new Date(selectedDates.$lt),
@@ -71,23 +73,32 @@ const Datepicker = ({ value, onChange, selectedDates }: DatepickerProps) => {
       {open ? (
         <DateContainer>
           <FilterContainer>
-            {statsTimeRangeItems?.map((item) => {
+            {statsTimeRangeItems?.map((item, index) => {
+              const isFirstYearItem =
+                /^\d{4}$/.test(item.key) && !/^\d{4}$/.test(statsTimeRangeItems[index - 1]?.key);
               return (
-                <SelectedDateLabel
-                  key={item.key}
-                  onClick={() => {
-                    if (item.key === TimeRanges.CUSTOM) {
-                      setOpenDatePickerModal(true);
-                      setOpen(false);
-                    } else {
-                      onChange(item.key, item.query);
-                      setDate({ start: new Date(), end: new Date() });
-                      setOpen(false);
-                    }
-                  }}
-                >
-                  {item.name}
-                </SelectedDateLabel>
+                <Fragment key={item.key}>
+                  {isFirstYearItem && <Divider />}
+                  <SelectedDateLabel
+                    onClick={() => {
+                      if (item.key === TimeRanges.CUSTOM) {
+                        setOpenDatePickerModal(true);
+                        setOpen(false);
+                      } else {
+                        onChange(item.key, item.query);
+                        if (item.query.$gte && item.query.$lt) {
+                          setDate({
+                            start: new Date(item.query.$gte),
+                            end: new Date(item.query.$lt),
+                          });
+                        }
+                        setOpen(false);
+                      }
+                    }}
+                  >
+                    {item.name}
+                  </SelectedDateLabel>
+                </Fragment>
               );
             })}
           </FilterContainer>
@@ -155,6 +166,12 @@ const FilterButton = styled.div`
   &:focus {
     cursor: pointer;
   }
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background-color: #e5e7eb;
+  margin: 4px 0;
 `;
 
 const SelectedDateLabel = styled.div`
