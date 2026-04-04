@@ -22,6 +22,7 @@ export interface Subscription<T = number> {
   geom?: FeatureCollection;
   frequency?: Frequency;
   active?: boolean;
+  textFilter?: string;
   eventsCount?: { allTime: number; new: number };
 }
 
@@ -30,6 +31,7 @@ export interface SubscriptionForm extends Subscription {
   apps: number[];
   frequency: Frequency;
   active: boolean;
+  textFilter: string;
 }
 
 export interface Event {

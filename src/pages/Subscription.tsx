@@ -88,12 +88,16 @@ const Subscriptions = () => {
     geom: subscription?.geom,
     frequency: subscription?.frequency || Frequency.DAY,
     futureApps: subscription?.id ? (subscription?.apps || []).length === 0 : true,
+    textFilter: subscription?.textFilter ?? '',
   };
 
   const handleSubmit = (values: SubscriptionForm) => {
     const params: SubscriptionForm = { ...values };
     if (values.futureApps) {
       params.apps = [];
+    }
+    if (!params.textFilter) {
+      params.textFilter = undefined;
     }
     if (subscription?.id) {
       return updateSubscription({ id: subscription?.id, params });
@@ -218,6 +222,20 @@ const Subscriptions = () => {
                     value={values.frequency}
                     onChange={(value: Frequency) => setFieldValue('frequency', value)}
                   />
+                </Section>
+                <Section>
+                  <Label>Tekstinis filtras (neprivaloma)</Label>
+                  <TextField
+                    value={values.textFilter}
+                    type="text"
+                    name="textFilter"
+                    placeholder="pvz. statybos leidimas"
+                    onChange={(value) => setFieldValue('textFilter', value)}
+                  />
+                  <Description>
+                    Jei nurodysite tekstą, gausite pranešimus tik apie tuos įvykius, kurių
+                    pavadinime arba aprašyme yra šis žodis ar frazė.
+                  </Description>
                 </Section>
                 <ButtonContainer>
                   <Button type="submit">{subscription?.id ? 'Išsaugoti' : 'Prenumeruoti'}</Button>
