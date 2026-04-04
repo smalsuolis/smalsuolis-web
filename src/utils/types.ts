@@ -31,7 +31,7 @@ export interface SubscriptionForm extends Subscription {
   apps: number[];
   frequency: Frequency;
   active: boolean;
-  textFilter: string;
+  textFilter?: string;
 }
 
 export interface Event {

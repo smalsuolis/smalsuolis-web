@@ -97,7 +97,7 @@ const Subscriptions = () => {
       params.apps = [];
     }
     if (!params.textFilter) {
-      params.textFilter = undefined;
+      delete params.textFilter;
     }
     if (subscription?.id) {
       return updateSubscription({ id: subscription?.id, params });
