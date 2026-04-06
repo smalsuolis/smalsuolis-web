@@ -272,7 +272,7 @@ const FilterRow = styled.div`
   flex-direction: row;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 20px 12px 0 12px;
+  padding: 20px 0 0 0;
 `;
 
 const CountText = styled.div`
@@ -330,7 +330,7 @@ const MapAndListButton = styled(Button)`
 
 const SearchRow = styled.div`
   width: 100%;
-  padding: 8px 12px 0;
+  padding: 8px 0 0;
 `;
 
 const SearchInputWrapper = styled.div`
