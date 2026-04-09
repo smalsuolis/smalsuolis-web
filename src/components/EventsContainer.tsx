@@ -13,9 +13,11 @@ import {
   isEmpty,
   Subscription,
   subtitle,
+  timeRangeItems,
   useGetCurrentRoute,
   useInfinityLoad,
 } from '../utils';
+import { TimeRanges } from '../utils/types';
 import api from '../utils/api';
 import CopiedFromDSContentLayout from './CopiedFromDSContentLayout';
 import EmptyState from './EmptyState';
@@ -49,6 +51,98 @@ const EventsContainer = ({
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
   const [search, setSearch] = useState(searchInput);
 
+  const { loggedIn } = useContext<UserContextType>(UserContext);
+
+  // Whether the URL has filter params that need to be loaded
+  const hasUrlFilterParams = searchParams.has('apps') || searchParams.has('range');
+  const initFromUrlDone = useRef(!hasUrlFilterParams);
+
+  // Fetch all apps so we can reconstruct filter objects from URL param IDs
+  const { data: appsResponse } = useQuery({
+    queryKey: ['apps', 'all'],
+    queryFn: () => api.getAllApps(),
+  });
+  const allApps = appsResponse ?? [];
+
+  const { data: subsResponse, isFetching: subResponseLoading } = useQuery({
+    queryKey: ['allSubscriptions'],
+    queryFn: () => api.getAllSubscriptions(),
+    enabled: loggedIn && isMyEvents,
+    refetchOnWindowFocus: false,
+  });
+  const allSubscriptions = subsResponse ?? [];
+
+  // Initialize filters from URL params (runs once when data is ready)
+  useEffect(() => {
+    if (initFromUrlDone.current) return;
+
+    const appsParam = searchParams.get('apps');
+    const rangeParam = searchParams.get('range');
+
+    // Wait for apps data if needed
+    if (appsParam && !allApps.length) return;
+
+    initFromUrlDone.current = true;
+
+    const newFilters: Filters = {};
+
+    if (appsParam) {
+      const appIds = appsParam.split(',').map(Number);
+      newFilters.apps = allApps.filter((a) => appIds.includes(a.id));
+    }
+
+    if (rangeParam) {
+      if (rangeParam === TimeRanges.CUSTOM) {
+        const from = searchParams.get('from');
+        const to = searchParams.get('to');
+        if (from && to) {
+          newFilters.timeRange = {
+            key: TimeRanges.CUSTOM,
+            name: 'Pasirinkite datą',
+            query: { $gte: from, $lt: to },
+          };
+        }
+      } else {
+        const item = timeRangeItems.find((i) => i.key === rangeParam);
+        if (item) {
+          newFilters.timeRange = item;
+        }
+      }
+    }
+
+    filters.setValue(newFilters);
+  }, [allApps, allSubscriptions, searchParams]);
+
+  // Sync filters to URL params whenever they change
+  useEffect(() => {
+    if (!initFromUrlDone.current) return;
+
+    setSearchParams(
+      (prev) => {
+        prev.delete('apps');
+        prev.delete('range');
+        prev.delete('from');
+        prev.delete('to');
+
+        const { apps, timeRange } = filters.value;
+
+        if (apps?.length) {
+          prev.set('apps', apps.map((a) => a.id).join(','));
+        }
+        if (timeRange) {
+          prev.set('range', timeRange.key);
+          if (timeRange.key === TimeRanges.CUSTOM) {
+            prev.set('from', timeRange.query.$gte);
+            prev.set('to', timeRange.query.$lt);
+          }
+        }
+
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [filters.value]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setSearch(searchInput);
@@ -67,17 +161,8 @@ const EventsContainer = ({
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const { loggedIn } = useContext<UserContextType>(UserContext);
   const currentRoute = useGetCurrentRoute();
   const observerRef = useRef<any>(null);
-
-  const { data: subsResponse, isFetching: subResponseLoading } = useQuery({
-    queryKey: ['allSubscriptions'],
-    queryFn: () => api.getAllSubscriptions(),
-    enabled: loggedIn && isMyEvents,
-    refetchOnWindowFocus: false,
-  });
-  const allSubscriptions = subsResponse ?? [];
 
   const getFilter = () => {
     const { apps, timeRange, subscriptions } = filters.value;
