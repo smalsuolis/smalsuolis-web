@@ -1,6 +1,6 @@
 import { filterMenuRoutes, filterRoutes } from '@aplinkosministerija/design-system';
 import { useContext } from 'react';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import LoaderComponent from './components/LoaderComponent';
 import { UserContext, UserContextType } from './components/UserProvider';
@@ -10,6 +10,7 @@ import DefaultLayout from './components/DefaultLayout';
 
 function App() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isLoading, loggedIn, subscriptionsCount } = useContext<UserContextType>(UserContext);
   const currentRoute = useGetCurrentRoute();
   const { mutateAsync: logout } = useLogout();
@@ -45,7 +46,16 @@ function App() {
       }}
       onLogin={() => navigate(slugs.login)}
       onLogout={() => logout()}
-      onRouteSelected={(slug) => navigate(slug)}
+      onRouteSelected={(slug) => {
+        const eventsPages = [slugs.events, slugs.myEvents];
+        const isOnEventsPage = eventsPages.some((s) => location.pathname.startsWith(s));
+        const isGoingToEventsPage = eventsPages.some((s) => slug.startsWith(s));
+        if (isOnEventsPage && isGoingToEventsPage) {
+          navigate(slug + location.search);
+        } else {
+          navigate(slug);
+        }
+      }}
     >
       <Routes>
         <Route>
