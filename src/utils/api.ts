@@ -304,7 +304,7 @@ class Api {
     params,
   }: {
     id: number | string;
-    params: Subscription;
+    params: Partial<Subscription>;
   }): Promise<Subscription> => {
     return this.patch({
       resource: Resources.SUBSCRIPTIONS,

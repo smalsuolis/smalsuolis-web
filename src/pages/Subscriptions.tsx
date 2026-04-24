@@ -1,5 +1,5 @@
 import { ContentLayout } from '@aplinkosministerija/design-system';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import styled from 'styled-components';
@@ -13,6 +13,7 @@ import api from '../utils/api';
 const Subscriptions = () => {
   const currentRoute = useGetCurrentRoute();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const observerRef = useRef<any>(null);
   const [anyEventsCountNull, setAnyEventsCountNull] = useState(false);
 
@@ -29,6 +30,37 @@ const Subscriptions = () => {
   const { data: appsResponse } = useQuery({
     queryKey: ['apps'],
     queryFn: () => api.getApps({ page: 1 }),
+  });
+
+  const { mutate: toggleActive } = useMutation({
+    mutationFn: ({ id, active }: { id: number; active: boolean }) =>
+      api.updateSubscription({ id, params: { active } }),
+    onMutate: async ({ id, active }) => {
+      await queryClient.cancelQueries({ queryKey: ['subscriptions'] });
+      const previous = queryClient.getQueryData(['subscriptions']);
+      queryClient.setQueryData(['subscriptions'], (old: any) => {
+        if (!old?.pages) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page: any) => ({
+            ...page,
+            data: page.data.map((sub: Subscription<App>) =>
+              sub.id === id ? { ...sub, active } : sub,
+            ),
+          })),
+        };
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['subscriptions'], context.previous);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+    },
   });
 
   const emptySubscriptions = !subscriptions?.pages[0]?.data?.length;
@@ -57,6 +89,7 @@ const Subscriptions = () => {
                     <SubscriptionCard
                       subscription={subscription}
                       onClick={() => navigate(slugs.subscription(subscription?.id?.toString()))}
+                      onToggleActive={(active) => toggleActive({ id: subscription.id, active })}
                       apps={appsResponse?.rows}
                     />
                   </React.Fragment>

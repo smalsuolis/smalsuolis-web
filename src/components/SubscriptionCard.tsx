@@ -1,4 +1,4 @@
-import { device } from '@aplinkosministerija/design-system';
+import { device, Switch } from '@aplinkosministerija/design-system';
 import styled from 'styled-components';
 import { App, Frequency, IconName, Subscription } from '../utils';
 import AppItem from './AppsItem';
@@ -14,21 +14,24 @@ const frequencyLabels = {
 const SubscriptionCard = ({
   subscription,
   onClick,
+  onToggleActive,
   apps = [],
 }: {
   subscription: Subscription<App>;
   onClick: () => void;
+  onToggleActive?: (active: boolean) => void;
   apps?: App[];
 }) => {
   const futureApps = subscription?.apps?.length === 0;
   const allApps = !futureApps && subscription?.apps?.length === apps?.length;
   const showApps = !futureApps && !allApps;
   const { eventsCount } = subscription;
+  const isActive = subscription?.active !== false;
 
   return (
     <Container>
-      <InnerContainer>
-        <Content onClick={onClick}>
+      <InnerContainer $inactive={!isActive}>
+        <Content onClick={onClick} $inactive={!isActive}>
           <Name>
             {`${subscription?.name ?? (subscription?.frequency && frequencyLabels[subscription?.frequency])}`}{' '}
           </Name>
@@ -53,17 +56,27 @@ const SubscriptionCard = ({
               })}
           </AppsContainer>
         </Content>
-        <EventsCount>
-          <EventsCountLabel>{'Įvykių skaičius'}</EventsCountLabel>
-          {eventsCount === null ? (
-            <Loader size="30px" />
-          ) : (
-            <>
-              <EventsCountAllTime>{eventsCount?.allTime}</EventsCountAllTime>
-              {!!eventsCount?.new && <EventsCountNew>{`+ ${eventsCount.new}`}</EventsCountNew>}
-            </>
+        <RightColumn>
+          {onToggleActive && (
+            <SwitchWrapper
+              onClick={(e) => e.stopPropagation()}
+              title={isActive ? 'Prenumerata aktyvi' : 'Prenumerata neaktyvi'}
+            >
+              <Switch value={isActive} onChange={(e) => onToggleActive(e.target.checked)} />
+            </SwitchWrapper>
           )}
-        </EventsCount>
+          <EventsCount $inactive={!isActive}>
+            <EventsCountLabel>{'Įvykių skaičius'}</EventsCountLabel>
+            {eventsCount === null ? (
+              <Loader size="30px" />
+            ) : (
+              <>
+                <EventsCountAllTime>{eventsCount?.allTime}</EventsCountAllTime>
+                {!!eventsCount?.new && <EventsCountNew>{`+ ${eventsCount.new}`}</EventsCountNew>}
+              </>
+            )}
+          </EventsCount>
+        </RightColumn>
       </InnerContainer>
     </Container>
   );
@@ -106,26 +119,48 @@ const EventsCountNew = styled.div`
   }
 `;
 
-const EventsCount = styled.div`
+const EventsCount = styled.div<{ $inactive?: boolean }>`
   display: flex;
   align-items: flex-end;
   flex-direction: column;
   gap: 3px;
+  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
+  transition: opacity 0.2s;
 `;
 
-const InnerContainer = styled.div`
+const RightColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const SwitchWrapper = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const InnerContainer = styled.div<{ $inactive?: boolean }>`
   display: flex;
   box-sizing: border-box;
   padding: 16px;
   border-radius: 8px;
-  background: ${({ theme }) => theme.colors.GREY};
+  background: ${({ theme, $inactive }) => ($inactive ? 'transparent' : theme.colors.GREY)};
+  border: 1px ${({ $inactive }) => ($inactive ? 'dashed' : 'solid')}
+    ${({ $inactive }) => ($inactive ? '#d0d0d0' : 'transparent')};
+  transition:
+    background 0.2s,
+    border-color 0.2s;
 `;
 
-const Content = styled.div`
+const Content = styled.div<{ $inactive?: boolean }>`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   flex: 1;
+  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
+  transition: opacity 0.2s;
 `;
 
 const Name = styled.div`
