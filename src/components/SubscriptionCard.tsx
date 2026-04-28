@@ -75,7 +75,7 @@ const SubscriptionCard = ({
                   : 'Prenumerata neaktyvi — naujienos nesiunčiamos'
               }
             >
-              <SwitchLabel>{isActive ? 'Aktyvi' : 'Neaktyvi'}</SwitchLabel>
+              {!isActive && <InactiveLabel>Neaktyvi</InactiveLabel>}
               <Switch value={isActive} onChange={(e) => onToggleActive(e.target.checked)} />
             </SwitchWrapper>
           )}
@@ -152,12 +152,11 @@ const RightColumn = styled.div`
 
 const SwitchWrapper = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
 `;
 
-const SwitchLabel = styled.span`
+const InactiveLabel = styled.span`
   font-size: 1.2rem;
   font-weight: 400;
   color: ${({ theme }) => theme.colors.text.secondary};
