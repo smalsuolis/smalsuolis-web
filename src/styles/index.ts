@@ -36,6 +36,7 @@ export const theme: Theme = {
         text: '#101010',
         border: 'white',
         hover: '#121A55',
+        hoverText: 'white',
       },
       [ButtonVariants.TERTIARY]: {
         background: '#14532D',
