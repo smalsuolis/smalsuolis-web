@@ -49,7 +49,7 @@ const Subscriptions = () => {
 
   const { mutate: toggleActive } = useMutation({
     mutationFn: ({ id, active }: { id: number; active: boolean }) =>
-      api.updateSubscription({ id, params: { active } }),
+      api.setSubscriptionsActive({ ids: [id], active }),
     onMutate: async ({ id, active }) => {
       await queryClient.cancelQueries({ queryKey: ['subscriptions'] });
       const previous = queryClient.getQueryData(['subscriptions']);
