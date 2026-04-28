@@ -1,4 +1,4 @@
-import { device, Switch } from '@aplinkosministerija/design-system';
+import { CheckBox, device, Switch } from '@aplinkosministerija/design-system';
 import styled from 'styled-components';
 import { App, Frequency, IconName, Subscription } from '../utils';
 import AppItem from './AppsItem';
@@ -15,11 +15,15 @@ const SubscriptionCard = ({
   subscription,
   onClick,
   onToggleActive,
+  selected,
+  onSelect,
   apps = [],
 }: {
   subscription: Subscription<App>;
   onClick: () => void;
   onToggleActive?: (active: boolean) => void;
+  selected?: boolean;
+  onSelect?: (checked: boolean) => void;
   apps?: App[];
 }) => {
   const futureApps = subscription?.apps?.length === 0;
@@ -30,7 +34,12 @@ const SubscriptionCard = ({
 
   return (
     <Container>
-      <InnerContainer $inactive={!isActive}>
+      <InnerContainer $inactive={!isActive} $selected={!!selected}>
+        {onSelect && (
+          <CheckboxWrapper onClick={(e) => e.stopPropagation()}>
+            <CheckBox value={!!selected} onChange={(value) => onSelect(value)} />
+          </CheckboxWrapper>
+        )}
         <Content onClick={onClick} $inactive={!isActive}>
           <Name>
             {`${subscription?.name ?? (subscription?.frequency && frequencyLabels[subscription?.frequency])}`}{' '}
@@ -141,14 +150,23 @@ const SwitchWrapper = styled.div`
   align-items: center;
 `;
 
-const InnerContainer = styled.div<{ $inactive?: boolean }>`
+const CheckboxWrapper = styled.div`
+  display: flex;
+  align-items: flex-start;
+  padding-top: 4px;
+  margin-right: 12px;
+`;
+
+const InnerContainer = styled.div<{ $inactive?: boolean; $selected?: boolean }>`
   display: flex;
   box-sizing: border-box;
   padding: 16px;
   border-radius: 8px;
-  background: ${({ theme, $inactive }) => ($inactive ? 'transparent' : theme.colors.GREY)};
-  border: 1px ${({ $inactive }) => ($inactive ? 'dashed' : 'solid')}
-    ${({ $inactive }) => ($inactive ? '#d0d0d0' : 'transparent')};
+  background: ${({ theme, $inactive, $selected }) =>
+    $selected ? '#e8f0ea' : $inactive ? 'transparent' : theme.colors.GREY};
+  border: 1px
+    ${({ $inactive, $selected }) => ($selected ? 'solid' : $inactive ? 'dashed' : 'solid')}
+    ${({ $inactive, $selected }) => ($selected ? '#1f5c2e' : $inactive ? '#d0d0d0' : 'transparent')};
   transition:
     background 0.2s,
     border-color 0.2s;

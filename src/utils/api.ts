@@ -326,12 +326,23 @@ class Api {
     });
   };
 
-  deleteSubscriptions = async (ids: number[]): Promise<any> => {
+  deleteSubscriptions = async (ids: number[]): Promise<{ removed: number }> => {
     return this.post({
-      resource: Resources.SUBSCRIPTIONS + '/delete',
-      params: {
-        ids,
-      },
+      resource: Resources.SUBSCRIPTIONS + '/removeMany',
+      params: { ids },
+    });
+  };
+
+  setSubscriptionsActive = async ({
+    ids,
+    active,
+  }: {
+    ids: number[];
+    active: boolean;
+  }): Promise<{ updated: number }> => {
+    return this.post({
+      resource: Resources.SUBSCRIPTIONS + '/setActive',
+      params: { ids, active },
     });
   };
 

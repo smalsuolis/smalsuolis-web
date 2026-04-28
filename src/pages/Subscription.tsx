@@ -150,19 +150,6 @@ const Subscriptions = () => {
                   />
                 </Section>
                 <Section>
-                  <SubscriptionActivation>
-                    <Label>{values.active ? 'Prenumerata aktyvi' : 'Prenumerata neaktyvi'}</Label>
-                    <Switch
-                      value={values.active}
-                      onChange={(e) => setFieldValue('active', e.target.checked)}
-                    />
-                    <Description>
-                      Esant aktyviai prenumeratai bus siunčiamos naujienos į el. paštą, kurį
-                      nurodėte registruodamiesi prie mūsų svetainės.
-                    </Description>
-                  </SubscriptionActivation>
-                </Section>
-                <Section>
                   <AppsHeadingRow>
                     <Label>Pasirinkite dominančias sritis</Label>
                     <SelectAllAppsButton
@@ -288,14 +275,6 @@ const Subtitle = styled.div`
   text-align: center;
   font-size: 1em;
   font-weight: 500;
-`;
-
-const SubscriptionActivation = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 48px;
-  gap: 8px;
-  align-items: center;
-  border-radius: 16px;
 `;
 
 const Section = styled.div`
