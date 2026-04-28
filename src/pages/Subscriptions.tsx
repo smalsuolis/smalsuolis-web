@@ -40,10 +40,10 @@ const Subscriptions = () => {
     [subscriptions],
   );
 
-  const invalidateSubscriptions = () => {
-    queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
-    queryClient.invalidateQueries({ queryKey: ['user'] });
-  };
+  // Active toggles don't change anything else server-side, so the optimistic
+  // update is canonical — only `user` needs refreshing for its active-sub
+  // count. Refetching `subscriptions` would flicker the bottom loader.
+  const invalidateUser = () => queryClient.invalidateQueries({ queryKey: ['user'] });
 
   const clearSelection = () => setSelectedIds(new Set());
 
@@ -72,7 +72,7 @@ const Subscriptions = () => {
         queryClient.setQueryData(['subscriptions'], context.previous);
       }
     },
-    onSettled: invalidateSubscriptions,
+    onSuccess: invalidateUser,
   });
 
   const { mutate: bulkSetActive, isPending: bulkSetActivePending } = useMutation({
@@ -101,8 +101,10 @@ const Subscriptions = () => {
         queryClient.setQueryData(['subscriptions'], context.previous);
       }
     },
-    onSettled: invalidateSubscriptions,
-    onSuccess: clearSelection,
+    onSuccess: () => {
+      clearSelection();
+      invalidateUser();
+    },
   });
 
   const { mutate: bulkRemove, isPending: bulkRemovePending } = useMutation({
@@ -110,7 +112,8 @@ const Subscriptions = () => {
     onSuccess: () => {
       clearSelection();
       setShowBulkDelete(false);
-      invalidateSubscriptions();
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
+      invalidateUser();
     },
   });
 
