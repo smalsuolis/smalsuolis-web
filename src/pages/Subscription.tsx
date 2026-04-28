@@ -83,7 +83,6 @@ const Subscriptions = () => {
   const initialValues: SubscriptionForm = {
     id: subscription?.id ?? 0,
     name: subscription?.name ?? '',
-    active: typeof subscription?.active === 'boolean' ? subscription?.active : true,
     apps: noSubscription || futureApps ? allApps : subscription?.apps || [],
     geom: subscription?.geom,
     frequency: subscription?.frequency || Frequency.DAY,

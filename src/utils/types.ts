@@ -30,7 +30,6 @@ export interface SubscriptionForm extends Subscription {
   futureApps: boolean;
   apps: number[];
   frequency: Frequency;
-  active: boolean;
   textFilter?: string;
 }
 
