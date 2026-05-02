@@ -200,34 +200,22 @@ const Subscriptions = () => {
                     </Description>
                   </FutureAppsContainer>
                 </Section>
-                {(() => {
-                  // Categories only refine infostatyba (statyba) events, so
-                  // hide the picker entirely when no infostatyba app is in
-                  // scope. `futureApps=true` means "all apps including future
-                  // ones" → infostatyba is implicitly included.
-                  const infostatybaAppIds = new Set(
-                    apps.filter((a) => a.key.startsWith('infostatyba')).map((a) => a.id),
-                  );
-                  const hasInfostatybaInScope =
-                    values.futureApps || values.apps.some((id) => infostatybaAppIds.has(id));
-                  if (!hasInfostatybaInScope || categoryOptions.length === 0) return null;
-                  return (
-                    <Section>
-                      <Label>Susiaurinkite pagal statinių kategorijas (neprivaloma)</Label>
-                      <Description>
-                        Šie filtrai taikomi tik statybos leidimų (infostatyba) įvykiams. Kitų sričių
-                        įvykiai (miškų kirtimai, žuvinimai, žemėtvarka) gaunami nepriklausomai nuo
-                        čia pažymėtų kategorijų. Jei nieko nepažymėsite, gausite visus pasirinktų
-                        sričių įvykius.
-                      </Description>
-                      <Categories
-                        options={categoryOptions}
-                        value={values.categories}
-                        onChange={(value) => setFieldValue('categories', value)}
-                      />
-                    </Section>
-                  );
-                })()}
+                {categoryOptions.length > 0 && (
+                  <Section>
+                    <Label>Susiaurinkite pagal statinių kategorijas (neprivaloma)</Label>
+                    <Description>
+                      Šie filtrai taikomi tik statybos leidimų (infostatyba) įvykiams. Kitų sričių
+                      įvykiai (miškų kirtimai, žuvinimai, žemėtvarka) gaunami nepriklausomai nuo čia
+                      pažymėtų kategorijų. Jei nieko nepažymėsite, gausite visus pasirinktų sričių
+                      įvykius.
+                    </Description>
+                    <Categories
+                      options={categoryOptions}
+                      value={values.categories}
+                      onChange={(value) => setFieldValue('categories', value)}
+                    />
+                  </Section>
+                )}
                 <Section>
                   <MapField
                     allow="geolocation *"

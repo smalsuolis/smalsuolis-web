@@ -90,17 +90,10 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
   };
 
   const onFilterClick = () => {
-    // Drop categories from the saved filter if no infostatyba app is in scope —
-    // applying it then would produce confusing empty results. Picker state is
-    // retained locally so re-adding infostatyba restores the prior selection.
-    const hasInfostatybaInScope =
-      selectedApps.length === 0 || selectedApps.some((a) => a.key.startsWith('infostatyba'));
     setFilters({
       ...(selectedApps.length > 0 ? { apps: selectedApps } : null),
       ...(selectedSubs.length > 0 ? { subscriptions: selectedSubs } : null),
-      ...(hasInfostatybaInScope && selectedCategories.length > 0
-        ? { categories: selectedCategories }
-        : null),
+      ...(selectedCategories.length > 0 ? { categories: selectedCategories } : null),
       ...(selectedTimeRange ? { timeRange: selectedTimeRange[0] } : null),
     });
     onModalClose();
@@ -147,21 +140,16 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
   };
 
   // Categories (infostatyba only — other apps don't have classifiers yet).
-  // Show top-level + level-2 nodes; level-3 leaves are too granular for a
-  // top-of-list filter. Server-side `categoryGroup` expands the subtree.
-  // Hidden when the active app filter excludes infostatyba — applying it then
-  // would just produce empty results.
+  // Always rendered for discoverability + consistency with how the other
+  // filters behave. The label + hint communicate scope; if the user pairs it
+  // with a non-infostatyba app filter they'll see empty results, same way any
+  // contradictory filter combination behaves elsewhere.
+  // Shows top-level + level-2 nodes only; level-3 leaves are too granular for
+  // a top-of-list filter. Server-side `categoryGroup` expands each selection.
   const renderCategories = () => {
     if (loadingCategories) {
       return <Loader />;
     }
-    const hasInfostatybaInScope =
-      selectedApps.length === 0 || selectedApps.some((a) => a.key.startsWith('infostatyba'));
-    if (!hasInfostatybaInScope) return null;
-
-    // Hide deepest leaves to keep the picker manageable; level 1+2 covers the
-    // useful filter axes (Pastatai vs Inžineriniai, then their subgroups).
-    // `parent` is null for level 1, points to a level-1 for level 2.
     const topLevelIds = new Set(categories.filter((c) => c.parent === null).map((c) => c.id));
     const visibleCategories = categories.filter(
       (c) => c.parent === null || topLevelIds.has(c.parent as number),
@@ -170,7 +158,10 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     return (
       <FilterGroup>
         <Subtitle>{subtitle.categories}</Subtitle>
-        <CategoriesHint>Taikoma tik statybos leidimų įvykiams.</CategoriesHint>
+        <CategoriesHint>
+          Taikoma tik statybos leidimų (infostatyba) įvykiams — kitų sričių įvykiams ši filtracija
+          nedaro įtakos.
+        </CategoriesHint>
         <FilterPicker
           allowMultipleSelection
           getItemKey={(item) => item.id}
