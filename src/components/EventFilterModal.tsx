@@ -90,10 +90,17 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
   };
 
   const onFilterClick = () => {
+    // Drop categories from the saved filter if no infostatyba app is in scope —
+    // applying it then would produce confusing empty results. Picker state is
+    // retained locally so re-adding infostatyba restores the prior selection.
+    const hasInfostatybaInScope =
+      selectedApps.length === 0 || selectedApps.some((a) => a.key.startsWith('infostatyba'));
     setFilters({
       ...(selectedApps.length > 0 ? { apps: selectedApps } : null),
       ...(selectedSubs.length > 0 ? { subscriptions: selectedSubs } : null),
-      ...(selectedCategories.length > 0 ? { categories: selectedCategories } : null),
+      ...(hasInfostatybaInScope && selectedCategories.length > 0
+        ? { categories: selectedCategories }
+        : null),
       ...(selectedTimeRange ? { timeRange: selectedTimeRange[0] } : null),
     });
     onModalClose();
@@ -142,10 +149,16 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
   // Categories (infostatyba only — other apps don't have classifiers yet).
   // Show top-level + level-2 nodes; level-3 leaves are too granular for a
   // top-of-list filter. Server-side `categoryGroup` expands the subtree.
+  // Hidden when the active app filter excludes infostatyba — applying it then
+  // would just produce empty results.
   const renderCategories = () => {
     if (loadingCategories) {
       return <Loader />;
     }
+    const hasInfostatybaInScope =
+      selectedApps.length === 0 || selectedApps.some((a) => a.key.startsWith('infostatyba'));
+    if (!hasInfostatybaInScope) return null;
+
     // Hide deepest leaves to keep the picker manageable; level 1+2 covers the
     // useful filter axes (Pastatai vs Inžineriniai, then their subgroups).
     // `parent` is null for level 1, points to a level-1 for level 2.
@@ -157,6 +170,7 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     return (
       <FilterGroup>
         <Subtitle>{subtitle.categories}</Subtitle>
+        <CategoriesHint>Taikoma tik statybos leidimų įvykiams.</CategoriesHint>
         <FilterPicker
           allowMultipleSelection
           getItemKey={(item) => item.id}
@@ -325,6 +339,15 @@ const Subtitle = styled.div`
   font-weight: 600;
   line-height: 20.16px;
   text-align: left;
+`;
+
+const CategoriesHint = styled.div`
+  font-family: Plus Jakarta Sans;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 18px;
+  color: #666;
+  margin-top: -8px;
 `;
 
 const FilterButton = styled(Button)`

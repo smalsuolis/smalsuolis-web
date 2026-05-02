@@ -109,7 +109,10 @@ export const subtitle = {
   future: 'Būsimas',
   category: 'Kategorijos',
   apps: 'Sritys',
-  categories: 'Kategorijos',
+  // Categories are only emitted for infostatyba (statyba) events; spell that
+  // out in the label so a user with non-statyba apps selected understands why
+  // applying these doesn't narrow miškai/žuvinimas results.
+  categories: 'Statinių kategorijos',
   date: 'Data',
   hasNotRegistered: 'Neturite paskyros?',
   fewActions: 'Tik keli paspaudimai',
