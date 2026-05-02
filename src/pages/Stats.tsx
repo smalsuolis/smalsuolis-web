@@ -64,6 +64,7 @@ const Stats = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [deforestationStatsFilter, setDeforestationStatsFilter] = useState('count');
   const [showAllDeforestationStats, setShowAllDeforestationStats] = useState(false);
+  const [showAllCategoryStats, setShowAllCategoryStats] = useState(false);
 
   const initialRange = searchParams.get('range') ?? TimeRanges.LAST_7_DAYS;
   const initialQuery: { $gte: string; $lt: string } =
@@ -89,6 +90,14 @@ const Stats = () => {
     queryKey: ['stats', effectiveQuery],
     queryFn: () => api.getStats(effectiveQuery),
     refetchOnWindowFocus: false,
+  });
+
+  // Category list — used to map codes to their display names. Static lookup,
+  // independent of the date filter, so cache aggressively.
+  const { data: infostatybaCategories } = useQuery({
+    queryKey: ['categories', 'all', 'infostatyba'],
+    queryFn: () => api.getAllCategories('infostatyba'),
+    staleTime: Infinity,
   });
 
   const previousQuery = calculatePreviousPeriod(effectiveQuery);
@@ -133,7 +142,43 @@ const Stats = () => {
   ];
 
   const constructionsStatsByTag = data?.byApp?.infostatyba?.byTag;
+  const constructionsStatsByCategory = data?.byApp?.infostatyba?.byCategory;
   const deforestationStatsByTag = data?.byApp?.miskoKirtimai?.byTag;
+
+  const categoryNameByCode = (infostatybaCategories ?? []).reduce<Record<string, string>>(
+    (acc, c) => {
+      acc[c.code] = c.name;
+      return acc;
+    },
+    {},
+  );
+
+  const constructionsStatsByCategoryArray = constructionsStatsByCategory
+    ? Object.keys(constructionsStatsByCategory).reduce<
+        Array<{ code: string; label: string; count: number; previousCount?: number }>
+      >((acc, code) => {
+        acc.push({
+          code,
+          label: categoryNameByCode[code] || code,
+          count: constructionsStatsByCategory[code].count,
+          previousCount: previousData?.byApp?.infostatyba?.byCategory?.[code]?.count,
+        });
+        return acc;
+      }, [])
+    : undefined;
+
+  const sortedCategoryStatsArray = orderBy(
+    constructionsStatsByCategoryArray,
+    (item) => Number(item.count),
+    'desc',
+  );
+
+  const highestCategoryStatsNumber = constructionsStatsByCategory
+    ? Object.values(constructionsStatsByCategory).reduce(
+        (max, v) => (v.count > max ? v.count : max),
+        0,
+      ) || 1
+    : 1;
 
   const constructionsStatsArray =
     constructionsStatsByTag &&
@@ -688,6 +733,100 @@ const Stats = () => {
             </DetailedStatsWrapper>
           </Row>
 
+          {/* Statybų leidimai — pasiskirstymas pagal kategoriją (full width
+              because there are too many leaves to fit in the 35% column) */}
+          {constructionsStatsByCategory && (
+            <FullWidthStatsWrapper>
+              <StatsHeader>Statybų leidimai pagal kategoriją</StatsHeader>
+              {sortedCategoryStatsArray
+                .slice(0, 10)
+                .map(({ code, label, count, previousCount }) => {
+                  const statsPercentage = (count * 100) / highestCategoryStatsNumber;
+                  return (
+                    <div key={code}>
+                      <DetailedStatsRow
+                        style={{
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                        }}
+                      >
+                        <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
+                          {label}
+                        </InfoLabel>
+                        <AmountLabel
+                          style={{
+                            flexShrink: 0,
+                            minWidth: 'auto',
+                            gap: '4px',
+                            marginLeft: 'auto',
+                          }}
+                        >
+                          <span style={{ whiteSpace: 'nowrap' }}>{count}</span>
+                          {isComparisonEnabled && (
+                            <StatDelta
+                              current={count}
+                              previous={previousCount}
+                              isFetching={isPreviousFetching}
+                            />
+                          )}
+                        </AmountLabel>
+                      </DetailedStatsRow>
+                      <InfoBarWrapper>
+                        <InfoBar $percentage={statsPercentage} />
+                      </InfoBarWrapper>
+                    </div>
+                  );
+                })}
+              <CollapsibleContainer $isExpanded={showAllCategoryStats}>
+                {sortedCategoryStatsArray.slice(10).map(({ code, label, count, previousCount }) => {
+                  const statsPercentage = (count * 100) / highestCategoryStatsNumber;
+                  return (
+                    <div key={code}>
+                      <DetailedStatsRow
+                        style={{
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                        }}
+                      >
+                        <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
+                          {label}
+                        </InfoLabel>
+                        <AmountLabel
+                          style={{
+                            flexShrink: 0,
+                            minWidth: 'auto',
+                            gap: '4px',
+                            marginLeft: 'auto',
+                          }}
+                        >
+                          <span style={{ whiteSpace: 'nowrap' }}>{count}</span>
+                          {isComparisonEnabled && (
+                            <StatDelta
+                              current={count}
+                              previous={previousCount}
+                              isFetching={isPreviousFetching}
+                            />
+                          )}
+                        </AmountLabel>
+                      </DetailedStatsRow>
+                      <InfoBarWrapper>
+                        <InfoBar $percentage={statsPercentage} />
+                      </InfoBarWrapper>
+                    </div>
+                  );
+                })}
+              </CollapsibleContainer>
+              {sortedCategoryStatsArray.length > 10 && (
+                <ShowMoreButton onClick={() => setShowAllCategoryStats(!showAllCategoryStats)}>
+                  {showAllCategoryStats ? 'Rodyti mažiau' : 'Rodyti daugiau'}
+                  <ChevronIcon name={IconName.dropdownArrow} $isExpanded={showAllCategoryStats} />
+                </ShowMoreButton>
+              )}
+            </FullWidthStatsWrapper>
+          )}
+
           {/* Last Update Section */}
           {!isLoadingLastUpdate && lastUpdateData && (
             <>
@@ -854,6 +993,16 @@ const DetailedStatsWrapper = styled.div`
   @media ${device.tablet} {
     width: 100%;
   }
+`;
+
+const FullWidthStatsWrapper = styled.div`
+  flex-direction: column;
+  background-color: white;
+  border-radius: 32px;
+  padding: 32px;
+  width: 100%;
+  display: flex;
+  margin-top: 24px;
 `;
 
 const StatsHeader = styled.div`

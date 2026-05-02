@@ -165,7 +165,7 @@ const EventsContainer = ({
   const observerRef = useRef<any>(null);
 
   const getFilter = () => {
-    const { apps, timeRange, subscriptions } = filters.value;
+    const { apps, timeRange, subscriptions, categories } = filters.value;
     let filterSubs: Subscription[] = [];
     if (isMyEvents) {
       filterSubs = subscriptions && subscriptions.length ? subscriptions : allSubscriptions;
@@ -173,6 +173,9 @@ const EventsContainer = ({
     return {
       ...(apps ? { app: { $in: apps.map((app) => app.id) } } : null),
       ...(filterSubs.length ? { subscription: { $in: filterSubs.map((sub) => sub.id) } } : null),
+      // categoryGroup expands selected categories' subtrees server-side, so a
+      // user picking 'pastatai' transparently matches all leaves under it.
+      ...(categories?.length ? { categoryGroup: categories.map((c) => c.id) } : null),
       ...(timeRange ? { startAt: timeRange.query } : null),
       ...(search
         ? {

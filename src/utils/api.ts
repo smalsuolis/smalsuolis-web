@@ -1,7 +1,7 @@
 import Axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 import Cookies from 'universal-cookie';
-import { App, Event, LastUpdateResponse, Stats, Subscription } from './types';
+import { App, Category, Event, LastUpdateResponse, Stats, Subscription } from './types';
 const cookies = new Cookies();
 
 interface Get {
@@ -67,6 +67,7 @@ export enum Resources {
   NEWSFEED = 'newsfeed',
   SUBSCRIPTIONS = 'subscriptions',
   APPS = 'apps',
+  CATEGORIES = 'categories',
   USERS = 'users',
   STATS = 'stats',
 }
@@ -356,6 +357,14 @@ class Api {
   getAllApps = async (): Promise<App[]> => {
     return this.getAll({
       resource: Resources.APPS,
+    });
+  };
+
+  getAllCategories = async (appType?: string): Promise<Category[]> => {
+    return this.getAll({
+      resource: Resources.CATEGORIES,
+      ...(appType && { query: JSON.stringify({ appType }) }),
+      sort: ['sort', 'name'],
     });
   };
 

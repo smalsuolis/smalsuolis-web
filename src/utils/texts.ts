@@ -108,6 +108,8 @@ export const subtitle = {
   foundRecords: 'Rasta įrašų',
   future: 'Būsimas',
   category: 'Kategorijos',
+  apps: 'Sritys',
+  categories: 'Kategorijos',
   date: 'Data',
   hasNotRegistered: 'Neturite paskyros?',
   fewActions: 'Tik keli paspaudimai',

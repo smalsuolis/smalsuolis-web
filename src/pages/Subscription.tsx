@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import styled from 'styled-components';
 import Apps from '../components/Apps';
+import Categories from '../components/Categories';
 import LoaderComponent from '../components/LoaderComponent';
 import PageActions from '../components/PageActions';
 import Popup from '../components/Popup';
@@ -46,6 +47,13 @@ const Subscriptions = () => {
 
   const apps: App[] = appsResponse?.rows || [];
 
+  const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories', 'all', 'infostatyba'],
+    queryFn: () => api.getAllCategories('infostatyba'),
+    staleTime: Infinity,
+  });
+  const categoryOptions = categoriesResponse ?? [];
+
   const onSuccess = () => {
     navigate(slugs.subscriptions);
     queryClient.invalidateQueries({ queryKey: ['user'] });
@@ -71,7 +79,7 @@ const Subscriptions = () => {
     },
   });
 
-  if (subscriptionLoading || appsLoading) {
+  if (subscriptionLoading || appsLoading || categoriesLoading) {
     return <LoaderComponent />;
   }
 
@@ -84,6 +92,7 @@ const Subscriptions = () => {
     id: subscription?.id ?? 0,
     name: subscription?.name ?? '',
     apps: noSubscription || futureApps ? allApps : subscription?.apps || [],
+    categories: subscription?.categories ?? [],
     geom: subscription?.geom,
     frequency: subscription?.frequency || Frequency.DAY,
     futureApps: subscription?.id ? (subscription?.apps || []).length === 0 : true,
@@ -191,6 +200,20 @@ const Subscriptions = () => {
                     </Description>
                   </FutureAppsContainer>
                 </Section>
+                {categoryOptions.length > 0 && (
+                  <Section>
+                    <Label>Susiaurinkite pagal kategorijas (neprivaloma)</Label>
+                    <Description>
+                      Jei nieko nepažymėsite, gausite pranešimus apie visus įvykius pasirinktose
+                      srityse. Pažymėtos kategorijos taikomos tik infostatybos įvykiams.
+                    </Description>
+                    <Categories
+                      options={categoryOptions}
+                      value={values.categories}
+                      onChange={(value) => setFieldValue('categories', value)}
+                    />
+                  </Section>
+                )}
                 <Section>
                   <MapField
                     allow="geolocation *"

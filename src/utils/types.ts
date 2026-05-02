@@ -14,11 +14,22 @@ export interface App {
   icon: string;
 }
 
+export interface Category {
+  id: number;
+  code: string;
+  name: string;
+  parent: number | null;
+  appType: string;
+  sort: number;
+  hidden?: boolean;
+}
+
 export interface Subscription<T = number> {
   id: number;
   name: string;
   user?: number;
   apps?: T[];
+  categories?: number[];
   geom?: FeatureCollection;
   frequency?: Frequency;
   active?: boolean;
@@ -29,6 +40,7 @@ export interface Subscription<T = number> {
 export interface SubscriptionForm extends Subscription {
   futureApps: boolean;
   apps: number[];
+  categories: number[];
   frequency: Frequency;
   textFilter?: string;
 }
@@ -45,6 +57,7 @@ export interface Event {
   name: string;
   url?: string;
   app: App;
+  category?: Category;
 }
 
 export interface User {
@@ -226,6 +239,7 @@ export const statsTimeRangeItems: TimeRangeItem[] = [
 export interface Filters {
   apps?: App[];
   subscriptions?: Subscription[];
+  categories?: Category[];
   timeRange?: TimeRangeItem;
 }
 
@@ -234,6 +248,7 @@ export interface Stats {
     infostatyba: {
       count: number;
       byTag: Record<string, { count: number }>;
+      byCategory?: Record<string, { count: number }>;
     };
     izuvinimas: {
       count: number;

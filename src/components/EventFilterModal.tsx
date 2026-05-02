@@ -6,6 +6,7 @@ import FilterPicker from './FilterPicker';
 import { useContext, useEffect, useState } from 'react';
 import {
   App,
+  Category,
   Filters,
   IconName,
   Subscription,
@@ -39,6 +40,7 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
 
   const [selectedApps, setSelectedApps] = useState<App[]>([]);
   const [selectedSubs, setSelectedSubs] = useState<Subscription[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRangeItem[]>([]);
   const [date, setDate] = useState<DateProps | undefined>(undefined);
   const { loggedIn } = useContext<UserContextType>(UserContext);
@@ -56,6 +58,12 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
   });
   const subs = subsResponse ?? [];
 
+  const { data: categoriesResponse, isLoading: loadingCategories } = useQuery({
+    queryKey: ['categories', 'all', 'infostatyba'],
+    queryFn: () => api.getAllCategories('infostatyba'),
+  });
+  const categories = categoriesResponse ?? [];
+
   const clearFilter = () => {
     resetFilters();
     onModalClose();
@@ -65,6 +73,7 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     if (visible) {
       setSelectedApps(filters.apps || []);
       setSelectedSubs(filters.subscriptions || []);
+      setSelectedCategories(filters.categories || []);
       setSelectedTimeRange(filters.timeRange ? [filters.timeRange] : []);
       if (filters?.timeRange?.key === TimeRanges.CUSTOM) {
         setDate({
@@ -84,6 +93,7 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     setFilters({
       ...(selectedApps.length > 0 ? { apps: selectedApps } : null),
       ...(selectedSubs.length > 0 ? { subscriptions: selectedSubs } : null),
+      ...(selectedCategories.length > 0 ? { categories: selectedCategories } : null),
       ...(selectedTimeRange ? { timeRange: selectedTimeRange[0] } : null),
     });
     onModalClose();
@@ -116,7 +126,7 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     if (apps?.length > 0) {
       return (
         <FilterGroup>
-          <Subtitle>{subtitle.category}</Subtitle>
+          <Subtitle>{subtitle.apps}</Subtitle>
           <FilterPicker
             allowMultipleSelection
             getItemKey={(item) => item.key}
@@ -127,6 +137,35 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
         </FilterGroup>
       );
     }
+  };
+
+  // Categories (infostatyba only — other apps don't have classifiers yet).
+  // Show top-level + level-2 nodes; level-3 leaves are too granular for a
+  // top-of-list filter. Server-side `categoryGroup` expands the subtree.
+  const renderCategories = () => {
+    if (loadingCategories) {
+      return <Loader />;
+    }
+    // Hide deepest leaves to keep the picker manageable; level 1+2 covers the
+    // useful filter axes (Pastatai vs Inžineriniai, then their subgroups).
+    // `parent` is null for level 1, points to a level-1 for level 2.
+    const topLevelIds = new Set(categories.filter((c) => c.parent === null).map((c) => c.id));
+    const visibleCategories = categories.filter(
+      (c) => c.parent === null || topLevelIds.has(c.parent as number),
+    );
+    if (visibleCategories.length === 0) return null;
+    return (
+      <FilterGroup>
+        <Subtitle>{subtitle.categories}</Subtitle>
+        <FilterPicker
+          allowMultipleSelection
+          getItemKey={(item) => item.id}
+          data={visibleCategories}
+          selectedItems={selectedCategories}
+          setSelectedItems={(items) => setSelectedCategories(items)}
+        />
+      </FilterGroup>
+    );
   };
 
   const timeRanges: TimeRangeItem[] = timeRangeItems.map((item) => {
@@ -151,6 +190,7 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
 
         {renderSubs()}
         {renderApps()}
+        {renderCategories()}
 
         <FilterGroup>
           <Subtitle>{subtitle.date}</Subtitle>
