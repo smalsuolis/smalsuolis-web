@@ -251,10 +251,25 @@ const EventsContainer = ({
     if (isListView) {
       return renderListContent();
     } else {
-      const filters = getFilter();
+      const mapFilters = getFilter();
       const geom = getMapGeom();
+      // Map iframe (biip-maps-web) doesn't yet know about the `categories`
+      // filter — it'll show every event regardless of the user's selection.
+      // Surface that as a banner so the discrepancy isn't silent. Remove the
+      // banner once the upstream maps repo handles `categoryGroup`.
+      const categoriesActive = !!filters.value.categories?.length;
 
-      return <MapView filters={filters} geom={geom} />;
+      return (
+        <>
+          {categoriesActive && (
+            <MapCategoriesNotice>
+              Statinių kategorijų filtras šiuo metu netaikomas žemėlapio rodinyje. Perjunkite į
+              sąrašo rodinį norėdami filtruoti pagal kategorijas.
+            </MapCategoriesNotice>
+          )}
+          <MapView filters={mapFilters} geom={geom} />
+        </>
+      );
     }
   };
 
@@ -328,6 +343,17 @@ export default EventsContainer;
 const Invisible = styled.div`
   width: 10px;
   height: 16px;
+`;
+
+const MapCategoriesNotice = styled.div`
+  background: #fff7e6;
+  border: 1px solid #f5c97a;
+  color: #6b4f15;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 18px;
+  margin: 0 16px 8px;
 `;
 
 const Container = styled.div`

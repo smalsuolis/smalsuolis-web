@@ -3,6 +3,7 @@ import { device } from '../styles';
 import Icon from './Icons';
 import { Button, Modal, useStorage } from '@aplinkosministerija/design-system';
 import FilterPicker from './FilterPicker';
+import Categories from './Categories';
 import { useContext, useEffect, useState } from 'react';
 import {
   App,
@@ -144,17 +145,16 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
   // filters behave. The label + hint communicate scope; if the user pairs it
   // with a non-infostatyba app filter they'll see empty results, same way any
   // contradictory filter combination behaves elsewhere.
-  // Shows top-level + level-2 nodes only; level-3 leaves are too granular for
-  // a top-of-list filter. Server-side `categoryGroup` expands each selection.
+  //
+  // Uses the hierarchical Categories picker (same as the subscription form):
+  // level-2 chips with optional level-3 expansion per node. Server-side
+  // `categoryGroup` expands every selected id to its descendants.
   const renderCategories = () => {
     if (loadingCategories) {
       return <Loader />;
     }
-    const topLevelIds = new Set(categories.filter((c) => c.parent === null).map((c) => c.id));
-    const visibleCategories = categories.filter(
-      (c) => c.parent === null || topLevelIds.has(c.parent as number),
-    );
-    if (visibleCategories.length === 0) return null;
+    if (categories.length === 0) return null;
+    const selectedIds = selectedCategories.map((c) => c.id);
     return (
       <FilterGroup>
         <Subtitle>{subtitle.categories}</Subtitle>
@@ -162,12 +162,13 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
           Taikoma tik statybos leidimų (infostatyba) įvykiams — kitų sričių įvykiams ši filtracija
           nedaro įtakos.
         </CategoriesHint>
-        <FilterPicker
-          allowMultipleSelection
-          getItemKey={(item) => item.id}
-          data={visibleCategories}
-          selectedItems={selectedCategories}
-          setSelectedItems={(items) => setSelectedCategories(items)}
+        <Categories
+          options={categories}
+          value={selectedIds}
+          onChange={(ids) => {
+            const byId = new Map(categories.map((c) => [c.id, c]));
+            setSelectedCategories(ids.map((id) => byId.get(id)).filter(Boolean) as Category[]);
+          }}
         />
       </FilterGroup>
     );
