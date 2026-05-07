@@ -54,7 +54,8 @@ const EventsContainer = ({
   const { loggedIn } = useContext<UserContextType>(UserContext);
 
   // Whether the URL has filter params that need to be loaded
-  const hasUrlFilterParams = searchParams.has('apps') || searchParams.has('range');
+  const hasUrlFilterParams =
+    searchParams.has('apps') || searchParams.has('range') || searchParams.has('categories');
   const initFromUrlDone = useRef(!hasUrlFilterParams);
 
   // Fetch all apps so we can reconstruct filter objects from URL param IDs
@@ -63,6 +64,15 @@ const EventsContainer = ({
     queryFn: () => api.getAllApps(),
   });
   const allApps = appsResponse ?? [];
+
+  // Categories are static (seed-only) — fetch once, reuse for URL hydration
+  // and any other consumers that need to map ids back to Category objects.
+  const { data: categoriesResponse } = useQuery({
+    queryKey: ['categories', 'all', 'infostatyba'],
+    queryFn: () => api.getAllCategories('infostatyba'),
+    staleTime: Infinity,
+  });
+  const allCategories = categoriesResponse ?? [];
 
   const { data: subsResponse, isFetching: subResponseLoading } = useQuery({
     queryKey: ['allSubscriptions'],
@@ -78,9 +88,11 @@ const EventsContainer = ({
 
     const appsParam = searchParams.get('apps');
     const rangeParam = searchParams.get('range');
+    const categoriesParam = searchParams.get('categories');
 
-    // Wait for apps data if needed
+    // Wait for the relevant lookup data before resolving ids → objects.
     if (appsParam && !allApps.length) return;
+    if (categoriesParam && !allCategories.length) return;
 
     initFromUrlDone.current = true;
 
@@ -89,6 +101,11 @@ const EventsContainer = ({
     if (appsParam) {
       const appIds = appsParam.split(',').map(Number);
       newFilters.apps = allApps.filter((a) => appIds.includes(a.id));
+    }
+
+    if (categoriesParam) {
+      const ids = categoriesParam.split(',').map(Number);
+      newFilters.categories = allCategories.filter((c) => ids.includes(c.id));
     }
 
     if (rangeParam) {
@@ -111,7 +128,7 @@ const EventsContainer = ({
     }
 
     filters.setValue(newFilters);
-  }, [allApps, allSubscriptions, searchParams]);
+  }, [allApps, allCategories, allSubscriptions, searchParams]);
 
   // Sync filters to URL params whenever they change
   useEffect(() => {
@@ -123,11 +140,15 @@ const EventsContainer = ({
         prev.delete('range');
         prev.delete('from');
         prev.delete('to');
+        prev.delete('categories');
 
-        const { apps, timeRange } = filters.value;
+        const { apps, timeRange, categories } = filters.value;
 
         if (apps?.length) {
           prev.set('apps', apps.map((a) => a.id).join(','));
+        }
+        if (categories?.length) {
+          prev.set('categories', categories.map((c) => c.id).join(','));
         }
         if (timeRange) {
           prev.set('range', timeRange.key);

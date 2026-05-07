@@ -6,34 +6,40 @@ import { IconName } from '../utils';
 
 // Hierarchical multi-select for statyba categories.
 //
-// Design:
+// Layout:
 //   - Level-2 chips flow horizontally in a wrap row, grouped under their
-//     level-1 parent (Pastatai / Inžineriniai). Per-chip chevron expands
-//     a sub-panel that lists the level-3 leaves beneath every level-2 chip
-//     row, so multiple expansions can coexist without breaking the chip
-//     layout.
-//   - Selection is tracked as a flat number[] in `value`. The user can pick
-//     ids at any level — backend `categoryGroup` walks descendants on the
-//     server. So picking 'Gyvenamieji' transparently covers its 6 leaves.
+//     level-1 parent (Pastatai / Inžineriniai). Each chip has a tiny
+//     chevron icon-button next to it; click it to expand a sub-panel
+//     listing the level-3 leaves. Multiple expansions stack.
 //
-// Coverage semantics (what the UI shows as "selected"):
-//   - A level-2 chip is FULLY covered if its id is in value OR every one of
-//     its leaves is in value → renders as selected.
-//   - A level-2 chip is PARTIALLY covered if some (not all) of its leaves
-//     are in value and the parent isn't → renders selected with "(N/M)".
-//   - A leaf chip is EFFECTIVELY selected if its id is in value OR its
-//     parent's id is in value (covered transitively).
+// Selection model:
+//   - `value` is a flat number[] of explicitly-selected ids at any level.
+//   - Server-side `categoryGroup` walks descendants — so picking 'Gyvenamieji'
+//     transparently covers its 6 leaves; picking only 'Daugiabutis' matches
+//     just that leaf.
 //
-// Click behavior:
-//   - Click level-2 (fully covered) → clears parent + all its leaves.
-//   - Click level-2 (off / partial)  → consolidate: drops leaf entries,
-//     adds the level-2 id. (Functionally identical to "all leaves" via the
-//     descendant expansion on the server, but cleaner state.)
-//   - Click leaf when its parent is in value → no-op (locked). User must
-//     click the parent first to drill into individual leaves.
-//   - Click leaf otherwise → toggle the leaf id. If toggling on results in
-//     every leaf of that level-2 being selected, auto-consolidate to the
-//     parent id.
+// Coverage display (what looks "selected" on screen):
+//   - Level-2 is FULLY covered if its id is in value OR every one of its
+//     leaves is in value → solid selected style.
+//   - Level-2 is PARTIAL if some (not all) leaves are in value and the
+//     parent isn't → light tint with "(N/M)" badge.
+//   - Leaf chip looks selected if its id is in value OR its parent is in
+//     value (covered transitively).
+//
+// Click behavior — must be undoable at any level:
+//   - Click level-2 (covered)  → drop parent + all its leaves from value.
+//   - Click level-2 (off/part) → consolidate: drop leaf entries under it,
+//     add the level-2 id. (Functionally identical to "all leaves" but
+//     cleaner state.)
+//   - Click leaf when parent IS in value → drill-down: drop the parent,
+//     add every sibling EXCEPT this one. So the user can deselect a single
+//     leaf even after selecting the whole subtree.
+//   - Click leaf normally → toggle the leaf id in value.
+//
+// No auto-consolidation on the leaf path — selecting all 6 leaves manually
+// keeps them as 6 ids in value, so user can deselect any one of them
+// individually. Level-2 chip still shows "fully covered" via the
+// all-leaves check.
 //
 // Skips the 'kita' / 'nepriskirta' branch — subscribing to "uncategorized"
 // makes no sense as an intent.
@@ -91,10 +97,8 @@ const Categories = ({
   const toggleLevel2 = (level2: { id: number; leaves: Category[] }) => {
     const leafIdSet = new Set(level2.leaves.map((l) => l.id));
     if (isLevel2FullyCovered(level2)) {
-      // Turn off: drop parent id and any leaf ids that were explicitly selected.
       onChange(value.filter((v) => v !== level2.id && !leafIdSet.has(v)));
     } else {
-      // Consolidate to parent: drop any leaf ids, add the level-2 id.
       const next = value.filter((v) => !leafIdSet.has(v));
       next.push(level2.id);
       onChange(next);
@@ -102,23 +106,21 @@ const Categories = ({
   };
 
   const toggleLeaf = (leaf: Category, level2: { id: number; leaves: Category[] }) => {
-    if (valueSet.has(level2.id)) return; // locked while parent covers everything
     if (valueSet.has(leaf.id)) {
+      // Direct deselect — leaf is explicitly selected, just drop it.
       onChange(value.filter((v) => v !== leaf.id));
-    } else {
-      const next = [...value, leaf.id];
-      // Auto-consolidate: if every sibling is now in value, swap the leaf
-      // ids for the parent id so the stored selection stays clean.
-      const allSelected = level2.leaves.every((l) => next.includes(l.id));
-      if (allSelected) {
-        const leafIdSet = new Set(level2.leaves.map((l) => l.id));
-        const consolidated = next.filter((v) => !leafIdSet.has(v));
-        consolidated.push(level2.id);
-        onChange(consolidated);
-      } else {
-        onChange(next);
-      }
+      return;
     }
+    if (valueSet.has(level2.id)) {
+      // Parent covers this leaf transitively — user wants to remove just
+      // this one. Replace the parent with the rest of its siblings.
+      const siblings = level2.leaves.filter((l) => l.id !== leaf.id).map((l) => l.id);
+      const next = value.filter((v) => v !== level2.id);
+      onChange([...next, ...siblings]);
+      return;
+    }
+    // Plain add.
+    onChange([...value, leaf.id]);
   };
 
   const toggleGroup = (
@@ -126,7 +128,6 @@ const Categories = ({
     fullyCovered: boolean,
   ) => {
     if (fullyCovered) {
-      // Atžymėti visus: drop every id (parent or leaf) under this group.
       const idsToDrop = new Set<number>();
       for (const c of children) {
         idsToDrop.add(c.id);
@@ -134,7 +135,6 @@ const Categories = ({
       }
       onChange(value.filter((v) => !idsToDrop.has(v)));
     } else {
-      // Pasirinkti visus: drop any leaves under this group, add every level-2 id.
       const leafIdsToDrop = new Set<number>();
       for (const c of children) c.leaves.forEach((l) => leafIdsToDrop.add(l.id));
       const next = value.filter((v) => !leafIdsToDrop.has(v));
@@ -173,8 +173,8 @@ const Categories = ({
                       onClick={() => toggleLevel2(level2)}
                     >
                       {level2.name}
-                      {(partial || (fullyCovered && level2.leaves.length > 0)) && (
-                        <CountBadge $partial={partial}>
+                      {partial && (
+                        <CountBadge>
                           {effective}/{level2.leaves.length}
                         </CountBadge>
                       )}
@@ -182,11 +182,12 @@ const Categories = ({
                     {level2.leaves.length > 0 && (
                       <ExpandButton
                         type="button"
-                        $expanded={expanded}
                         onClick={() => toggleExpand(level2.id)}
                         aria-label={expanded ? 'Suskleisti' : 'Išskleisti'}
                       >
-                        <ChevronIcon name={IconName.dropdownArrow} />
+                        <ChevronWrapper $expanded={expanded}>
+                          <Icon name={IconName.dropdownArrow} />
+                        </ChevronWrapper>
                       </ExpandButton>
                     )}
                   </ChipGroup>
@@ -205,13 +206,7 @@ const Categories = ({
                         <LeafChip
                           key={leaf.id}
                           $selected={leafSelected}
-                          $locked={parentSelected}
                           onClick={() => toggleLeaf(leaf, level2)}
-                          title={
-                            parentSelected
-                              ? 'Atžymėkite tėvinę kategoriją norėdami keisti'
-                              : undefined
-                          }
                         >
                           {leaf.name}
                         </LeafChip>
@@ -266,20 +261,18 @@ const SelectAll = styled.a`
 const ChipsRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 `;
 
 const ChipGroup = styled.div`
   display: inline-flex;
   align-items: center;
+  gap: 2px;
 `;
 
 const Chip = styled.div<{ $selected: boolean; $partial: boolean }>`
   padding: 8px 14px;
-  border-top-left-radius: 16px;
-  border-bottom-left-radius: 16px;
-  border-top-right-radius: 16px;
-  border-bottom-right-radius: 16px;
+  border-radius: 16px;
   border: 1px solid ${({ $selected, $partial }) => ($selected || $partial ? '#1b4c28' : '#d4d5de')};
   background-color: ${({ $selected, $partial }) =>
     $selected ? '#1b4c28' : $partial ? '#f4fdf6' : 'white'};
@@ -298,46 +291,43 @@ const Chip = styled.div<{ $selected: boolean; $partial: boolean }>`
   }
 `;
 
-const CountBadge = styled.span<{ $partial: boolean }>`
+const CountBadge = styled.span`
   font-size: 11px;
   font-weight: 600;
-  color: ${({ $partial }) => ($partial ? '#1b4c28' : 'white')};
-  background: ${({ $partial }) => ($partial ? '#e8f5ec' : 'rgba(255, 255, 255, 0.2)')};
+  color: #1b4c28;
+  background: #e8f5ec;
   padding: 1px 6px;
   border-radius: 8px;
 `;
 
-const ExpandButton = styled.button<{ $expanded: boolean }>`
+const ExpandButton = styled.button`
   background: transparent;
-  border: 1px solid #d4d5de;
-  border-left: none;
-  border-top-right-radius: 16px;
-  border-bottom-right-radius: 16px;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  width: 28px;
-  height: 32px;
+  border: none;
   padding: 0;
-  margin-left: -1px;
+  width: 24px;
+  height: 24px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #525252;
-  background: white;
+  color: #888;
+  border-radius: 50%;
   transition:
-    transform 0.15s ease,
-    border-color 0.15s ease;
-  transform: ${({ $expanded }) => ($expanded ? 'rotate(180deg)' : 'rotate(0deg)')};
+    background 0.15s ease,
+    color 0.15s ease;
 
   &:hover {
-    border-color: #1b4c28;
+    background: #f0f0f0;
     color: #1b4c28;
   }
 `;
 
-const ChevronIcon = styled(Icon)`
-  font-size: 1.2rem;
+const ChevronWrapper = styled.span<{ $expanded: boolean }>`
+  display: inline-flex;
+  font-size: 1.1rem;
+  line-height: 1;
+  transform: ${({ $expanded }) => ($expanded ? 'rotate(180deg)' : 'rotate(0deg)')};
+  transition: transform 0.15s ease;
 `;
 
 const ExpansionPanel = styled.div`
@@ -362,20 +352,19 @@ const LeafRow = styled.div`
   gap: 6px;
 `;
 
-const LeafChip = styled.div<{ $selected: boolean; $locked: boolean }>`
+const LeafChip = styled.div<{ $selected: boolean }>`
   padding: 5px 10px;
   border-radius: 12px;
   border: 1px solid ${({ $selected }) => ($selected ? '#1b4c28' : '#e5e7eb')};
   background-color: ${({ $selected }) => ($selected ? '#f4fdf6' : 'white')};
   color: ${({ $selected }) => ($selected ? '#1b4c28' : '#666')};
-  opacity: ${({ $locked }) => ($locked ? 0.7 : 1)};
-  cursor: ${({ $locked }) => ($locked ? 'not-allowed' : 'pointer')};
   font-size: 12px;
   font-weight: 500;
+  cursor: pointer;
   user-select: none;
   transition: all 0.15s ease;
 
   &:hover {
-    border-color: ${({ $locked }) => ($locked ? '#e5e7eb' : '#1b4c28')};
+    border-color: #1b4c28;
   }
 `;
