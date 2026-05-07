@@ -342,9 +342,11 @@ const ExpandButton = styled.button`
   }
 `;
 
+// Icon size is independent of the button's 36×36 hit area — Icon scales with
+// font-size (em-based path), so bumping this only changes the visible chevron.
 const ChevronWrapper = styled.span<{ $expanded: boolean }>`
   display: inline-flex;
-  font-size: 1.1rem;
+  font-size: 1.8rem;
   line-height: 1;
   transform: ${({ $expanded }) => ($expanded ? 'rotate(180deg)' : 'rotate(0deg)')};
   transition: transform 0.15s ease;

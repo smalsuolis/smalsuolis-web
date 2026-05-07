@@ -158,10 +158,7 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     return (
       <FilterGroup>
         <Subtitle>{subtitle.categories}</Subtitle>
-        <CategoriesHint>
-          Taikoma tik statybos leidimų (infostatyba) įvykiams — kitų sričių įvykiams ši filtracija
-          nedaro įtakos.
-        </CategoriesHint>
+        <CategoriesHint>Taikoma tik statybos leidimų (infostatyba) įvykiams.</CategoriesHint>
         <Categories
           options={categories}
           value={selectedIds}
