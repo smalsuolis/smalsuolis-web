@@ -52,7 +52,10 @@ const Categories = ({
   value: number[];
   onChange: (ids: number[]) => void;
 }) => {
-  const [expandedLevel2, setExpandedLevel2] = useState<Set<number>>(new Set());
+  // Single-open accordion: opening one chevron auto-closes the previous
+  // expansion. Less visual stack, friendlier on mobile. The chip's "(N/M)"
+  // badge already conveys partial-selection state without keeping panels open.
+  const [expandedLevel2Id, setExpandedLevel2Id] = useState<number | null>(null);
   const valueSet = useMemo(() => new Set(value), [value]);
 
   const groups = useMemo(() => {
@@ -70,13 +73,10 @@ const Categories = ({
   }, [options]);
 
   const toggleExpand = (id: number) => {
-    setExpandedLevel2((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setExpandedLevel2Id((prev) => (prev === id ? null : id));
   };
+
+  const closeExpansion = () => setExpandedLevel2Id(null);
 
   const isLevel2FullyCovered = (level2: { id: number; leaves: Category[] }) =>
     valueSet.has(level2.id) ||
@@ -150,7 +150,12 @@ const Categories = ({
       {groups.map(({ root, children }) => {
         const groupFullyCovered =
           children.length > 0 && children.every((c) => isLevel2FullyCovered(c));
-        const expandedChildren = children.filter((c) => expandedLevel2.has(c.id));
+        // Only render an expansion if the currently-open id belongs to this
+        // group. Single-open across the whole picker, not per-group.
+        const expandedChild =
+          expandedLevel2Id !== null
+            ? children.find((c) => c.id === expandedLevel2Id) ?? null
+            : null;
         return (
           <Group key={root.id}>
             <GroupHeaderRow>
@@ -164,7 +169,7 @@ const Categories = ({
                 const fullyCovered = isLevel2FullyCovered(level2);
                 const partial = isLevel2PartiallyCovered(level2);
                 const effective = effectiveLeafCount(level2);
-                const expanded = expandedLevel2.has(level2.id);
+                const expanded = expandedLevel2Id === level2.id;
                 return (
                   <ChipGroup key={level2.id}>
                     <Chip
@@ -194,28 +199,35 @@ const Categories = ({
                 );
               })}
             </ChipsRow>
-            {expandedChildren.map((level2) => {
-              const parentSelected = valueSet.has(level2.id);
-              return (
-                <ExpansionPanel key={`exp-${level2.id}`}>
-                  <ExpansionHeader>{level2.name} pakategorės</ExpansionHeader>
-                  <LeafRow>
-                    {level2.leaves.map((leaf) => {
-                      const leafSelected = parentSelected || valueSet.has(leaf.id);
-                      return (
-                        <LeafChip
-                          key={leaf.id}
-                          $selected={leafSelected}
-                          onClick={() => toggleLeaf(leaf, level2)}
-                        >
-                          {leaf.name}
-                        </LeafChip>
-                      );
-                    })}
-                  </LeafRow>
-                </ExpansionPanel>
-              );
-            })}
+            {expandedChild && (
+              <ExpansionPanel>
+                <ExpansionHeaderRow>
+                  <ExpansionHeader>{expandedChild.name} pakategorės</ExpansionHeader>
+                  <CloseButton
+                    type="button"
+                    onClick={closeExpansion}
+                    aria-label="Uždaryti pakategorių sąrašą"
+                  >
+                    ×
+                  </CloseButton>
+                </ExpansionHeaderRow>
+                <LeafRow>
+                  {expandedChild.leaves.map((leaf) => {
+                    const parentSelected = valueSet.has(expandedChild.id);
+                    const leafSelected = parentSelected || valueSet.has(leaf.id);
+                    return (
+                      <LeafChip
+                        key={leaf.id}
+                        $selected={leafSelected}
+                        onClick={() => toggleLeaf(leaf, expandedChild)}
+                      >
+                        {leaf.name}
+                      </LeafChip>
+                    );
+                  })}
+                </LeafRow>
+              </ExpansionPanel>
+            )}
           </Group>
         );
       })}
@@ -300,12 +312,15 @@ const CountBadge = styled.span`
   border-radius: 8px;
 `;
 
+// 36×36 visible — bumped from 24×24 to clear Apple's 44pt and Material's 48dp
+// minimum tap-target guidelines once you account for the chip itself acting
+// as a sibling target. Active-state colour helps confirm taps on touch.
 const ExpandButton = styled.button`
   background: transparent;
   border: none;
   padding: 0;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -318,6 +333,11 @@ const ExpandButton = styled.button`
 
   &:hover {
     background: #f0f0f0;
+    color: #1b4c28;
+  }
+
+  &:active {
+    background: #e8f5ec;
     color: #1b4c28;
   }
 `;
@@ -340,10 +360,41 @@ const ExpansionPanel = styled.div`
   border: 1px solid #ececec;
 `;
 
+const ExpansionHeaderRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+`;
+
 const ExpansionHeader = styled.div`
   font-size: 12px;
   font-weight: 600;
   color: #555;
+`;
+
+const CloseButton = styled.button`
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #888;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
+  &:hover {
+    background: #ececec;
+    color: #1b4c28;
+  }
 `;
 
 const LeafRow = styled.div`
