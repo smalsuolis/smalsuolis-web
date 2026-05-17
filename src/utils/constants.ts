@@ -68,6 +68,7 @@ export enum IconName {
   forest = 'forest',
   house = 'house',
   fishThin = 'fishThin',
+  buildings = 'buildings',
 }
 
 export enum ServerErrors {

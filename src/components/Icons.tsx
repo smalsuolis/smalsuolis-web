@@ -7,7 +7,7 @@ import { IoMdCalendar, IoMdHeartEmpty } from 'react-icons/io';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { IoLocationOutline, IoPersonOutline, IoSearch, IoFilter } from 'react-icons/io5';
 import { LiaBalanceScaleSolid } from 'react-icons/lia';
-import { PiMapTrifoldLight } from 'react-icons/pi';
+import { PiBuildingsLight, PiMapTrifoldLight } from 'react-icons/pi';
 import {
   MdDone,
   MdExitToApp,
@@ -760,6 +760,9 @@ V12l3,3"
 
     case IconName.filter:
       return <IoFilter className={className} {...rest} />;
+
+    case IconName.buildings:
+      return <PiBuildingsLight className={className} {...rest} />;
 
     case IconName.map:
       return <PiMapTrifoldLight className={className} {...rest} />;

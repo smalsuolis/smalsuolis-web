@@ -143,7 +143,7 @@ const Stats = () => {
       label: 'Žemės paskirties keitimų',
       count: data?.byApp?.savivaldybesZemetvarka?.count,
       previousCount: previousData?.byApp?.savivaldybesZemetvarka?.count,
-      icon: IconName.mapLocation,
+      icon: IconName.buildings,
     },
   ];
 
@@ -337,7 +337,7 @@ const Stats = () => {
       label: 'Žemės paskirties keitimas (Vilnius)',
       lastUpdate: savivaldybeZemetvarkaUpdate?.lastUpdate || null,
       lastUpdateCount: savivaldybeZemetvarkaUpdate?.lastUpdateCount || 0,
-      icon: IconName.mapLocation,
+      icon: IconName.buildings,
     },
   ];
 
