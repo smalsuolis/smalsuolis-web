@@ -393,7 +393,7 @@ const ClearPartialButton = styled.button`
   border-radius: 50%;
   font-size: 18px;
   line-height: 1;
-  transform: translateY(-4px);
+  transform: translateY(-3px);
   margin-left: 4px;
   flex-shrink: 0;
   transition:
