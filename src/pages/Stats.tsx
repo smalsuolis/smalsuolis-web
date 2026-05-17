@@ -1170,6 +1170,7 @@ const LastUpdateIconWrapper = styled.div`
   width: 48px;
   height: 48px;
   border-radius: 24px;
+  flex-shrink: 0;
   background-color: ${({ theme }) => theme.colors.primary};
   display: flex;
   align-items: center;
