@@ -95,7 +95,12 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     setFilters({
       ...(selectedApps.length > 0 ? { apps: selectedApps } : null),
       ...(selectedSubs.length > 0 ? { subscriptions: selectedSubs } : null),
-      ...(selectedCategories.length > 0 ? { categories: selectedCategories } : null),
+      // Only apply category filter when infostatyba is actually selected —
+      // selections are preserved in local state so toggling the app back on
+      // restores them, but they shouldn't filter while the app is off.
+      ...(infostatybaSelected && selectedCategories.length > 0
+        ? { categories: selectedCategories }
+        : null),
       ...(selectedTimeRange ? { timeRange: selectedTimeRange[0] } : null),
     });
     onModalClose();
