@@ -190,7 +190,7 @@ const Categories = ({
                           </CountBadge>
                         )}
                       </Chip>
-                      {partial && (
+                      {(partial || fullyCovered) && (
                         <ClearPartialButton
                           type="button"
                           onClick={clearPartial}
