@@ -260,6 +260,9 @@ export interface Stats {
     zemetvarkosPlanavimas: {
       count: number;
     };
+    savivaldybesZemetvarka: {
+      count: number;
+    };
   };
   count: number;
 }

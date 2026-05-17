@@ -139,6 +139,12 @@ const Stats = () => {
       previousCount: previousData?.byApp?.zemetvarkosPlanavimas?.count,
       icon: IconName.map,
     },
+    {
+      label: 'Žemės paskirties keitimų',
+      count: data?.byApp?.savivaldybesZemetvarka?.count,
+      previousCount: previousData?.byApp?.savivaldybesZemetvarka?.count,
+      icon: IconName.mapLocation,
+    },
   ];
 
   const constructionsStatsByTag = data?.byApp?.infostatyba?.byTag;
@@ -300,6 +306,7 @@ const Stats = () => {
   const izuvinimasUpdate = getLastUpdateForAppType('izuvinimas');
   const infostatybaUpdate = getLastUpdateForAppType('infostatyba');
   const zemetvarkosPlanavimasUpdate = getLastUpdateForAppType('zemetvarkosPlanavimas');
+  const savivaldybeZemetvarkaUpdate = getLastUpdateForAppType('savivaldybesZemetvarka');
 
   const lastUpdateItems = [
     {
@@ -325,6 +332,12 @@ const Stats = () => {
       lastUpdate: zemetvarkosPlanavimasUpdate?.lastUpdate || null,
       lastUpdateCount: zemetvarkosPlanavimasUpdate?.lastUpdateCount || 0,
       icon: IconName.map,
+    },
+    {
+      label: 'Žemės paskirties keitimas (Vilnius)',
+      lastUpdate: savivaldybeZemetvarkaUpdate?.lastUpdate || null,
+      lastUpdateCount: savivaldybeZemetvarkaUpdate?.lastUpdateCount || 0,
+      icon: IconName.mapLocation,
     },
   ];
 
