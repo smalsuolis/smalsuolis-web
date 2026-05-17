@@ -156,17 +156,20 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     if (categories.length === 0) return null;
     const selectedIds = selectedCategories.map((c) => c.id);
     return (
-      <FilterGroup>
-        <Subtitle>{subtitle.categories}</Subtitle>
-        <Categories
-          options={categories}
-          value={selectedIds}
-          onChange={(ids) => {
-            const byId = new Map(categories.map((c) => [c.id, c]));
-            setSelectedCategories(ids.map((id) => byId.get(id)).filter(Boolean) as Category[]);
-          }}
-        />
-      </FilterGroup>
+      <>
+        <Divider />
+        <FilterGroup>
+          <Subtitle>{subtitle.categories}</Subtitle>
+          <Categories
+            options={categories}
+            value={selectedIds}
+            onChange={(ids) => {
+              const byId = new Map(categories.map((c) => [c.id, c]));
+              setSelectedCategories(ids.map((id) => byId.get(id)).filter(Boolean) as Category[]);
+            }}
+          />
+        </FilterGroup>
+      </>
     );
   };
 

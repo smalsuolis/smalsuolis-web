@@ -187,10 +187,18 @@ const Categories = ({
                         {partial && (
                           <CountBadge>
                             {effective}/{level2.leaves.length}
-                            <ClearPartialButton onClick={clearPartial}>×</ClearPartialButton>
                           </CountBadge>
                         )}
                       </Chip>
+                      {partial && (
+                        <ClearPartialButton
+                          type="button"
+                          onClick={clearPartial}
+                          aria-label="Išvalyti pasirinkimus"
+                        >
+                          ×
+                        </ClearPartialButton>
+                      )}
                       {level2.leaves.length > 0 && (
                         <ExpandButton
                           type="button"
@@ -371,15 +379,26 @@ const ExpansionPanel = styled.div`
   border: 1px solid #ececec;
 `;
 
-const ClearPartialButton = styled.span`
-  margin-left: 2px;
-  font-size: 13px;
-  line-height: 1;
-  color: #1b4c28;
+const ClearPartialButton = styled.button`
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  opacity: 0.7;
+  color: #1b4c28;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+
   &:hover {
-    opacity: 1;
+    background: #e8f5ec;
   }
 `;
 
