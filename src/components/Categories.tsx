@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { Category } from '../utils';
 import Icon from './Icons';
@@ -170,64 +170,72 @@ const Categories = ({
                 const partial = isLevel2PartiallyCovered(level2);
                 const effective = effectiveLeafCount(level2);
                 const expanded = expandedLevel2Id === level2.id;
+                const leafIdSet = new Set(level2.leaves.map((l) => l.id));
+                const clearPartial = (e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  onChange(value.filter((v) => v !== level2.id && !leafIdSet.has(v)));
+                };
                 return (
-                  <ChipGroup key={level2.id}>
-                    <Chip
-                      $selected={fullyCovered}
-                      $partial={partial}
-                      onClick={() => toggleLevel2(level2)}
-                    >
-                      {level2.name}
-                      {partial && (
-                        <CountBadge>
-                          {effective}/{level2.leaves.length}
-                        </CountBadge>
-                      )}
-                    </Chip>
-                    {level2.leaves.length > 0 && (
-                      <ExpandButton
-                        type="button"
-                        onClick={() => toggleExpand(level2.id)}
-                        aria-label={expanded ? 'Suskleisti' : 'Išskleisti'}
+                  <>
+                    <ChipGroup key={level2.id}>
+                      <Chip
+                        $selected={fullyCovered}
+                        $partial={partial}
+                        onClick={() => toggleLevel2(level2)}
                       >
-                        <ChevronWrapper $expanded={expanded}>
-                          <Icon name={IconName.dropdownArrow} />
-                        </ChevronWrapper>
-                      </ExpandButton>
+                        {level2.name}
+                        {partial && (
+                          <CountBadge>
+                            {effective}/{level2.leaves.length}
+                            <ClearPartialButton onClick={clearPartial}>×</ClearPartialButton>
+                          </CountBadge>
+                        )}
+                      </Chip>
+                      {level2.leaves.length > 0 && (
+                        <ExpandButton
+                          type="button"
+                          onClick={() => toggleExpand(level2.id)}
+                          aria-label={expanded ? 'Suskleisti' : 'Išskleisti'}
+                        >
+                          <ChevronWrapper $expanded={expanded}>
+                            <Icon name={IconName.dropdownArrow} />
+                          </ChevronWrapper>
+                        </ExpandButton>
+                      )}
+                    </ChipGroup>
+                    {expanded && (
+                      <ExpansionPanel>
+                        <ExpansionHeaderRow>
+                          <ExpansionHeader>{level2.name} pakategorės</ExpansionHeader>
+                          <CloseButton
+                            type="button"
+                            onClick={closeExpansion}
+                            aria-label="Uždaryti pakategorių sąrašą"
+                          >
+                            ×
+                          </CloseButton>
+                        </ExpansionHeaderRow>
+                        <LeafRow>
+                          {level2.leaves.map((leaf) => {
+                            const parentSelected = valueSet.has(level2.id);
+                            const leafSelected = parentSelected || valueSet.has(leaf.id);
+                            return (
+                              <LeafChip
+                                key={leaf.id}
+                                $selected={leafSelected}
+                                onClick={() => toggleLeaf(leaf, level2)}
+                              >
+                                {leaf.name}
+                              </LeafChip>
+                            );
+                          })}
+                        </LeafRow>
+                      </ExpansionPanel>
                     )}
-                  </ChipGroup>
+                  </>
                 );
               })}
             </ChipsRow>
-            {expandedChild && (
-              <ExpansionPanel>
-                <ExpansionHeaderRow>
-                  <ExpansionHeader>{expandedChild.name} pakategorės</ExpansionHeader>
-                  <CloseButton
-                    type="button"
-                    onClick={closeExpansion}
-                    aria-label="Uždaryti pakategorių sąrašą"
-                  >
-                    ×
-                  </CloseButton>
-                </ExpansionHeaderRow>
-                <LeafRow>
-                  {expandedChild.leaves.map((leaf) => {
-                    const parentSelected = valueSet.has(expandedChild.id);
-                    const leafSelected = parentSelected || valueSet.has(leaf.id);
-                    return (
-                      <LeafChip
-                        key={leaf.id}
-                        $selected={leafSelected}
-                        onClick={() => toggleLeaf(leaf, expandedChild)}
-                      >
-                        {leaf.name}
-                      </LeafChip>
-                    );
-                  })}
-                </LeafRow>
-              </ExpansionPanel>
-            )}
           </Group>
         );
       })}
@@ -353,6 +361,7 @@ const ChevronWrapper = styled.span<{ $expanded: boolean }>`
 `;
 
 const ExpansionPanel = styled.div`
+  flex: 0 0 100%;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -360,6 +369,18 @@ const ExpansionPanel = styled.div`
   background: #fafafa;
   border-radius: 12px;
   border: 1px solid #ececec;
+`;
+
+const ClearPartialButton = styled.span`
+  margin-left: 2px;
+  font-size: 13px;
+  line-height: 1;
+  color: #1b4c28;
+  cursor: pointer;
+  opacity: 0.7;
+  &:hover {
+    opacity: 1;
+  }
 `;
 
 const ExpansionHeaderRow = styled.div`

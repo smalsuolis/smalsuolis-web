@@ -194,6 +194,8 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
         {renderApps()}
         {renderCategories()}
 
+        <Divider />
+
         <FilterGroup>
           <Subtitle>{subtitle.date}</Subtitle>
           <FilterPicker
@@ -327,6 +329,12 @@ const Subtitle = styled.div`
   font-weight: 600;
   line-height: 20.16px;
   text-align: left;
+`;
+
+const Divider = styled.hr`
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0;
 `;
 
 const CategoriesHint = styled.div`
