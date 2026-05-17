@@ -184,7 +184,7 @@ const Categories = ({
                         onClick={() => toggleLevel2(level2)}
                       >
                         {level2.name}
-                        {partial && (
+                        {(partial || fullyCovered) && (
                           <CountBadge>
                             {effective}/{level2.leaves.length}
                           </CountBadge>
