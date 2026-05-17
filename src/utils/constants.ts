@@ -90,6 +90,7 @@ export enum EventStatusTypes {
 export enum AppType {
   INFO_CONSTRUCTION = 'infostatyba',
   FISH_STOCKING = 'zuvinimas',
+  SAVIVALDYBE_ZEMETVARKA_VILNIUS = 'savivaldybesZemetvarka-vilnius',
 }
 
 export enum Frequency {
