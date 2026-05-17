@@ -45,11 +45,12 @@ const EventsContainer = ({
   emptyStateTitle: string;
 }) => {
   const filters = useStorage<Filters>('filters', {}, true);
-  const { value: isListView, setValue } = useStorage<boolean>('isListView', false, true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
   const [search, setSearch] = useState(searchInput);
+
+  const isListView = searchParams.get('view') === 'list';
 
   const { loggedIn } = useContext<UserContextType>(UserContext);
 
@@ -319,7 +320,17 @@ const EventsContainer = ({
       <MapAndListButton
         variant={ButtonVariants.TERTIARY}
         onClick={() => {
-          setValue(!isListView);
+          setSearchParams(
+            (prev) => {
+              if (isListView) {
+                prev.delete('view');
+              } else {
+                prev.set('view', 'list');
+              }
+              return prev;
+            },
+            { replace: true },
+          );
         }}
       >
         {isListView ? (

@@ -7,6 +7,7 @@ import Categories from './Categories';
 import { useContext, useEffect, useState } from 'react';
 import {
   App,
+  AppType,
   Category,
   Filters,
   IconName,
@@ -140,16 +141,15 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     }
   };
 
-  // Categories (infostatyba only — other apps don't have classifiers yet).
-  // Always rendered for discoverability + consistency with how the other
-  // filters behave. The label + hint communicate scope; if the user pairs it
-  // with a non-infostatyba app filter they'll see empty results, same way any
-  // contradictory filter combination behaves elsewhere.
-  //
-  // Uses the hierarchical Categories picker (same as the subscription form):
-  // level-2 chips with optional level-3 expansion per node. Server-side
-  // `categoryGroup` expands every selected id to its descendants.
+  // Categories are only relevant when an infostatyba app is selected.
+  // We hide the section when none is selected but preserve selectedCategories
+  // in state so the user can toggle the app on/off without losing their picks.
+  const infostatybaSelected = selectedApps.some((app) =>
+    app.key.startsWith(AppType.INFO_CONSTRUCTION),
+  );
+
   const renderCategories = () => {
+    if (!infostatybaSelected) return null;
     if (loadingCategories) {
       return <Loader />;
     }
@@ -158,7 +158,6 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     return (
       <FilterGroup>
         <Subtitle>{subtitle.categories}</Subtitle>
-        <CategoriesHint>Taikoma tik statybos leidimų (infostatyba) įvykiams.</CategoriesHint>
         <Categories
           options={categories}
           value={selectedIds}
