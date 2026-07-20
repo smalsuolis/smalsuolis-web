@@ -20,11 +20,15 @@ function App() {
   const authRoutes = filterRoutes(routes, loggedIn);
   const menuRoutes = filterMenuRoutes(routes, loggedIn);
 
+  // Logged-in users land on their personalised feed; everyone else lands on
+  // the public homepage.
   const mainPage = loggedIn
     ? subscriptionsCount > 0
       ? slugs.myEvents
       : slugs.newSubscription
-    : slugs.about;
+    : slugs.home;
+
+  const isHome = currentRoute?.slug === slugs.home;
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -37,6 +41,7 @@ function App() {
   return (
     <DefaultLayout
       loggedIn={loggedIn}
+      fullBleed={isHome}
       currentRoute={currentRoute}
       menuRoutes={menuRoutes || []}
       logo={<Icon name={IconName.sidebarLogo} />}

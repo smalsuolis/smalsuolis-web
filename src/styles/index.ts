@@ -1,4 +1,4 @@
-import { createGlobalStyle } from 'styled-components';
+import { createGlobalStyle, css } from 'styled-components';
 import { Theme } from '@aplinkosministerija/design-system';
 
 export enum ButtonVariants {
@@ -73,6 +73,16 @@ export const theme: Theme = {
     background: '#f7f7f7',
     cardBackground: { primary: '#f7f7f7', success: '#eafbf6' },
     GREY: '#f7f7f7',
+    // Grey ramp from the new design system (Figma MVP file).
+    grey: {
+      300: '#DDDDDD',
+      400: '#D6D6D6',
+      500: '#BCBCBC',
+      600: '#707070',
+      700: '#333333',
+    },
+    black: '#000000',
+    white: '#FFFFFF',
   },
   radius: {
     buttons: 100,
@@ -93,6 +103,34 @@ export const theme: Theme = {
     fieldLabels: 0,
     buttons: 0,
   },
+};
+
+/**
+ * Type scale from the new design (Figma MVP file). Values map the Figma
+ * `text-*` styles: [fontSize(px), lineHeight(unitless), fontWeight, letterSpacing(em)].
+ * Rendered in rem via the 62.5% html base (1rem = 10px), so 16px => 1.6rem.
+ */
+export const typography = {
+  '6xl': { size: 6.4, lineHeight: 1.2, weight: 700, tracking: '-0.02em' },
+  '5xl': { size: 4.8, lineHeight: 1.5, weight: 400, tracking: '-0.02em' },
+  '3xl': { size: 3.0, lineHeight: 1.3, weight: 500, tracking: '-0.02em' },
+  '2xl': { size: 2.4, lineHeight: 1.3, weight: 500, tracking: '-0.01em' },
+  xl: { size: 2.0, lineHeight: 1.5, weight: 400, tracking: '-0.01em' },
+  lg: { size: 1.8, lineHeight: 1.5, weight: 400, tracking: '-0.01em' },
+  base: { size: 1.6, lineHeight: 1.5, weight: 400, tracking: '-0.01em' },
+} as const;
+
+export type TypographyToken = keyof typeof typography;
+
+/** styled-components css mixin for a given type token. */
+export const font = (token: TypographyToken, weight?: number) => {
+  const t = typography[token];
+  return css`
+    font-size: ${t.size}rem;
+    line-height: ${t.lineHeight};
+    font-weight: ${weight ?? t.weight};
+    letter-spacing: ${t.tracking};
+  `;
 };
 
 export const GlobalStyle = createGlobalStyle`

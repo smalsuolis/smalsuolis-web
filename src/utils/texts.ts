@@ -40,6 +40,7 @@ export const inputLabels = {
 };
 
 export const titles = {
+  home: 'Pagrindinis',
   about: 'Apie mus',
   stats: 'Statistika',
   myEvents: 'Mano įvykiai',

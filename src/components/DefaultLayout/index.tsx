@@ -1,9 +1,8 @@
 import Div100vh from 'react-div-100vh';
 import styled from 'styled-components';
-import { useWindowSize } from '../../utils';
-import LogoHeader from './LogoHeader';
-import SideBar from './SideBar';
-import { AppRoute, device } from '@aplinkosministerija/design-system';
+import { AppRoute } from '@aplinkosministerija/design-system';
+import { device } from '../../styles';
+import TopNav from './TopNav';
 
 export interface DefaultLayoutProps {
   loggedIn: boolean;
@@ -16,20 +15,20 @@ export interface DefaultLayoutProps {
   onGoHome: () => void;
   logo: JSX.Element;
   currentRoute?: AppRoute;
+  // Full-bleed pages (e.g. the homepage) render their own hero/sections edge
+  // to edge and manage width internally. Non-bleed pages keep the padded,
+  // centered grey content container the inner pages were built against.
+  fullBleed?: boolean;
 }
 
 const DefaultLayout = (props: DefaultLayoutProps) => {
-  const { children } = props;
-  const isMobile = useWindowSize(device.mobileL);
+  const { children, fullBleed } = props;
 
   return (
     <Container>
-      {!isMobile && <SideBar {...props} />}
       <ScrollableContainer>
-        <InnerContainer>
-          <LogoHeader {...props} />
-          {children}
-        </InnerContainer>
+        <TopNav {...props} />
+        {fullBleed ? children : <InnerContainer>{children}</InnerContainer>}
       </ScrollableContainer>
     </Container>
   );

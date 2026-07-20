@@ -15,8 +15,10 @@ import Subscriptions from '../pages/Subscriptions';
 import { IconName } from './constants';
 import { titles } from './texts';
 import Stats from '../pages/Stats';
+import Home from '../pages/Home';
 
 export const slugs = {
+  home: '/',
   login: '/prisijungimas',
   forgotPassword: '/pamirsau',
   resetPassword: '/atstatyti',
@@ -34,6 +36,11 @@ export const slugs = {
 };
 
 export const routes: AppRoute[] = [
+  {
+    component: <Home />,
+    title: titles.home,
+    slug: slugs.home,
+  },
   {
     component: <Login />,
     loggedIn: false,
