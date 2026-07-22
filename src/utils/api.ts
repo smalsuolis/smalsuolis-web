@@ -12,6 +12,18 @@ import {
 } from './types';
 const cookies = new Cookies();
 
+// Send event queries as a JSON string. axios serializes a raw nested object with
+// indexed brackets (query[categoryGroup][0]=…), which the API's query parser
+// mis-reads for arrays like categoryGroup — silently dropping the filter. A JSON
+// string parses reliably (matching how getStats/getAllCategories already send
+// their queries). Pass-through for empty/undefined or already-stringified queries.
+const stringifyQuery = (query: any): any => {
+  if (query === undefined || query === null) return query;
+  if (typeof query === 'string') return query;
+  if (typeof query === 'object' && Object.keys(query).length === 0) return undefined;
+  return JSON.stringify(query);
+};
+
 interface Get {
   resource: string;
   page?: number;
@@ -232,7 +244,7 @@ class Api {
   }): Promise<GetAllResponse<Event>> => {
     return this.get({
       resource: Resources.EVENTS,
-      query,
+      query: stringifyQuery(query),
       populate: ['geom', 'app'],
       sort: ['-startAt', 'id'],
       page,
@@ -242,7 +254,7 @@ class Api {
   getEventsCount = async ({ query }: { query: any }): Promise<number> => {
     return this.getCount({
       resource: Resources.EVENTS,
-      query,
+      query: stringifyQuery(query),
     });
   };
 
@@ -263,7 +275,7 @@ class Api {
   }): Promise<GetAllResponse<Event>> => {
     return this.get({
       resource: Resources.NEWSFEED,
-      query,
+      query: stringifyQuery(query),
       populate: ['geom', 'app'],
       sort: ['-startAt', 'id'],
       page,
@@ -273,7 +285,7 @@ class Api {
   getNewsfeedCount = async ({ query }: { query: any }): Promise<number> => {
     return this.getCount({
       resource: Resources.NEWSFEED,
-      query,
+      query: stringifyQuery(query),
     });
   };
 

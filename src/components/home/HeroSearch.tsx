@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
-import { AddressSuggestion, slugs } from '../../utils';
+import { AddressSuggestion, IconName, slugs } from '../../utils';
 import Button from '../ui/Button';
+import Icon from '../Icons';
 import AddressAutocomplete from './AddressAutocomplete';
-import SritysSelect from './SritysSelect';
+import SritysFilterModal, { SritysValue } from './SritysFilterModal';
 
 // Hero band: full-bleed green gradient, headline + supporting copy, and the white
 // search bar (address autocomplete + Sritys) overlapping the bottom edge.
@@ -13,16 +14,20 @@ const HeroSearch = () => {
   const navigate = useNavigate();
   const [address, setAddress] = useState('');
   const [selected, setSelected] = useState<AddressSuggestion | null>(null);
-  const [appIds, setAppIds] = useState<number[]>([]);
+  const [srities, setSrities] = useState<SritysValue>({ appIds: [], categoriesByApp: {} });
+  const [filterOpen, setFilterOpen] = useState(false);
 
-  const onSearch = () => {
+  const sritysCount = srities.appIds.length;
+  const sritysLabel = sritysCount === 0 ? 'Sritys' : `Sritys (${sritysCount})`;
+
+  const goToMap = () => {
     // Go to the map page. Pass the resolved point + filters via router state so
     // the map centers immediately; mirror them in the URL for linkability.
     const params = new URLSearchParams();
     if (address) params.set('address', address);
-    if (appIds.length) params.set('app', appIds.join(','));
+    if (srities.appIds.length) params.set('app', srities.appIds.join(','));
     navigate(`${slugs.map}?${params.toString()}`, {
-      state: { address, suggestion: selected, appIds },
+      state: { address, suggestion: selected, appIds: srities.appIds },
     });
   };
 
@@ -50,16 +55,30 @@ const HeroSearch = () => {
               value={address}
               onChange={setAddress}
               onSelect={setSelected}
-              onSubmit={onSearch}
+              onSubmit={goToMap}
             />
           </SearchInputWrap>
           <Divider />
-          <SritysSelect value={appIds} onChange={setAppIds} />
+          <SritysButton type="button" onClick={() => setFilterOpen(true)} $active={sritysCount > 0}>
+            <span>{sritysLabel}</span>
+            <ChevronIcon name={IconName.dropdownArrow} />
+          </SritysButton>
           <SearchButtonWrap>
-            <Button onClick={onSearch}>Ieškoti</Button>
+            <Button onClick={goToMap}>Ieškoti</Button>
           </SearchButtonWrap>
         </SearchBar>
       </SearchBarWrap>
+
+      <SritysFilterModal
+        visible={filterOpen}
+        value={srities}
+        onChange={setSrities}
+        onApply={() => {
+          setFilterOpen(false);
+          goToMap();
+        }}
+        onClose={() => setFilterOpen(false)}
+      />
     </Hero>
   );
 };
@@ -178,6 +197,35 @@ const SearchInputWrap = styled.div`
     border: 1px solid ${({ theme }) => theme.colors.grey[500]};
     border-radius: 44px;
   }
+`;
+
+// "Sritys" trigger — DS Input styling (44px radius, 56px, grey-500 border).
+// Opens the SritysFilterModal.
+const SritysButton = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  min-width: 200px;
+  min-height: 56px;
+  padding: 12px 20px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[500]};
+  border-radius: 44px;
+  background: ${({ theme }) => theme.colors.white};
+  cursor: pointer;
+  ${font('lg')};
+  color: ${({ $active, theme }) => ($active ? theme.colors.text.primary : theme.colors.grey[500])};
+
+  @media ${device.mobileL} {
+    width: 100%;
+    min-width: 0;
+  }
+`;
+
+const ChevronIcon = styled(Icon)`
+  font-size: 1.6rem;
+  color: ${({ theme }) => theme.colors.grey[600]};
+  flex-shrink: 0;
 `;
 
 const Divider = styled.div`

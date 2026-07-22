@@ -101,7 +101,11 @@ export const buttonsTitles = {
   map: 'Smalsuolio žemėlapis',
   beCurious: 'Tapk smalsiu',
   ourTeam: 'Mūsų komanda',
+  clearAll: 'Išvalyti viską',
+  showResults: (n: number) => `Rodyti ${n.toLocaleString('lt-LT')} rezultatus`,
 };
+
+export const filterModalTitle = 'Filtravimas pagal sritis';
 
 export const subtitle = {
   about: 'Domina, kas vyksta aplinkui tave?',

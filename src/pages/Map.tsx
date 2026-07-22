@@ -3,10 +3,11 @@ import { useLocation, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import MapView from '../components/MapView';
 import AddressAutocomplete from '../components/home/AddressAutocomplete';
-import SritysSelect from '../components/home/SritysSelect';
+import SritysFilterModal, { SritysValue } from '../components/home/SritysFilterModal';
 import Button from '../components/ui/Button';
-import { device } from '../styles';
-import { AddressSuggestion } from '../utils';
+import { device, font } from '../styles';
+import { AddressSuggestion, IconName } from '../utils';
+import Icon from '../components/Icons';
 import api from '../utils/api';
 
 // A GeoJSON Point → a FeatureCollection the maps.biip.lt iframe autozooms to.
@@ -33,12 +34,16 @@ const MapPage = () => {
 
   const [address, setAddress] = useState(navState?.address ?? searchParams.get('address') ?? '');
   const [selected, setSelected] = useState<AddressSuggestion | null>(navState?.suggestion ?? null);
-  const [appIds, setAppIds] = useState<number[]>(
-    navState?.appIds ??
+  const [srities, setSrities] = useState<SritysValue>({
+    appIds:
+      navState?.appIds ??
       (searchParams.get('app')
         ? searchParams.get('app')!.split(',').map(Number).filter(Boolean)
         : []),
-  );
+    categoriesByApp: {},
+  });
+  const [filterOpen, setFilterOpen] = useState(false);
+  const appIds = srities.appIds;
 
   // On reload with ?address= but no resolved point (no router state), re-run the
   // suggest query once and take the best match so the map can still center.
@@ -72,6 +77,8 @@ const MapPage = () => {
 
   const filters = useMemo(() => (appIds.length ? { app: { $in: appIds } } : undefined), [appIds]);
 
+  const sritysLabel = appIds.length === 0 ? 'Sritys' : `Sritys (${appIds.length})`;
+
   return (
     <Page>
       <FloatingBar>
@@ -79,13 +86,24 @@ const MapPage = () => {
           <AddressAutocomplete value={address} onChange={setAddress} onSelect={setSelected} />
         </BarField>
         <BarDivider />
-        <SritysSelect value={appIds} onChange={setAppIds} />
-        <Button onClick={() => undefined}>Ieškoti</Button>
+        <SritysButton type="button" onClick={() => setFilterOpen(true)} $active={appIds.length > 0}>
+          <span>{sritysLabel}</span>
+          <Icon name={IconName.dropdownArrow} />
+        </SritysButton>
+        <Button onClick={() => setFilterOpen(true)}>Ieškoti</Button>
       </FloatingBar>
 
       <MapWrap>
         <MapView geom={geom} filters={filters} height="100%" />
       </MapWrap>
+
+      <SritysFilterModal
+        visible={filterOpen}
+        value={srities}
+        onChange={setSrities}
+        onApply={() => setFilterOpen(false)}
+        onClose={() => setFilterOpen(false)}
+      />
     </Page>
   );
 };
@@ -156,5 +174,30 @@ const BarDivider = styled.div`
 
   @media ${device.mobileL} {
     display: none;
+  }
+`;
+
+const SritysButton = styled.button<{ $active: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 180px;
+  min-height: 56px;
+  padding: 12px 20px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[500]};
+  border-radius: 44px;
+  background: ${({ theme }) => theme.colors.white};
+  cursor: pointer;
+  ${font('lg')};
+  color: ${({ $active, theme }) => ($active ? theme.colors.text.primary : theme.colors.grey[500])};
+
+  svg {
+    font-size: 1.6rem;
+    color: ${({ theme }) => theme.colors.grey[600]};
+  }
+
+  @media ${device.mobileL} {
+    width: 100%;
   }
 `;
