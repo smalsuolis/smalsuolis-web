@@ -41,6 +41,7 @@ export const inputLabels = {
 
 export const titles = {
   home: 'Pagrindinis',
+  map: 'Žemėlapis',
   about: 'Apie mus',
   stats: 'Statistika',
   myEvents: 'Mano įvykiai',

@@ -12,11 +12,14 @@ interface MapProps {
   preview?: boolean;
   filters?: any;
   geom?: any;
+  // Non-fullscreen iframe height. Defaults to 60vh (events-feed usage); the
+  // dedicated map page passes 100% to fill its container.
+  height?: string;
 }
 
 const src = `${mapsHost}/smalsuolis?preview=1`;
 
-const MapView = ({ error, filters, geom }: MapProps) => {
+const MapView = ({ error, filters, geom, height = '60vh' }: MapProps) => {
   const iframeRef = useRef<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
@@ -59,7 +62,7 @@ const MapView = ({ error, filters, geom }: MapProps) => {
           ref={iframeRef}
           src={src}
           $width={'100%'}
-          $height={showModal ? '100%' : '60vh'}
+          $height={showModal ? '100%' : height}
           style={{ border: 0 }}
           allowFullScreen={true}
           aria-hidden="false"

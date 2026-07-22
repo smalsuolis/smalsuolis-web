@@ -60,6 +60,17 @@ export interface Event {
   category?: Category;
 }
 
+// Address autocomplete suggestion from the boundaries registry (via the API's
+// /addresses/suggest endpoint). `geometry` is a GeoJSON Point in EPSG:4326.
+export interface AddressSuggestion {
+  code: number;
+  label: string;
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+}
+
 export interface User {
   id?: string;
   email?: string;

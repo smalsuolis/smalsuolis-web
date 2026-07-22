@@ -16,9 +16,11 @@ import { IconName } from './constants';
 import { titles } from './texts';
 import Stats from '../pages/Stats';
 import Home from '../pages/Home';
+import MapPage from '../pages/Map';
 
 export const slugs = {
   home: '/',
+  map: '/zemelapis',
   login: '/prisijungimas',
   forgotPassword: '/pamirsau',
   resetPassword: '/atstatyti',
@@ -40,6 +42,12 @@ export const routes: AppRoute[] = [
     component: <Home />,
     title: titles.home,
     slug: slugs.home,
+  },
+  {
+    component: <MapPage />,
+    title: titles.map,
+    icon: <Icon name={IconName.map} />,
+    slug: slugs.map,
   },
   {
     component: <Login />,

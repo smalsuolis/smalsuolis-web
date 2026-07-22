@@ -112,22 +112,26 @@ const LogoContainer = styled.div`
 const Links = styled.div`
   display: flex;
   align-items: center;
-  gap: 32px;
+  gap: 36px; /* DS Navbar item gap */
 
   @media ${device.mobileL} {
     display: none;
   }
 `;
 
+// Matches the design-system Navbar: 16px black links, letter-spacing -0.02em,
+// the active item in Bold (700) and the rest in Regular (400) — weight, not
+// color, signals the active route. Inactive links carry a slight opacity so the
+// active one still reads first (mirrors the DS's de-emphasized nav treatment).
 const NavLink = styled.div<{ $isActive: boolean }>`
   cursor: pointer;
-  ${font('base', 500)};
-  color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.text.primary : theme.colors.grey[600]};
-  transition: color 0.15s ease;
+  color: ${({ theme }) => theme.colors.text.primary};
+  ${({ $isActive }) => font('base', $isActive ? 700 : 400)};
+  opacity: ${({ $isActive }) => ($isActive ? 1 : 0.64)};
+  transition: opacity 0.15s ease;
 
   &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
+    opacity: 1;
   }
 `;
 

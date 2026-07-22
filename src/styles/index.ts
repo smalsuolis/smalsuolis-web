@@ -113,7 +113,7 @@ export const theme: Theme = {
 export const typography = {
   '6xl': { size: 6.4, lineHeight: 1.2, weight: 700, tracking: '-0.02em' },
   '5xl': { size: 4.8, lineHeight: 1.5, weight: 400, tracking: '-0.02em' },
-  '3xl': { size: 3.0, lineHeight: 1.3, weight: 500, tracking: '-0.02em' },
+  '3xl': { size: 3.0, lineHeight: 1.3, weight: 500, tracking: '-0.05em' },
   '2xl': { size: 2.4, lineHeight: 1.3, weight: 500, tracking: '-0.01em' },
   xl: { size: 2.0, lineHeight: 1.5, weight: 400, tracking: '-0.01em' },
   lg: { size: 1.8, lineHeight: 1.5, weight: 400, tracking: '-0.01em' },

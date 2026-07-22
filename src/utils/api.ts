@@ -1,7 +1,15 @@
 import Axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 import Cookies from 'universal-cookie';
-import { App, Category, Event, LastUpdateResponse, Stats, Subscription } from './types';
+import {
+  AddressSuggestion,
+  App,
+  Category,
+  Event,
+  LastUpdateResponse,
+  Stats,
+  Subscription,
+} from './types';
 const cookies = new Cookies();
 
 interface Get {
@@ -377,6 +385,14 @@ class Api {
 
   getLastUpdate = async (): Promise<LastUpdateResponse> => {
     return this.errorWrapper(() => this.AuthApiAxios.get('/integrations/last-update'));
+  };
+
+  // Address autocomplete backed by the boundaries registry (see the API's
+  // boundaries.service). Returns suggestions with a GeoJSON Point geometry.
+  suggestAddresses = async (search: string): Promise<AddressSuggestion[]> => {
+    return this.errorWrapper(() =>
+      this.AuthApiAxios.get('/addresses/suggest', { params: { search } }),
+    );
   };
 }
 

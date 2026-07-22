@@ -72,10 +72,11 @@ const Page = styled.div`
 
   @media ${device.mobileL} {
     & > section {
-      margin-top: 56px;
+      margin-top: 48px;
     }
     & > section:first-of-type {
-      margin-top: 96px;
+      /* Search bar overhangs the hero by ~24px on mobile; clear it. */
+      margin-top: 48px;
     }
   }
 `;

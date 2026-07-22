@@ -94,8 +94,9 @@ const Wrap = styled.div`
   gap: 24px;
 `;
 
+// DS section heading: Medium 30px, tight tracking. Node 116:1907.
 const Title = styled.h2`
-  ${font('2xl')};
+  ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   text-align: center;
@@ -135,12 +136,14 @@ const IconCircle = styled.span<{ $bg: string }>`
   flex-shrink: 0;
 `;
 
+// DS category chip: label Regular 18px black, count Regular 18px grey-600
+// (#707070). Figma nodes 116:2779 / 116:2780.
 const ChipLabel = styled.span`
-  ${font('base', 500)};
+  ${font('lg')};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Count = styled.span`
-  ${font('base', 500)};
-  color: ${({ theme }) => theme.colors.grey[500]};
+  ${font('lg')};
+  color: ${({ theme }) => theme.colors.grey[600]};
 `;

@@ -82,17 +82,19 @@ const Header = styled.div`
   margin-bottom: 16px;
 `;
 
+// DS "Naujausi įvykiai" heading: Medium 30px, tight tracking. Node 116:1910.
 const Title = styled.h2`
-  ${font('2xl')};
+  ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
 
+// DS "Rodyti visus įvykius" link: Regular 20px black. Node 116:1912.
 const SeeAll = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  ${font('base', 500)};
+  ${font('xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
   background: transparent;
@@ -161,12 +163,14 @@ const Tags = styled.div`
   gap: 8px;
 `;
 
+// DS event tag ("Category" chip): white bg, 1px grey-300 border, radius 128px,
+// padding 12px 20px, Medium 16px text in grey-700 (#333). Figma node 116:1926.
 const Tag = styled.span`
   ${font('base', 500)};
-  font-size: 1.3rem;
-  padding: 6px 14px;
-  border-radius: 100px;
+  padding: 12px 20px;
+  border-radius: 128px;
   border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.grey[700]};
 `;
 

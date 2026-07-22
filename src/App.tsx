@@ -28,7 +28,9 @@ function App() {
       : slugs.newSubscription
     : slugs.home;
 
-  const isHome = currentRoute?.slug === slugs.home;
+  // Home and the map page render edge-to-edge (own hero / full-viewport map),
+  // outside the padded inner content container.
+  const isFullBleed = currentRoute?.slug === slugs.home || currentRoute?.slug === slugs.map;
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -41,7 +43,7 @@ function App() {
   return (
     <DefaultLayout
       loggedIn={loggedIn}
-      fullBleed={isHome}
+      fullBleed={isFullBleed}
       currentRoute={currentRoute}
       menuRoutes={menuRoutes || []}
       logo={<Icon name={IconName.sidebarLogo} />}
