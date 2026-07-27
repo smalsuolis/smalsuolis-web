@@ -61,6 +61,9 @@ const ScrollableContainer = styled.div`
   width: 100%;
   min-height: 100%;
   overflow-y: scroll;
+  /* Guard: a single over-wide child shouldn't let the whole page pan sideways
+     on mobile. Content that genuinely needs width scrolls within its own box. */
+  overflow-x: hidden;
   background-color: white;
 `;
 
