@@ -283,6 +283,10 @@ export interface Stats {
     };
     izuvinimas: {
       count: number;
+      // Optional: the API sets byTag for any app whose events carry tags. These
+      // feeds emit none today, so the card renders its total with no rows —
+      // it fills in automatically if that changes.
+      byTag?: Record<string, { count: number }>;
     };
     miskoKirtimai: {
       count: number;
@@ -290,9 +294,11 @@ export interface Stats {
     };
     zemetvarkosPlanavimas: {
       count: number;
+      byTag?: Record<string, { count: number }>;
     };
     savivaldybesZemetvarka: {
       count: number;
+      byTag?: Record<string, { count: number }>;
     };
   };
   // Per-municipality breakdown, keyed by municipality name. Each has a total

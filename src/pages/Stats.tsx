@@ -182,11 +182,11 @@ const Stats = () => {
     return orderBy(rows, (r) => r.count, 'desc');
   };
 
-  // Only app types that carry a real byTag/byCategory breakdown get a card —
-  // currently miskoKirtimai and infostatyba. The other apps (zemetvarkos,
-  // izuvinimas, savivaldybes) have no tag/category data, so they'd render as
-  // empty cards; those are surfaced in the KPI strip and data-source section
-  // instead. Cards with no rows in the current window are filtered out below.
+  // One card per app type, matching the design. Only miskoKirtimai and
+  // infostatyba currently carry tag/category breakdowns in the data; the rest
+  // still get a card showing their real total with an empty-rows note, rather
+  // than disappearing, so the page shape stays stable and a zero reads as a
+  // zero. They gain rows automatically if those feeds start emitting tags.
   const breakdownCards = [
     {
       icon: IconName.forest,
@@ -205,6 +205,30 @@ const Stats = () => {
       title: 'Statybų leidimai pagal kategoriją',
       total: byApp?.infostatyba?.count || 0,
       rows: categoryRows(byApp?.infostatyba?.byCategory, prevByApp?.infostatyba?.byCategory),
+    },
+    {
+      icon: IconName.map,
+      title: 'Žemėtvarkos planavimas',
+      total: byApp?.zemetvarkosPlanavimas?.count || 0,
+      rows: tagRows(
+        byApp?.zemetvarkosPlanavimas?.byTag,
+        prevByApp?.zemetvarkosPlanavimas?.byTag,
+      ),
+    },
+    {
+      icon: IconName.fish,
+      title: 'Žuvinimas',
+      total: byApp?.izuvinimas?.count || 0,
+      rows: tagRows(byApp?.izuvinimas?.byTag, prevByApp?.izuvinimas?.byTag),
+    },
+    {
+      icon: IconName.mapLocation,
+      title: 'Žemės paskirties keitimai',
+      total: byApp?.savivaldybesZemetvarka?.count || 0,
+      rows: tagRows(
+        byApp?.savivaldybesZemetvarka?.byTag,
+        prevByApp?.savivaldybesZemetvarka?.byTag,
+      ),
     },
   ];
 
