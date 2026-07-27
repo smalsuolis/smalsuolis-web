@@ -206,7 +206,7 @@ const Stats = () => {
       total: byApp?.infostatyba?.count || 0,
       rows: categoryRows(byApp?.infostatyba?.byCategory, prevByApp?.infostatyba?.byCategory),
     },
-  ].filter((c) => c.rows.length > 0);
+  ];
 
   // ---- "Akyviausi miestai" ---------------------------------------------
   const byMunicipality = data?.byMunicipality || {};
@@ -315,21 +315,23 @@ const Stats = () => {
             ))}
           </CardGrid>
 
-          {topCities.length > 0 && (
-            <>
-              <SectionTitle>Akyviausi miestai</SectionTitle>
-              <CityGrid>
-                {topCities.map((city) => (
-                  <CityCard
-                    key={city.name}
-                    city={prettyMunicipality(city.name)}
-                    rows={cityRows(city.name, city.byApp)}
-                    showComparison={isComparisonEnabled}
-                    isFetching={isPreviousFetching}
-                  />
-                ))}
-              </CityGrid>
-            </>
+          {/* Section always renders so the page keeps a stable shape across
+              periods; short windows just have fewer (or no) municipalities. */}
+          <SectionTitle>Akyviausi miestai</SectionTitle>
+          {topCities.length > 0 ? (
+            <CityGrid>
+              {topCities.map((city) => (
+                <CityCard
+                  key={city.name}
+                  city={prettyMunicipality(city.name)}
+                  rows={cityRows(city.name, city.byApp)}
+                  showComparison={isComparisonEnabled}
+                  isFetching={isPreviousFetching}
+                />
+              ))}
+            </CityGrid>
+          ) : (
+            <EmptyNote>Šiuo laikotarpiu įvykių nėra</EmptyNote>
           )}
 
           {!isLoadingLastUpdate && lastUpdateData && (
@@ -467,13 +469,25 @@ const CardGrid = styled.div`
   }
 `;
 
+const EmptyNote = styled.div`
+  font-size: 1.4rem;
+  color: ${({ theme }) => theme.colors.grey[600]};
+  padding: 8px 0 24px;
+`;
+
 const CityGrid = styled.div`
   display: grid;
   /* minmax(0,1fr): grid items default to min-width:auto, so a long label
      would push the track past the viewport instead of ellipsizing. */
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
+  /* Matches the other card grids: 2-up on tablet, single column only on
+     phones. It previously dropped straight to one column at 1280px, which
+     left three very wide stacked cards on mid-size screens. */
   @media ${device.tablet} {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media ${device.mobileL} {
     grid-template-columns: minmax(0, 1fr);
   }
 `;

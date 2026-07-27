@@ -48,6 +48,7 @@ const BreakdownCard = ({
       </Header>
 
       <Rows>
+        {rows.length === 0 && <EmptyRow>Šiuo laikotarpiu įvykių nėra</EmptyRow>}
         {visible.map((r) => {
           const pct = r.total > 0 ? (r.count * 100) / r.total : 0;
           return (
@@ -146,6 +147,15 @@ const Total = styled.div`
 const Rows = styled.div`
   display: flex;
   flex-direction: column;
+`;
+
+// Shown instead of the rows when a card has no data for the selected period —
+// the card still renders so the page keeps a stable shape and the zero total
+// stays visible.
+const EmptyRow = styled.div`
+  font-size: 1.4rem;
+  color: ${({ theme }) => theme.colors.grey[600]};
+  padding: 10px 0;
 `;
 
 const Row = styled.div`
