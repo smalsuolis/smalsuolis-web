@@ -1,9 +1,9 @@
-import { Button, useStorage } from '@aplinkosministerija/design-system';
+import { useStorage } from '@aplinkosministerija/design-system';
 import { useQuery } from '@tanstack/react-query';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { ButtonVariants, device } from '../styles';
+import { device, font } from '../styles';
 import {
   buttonsTitles,
   Event,
@@ -12,22 +12,21 @@ import {
   inputLabels,
   isEmpty,
   Subscription,
-  subtitle,
   timeRangeItems,
   useGetCurrentRoute,
   useInfinityLoad,
 } from '../utils';
 import { TimeRanges } from '../utils/types';
 import api from '../utils/api';
-import CopiedFromDSContentLayout from './CopiedFromDSContentLayout';
 import EmptyState from './EmptyState';
-import EventCard from './EventCard';
+import EventRow from './EventRow';
 import EventFilterModal from './EventFilterModal';
+import EventModal from './EventModal';
 import Icon from './Icons';
-import Loader from './Loader';
 import LoaderComponent from './LoaderComponent';
 import MapView from './MapView';
 import { UserContext, UserContextType } from './UserProvider';
+import { useAuthModal } from './auth/AuthModalContext';
 
 const EventsContainer = ({
   isMyEvents = false,
@@ -46,6 +45,7 @@ const EventsContainer = ({
 }) => {
   const filters = useStorage<Filters>('filters', {}, true);
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
   const [search, setSearch] = useState(searchInput);
@@ -53,6 +53,7 @@ const EventsContainer = ({
   const isListView = searchParams.get('view') === 'list';
 
   const { loggedIn } = useContext<UserContextType>(UserContext);
+  const { open: openAuthModal } = useAuthModal();
 
   // Whether the URL has filter params that need to be loaded
   const hasUrlFilterParams =
@@ -210,11 +211,6 @@ const EventsContainer = ({
     };
   };
 
-  const { data: eventsCount, isLoading: eventsCountIsLoading } = useQuery({
-    queryKey: [queryKey, 'count', getFilter()],
-    queryFn: () => countEndpoint({ query: getFilter() }),
-  });
-
   const getMapGeom = () => {
     if (!allSubscriptions.length || !isMyEvents) return null;
 
@@ -256,7 +252,7 @@ const EventsContainer = ({
           return (
             <React.Fragment key={pageIndex}>
               {page.data.map((event: Event) => (
-                <EventCard key={event.id} event={event} />
+                <EventRow key={event.id} event={event} onSelect={setSelectedEvent} />
               ))}
             </React.Fragment>
           );
@@ -279,30 +275,36 @@ const EventsContainer = ({
     }
   };
 
+  const toggleView = () =>
+    setSearchParams(
+      (prev) => {
+        if (isListView) prev.delete('view');
+        else prev.set('view', 'list');
+        return prev;
+      },
+      { replace: true },
+    );
+
   return (
-    <CopiedFromDSContentLayout currentRoute={currentRoute} limitWidth={isListView}>
-      <FilterRow>
-        <CountText>
-          {`${subtitle.foundRecords}: `}
-          {eventsCountIsLoading ? <Loader size={'20px'} /> : eventsCount || '0'}
-        </CountText>
-        <FilterButton
-          onClick={() => {
-            setShowFilterModal(true);
-          }}
-        >
-          <FilterIconWrapper>
-            {!isEmpty(filters.value) && <FilterBadge />}
-            <Icon name={IconName.filter} size={22} color={'#1B4C28'} />
-          </FilterIconWrapper>
-          <FilterText>{buttonsTitles.filter}</FilterText>
-        </FilterButton>
-      </FilterRow>
-      <SearchRow>
-        <SearchInputWrapper>
-          <SearchIcon>
-            <Icon name={IconName.search} size={18} color={'#9AA4B2'} />
-          </SearchIcon>
+    <Page>
+      <Header>
+        <PageTitle>{currentRoute?.title ?? 'Naujausi įvykiai'}</PageTitle>
+        <HeaderActions>
+          {!loggedIn && (
+            <RegisterCta onClick={() => openAuthModal('register')}>
+              Dar neturite paskyros? Užsiregistruokite
+            </RegisterCta>
+          )}
+          <ViewToggle onClick={toggleView}>
+            <Icon name={isListView ? IconName.map : IconName.list} size={20} color={'white'} />
+            {isListView ? buttonsTitles.showMap : buttonsTitles.showList}
+          </ViewToggle>
+        </HeaderActions>
+      </Header>
+
+      <FilterBar>
+        <SearchField>
+          <Icon name={IconName.search} size={18} color={'#9AA4B2'} />
           <SearchInput
             type="text"
             value={searchInput}
@@ -314,43 +316,22 @@ const EventsContainer = ({
               <Icon name={IconName.close} size={16} color={'#9AA4B2'} />
             </ClearButton>
           )}
-        </SearchInputWrapper>
-      </SearchRow>
-      <Container>{renderListOrMap()}</Container>
-      <MapAndListButton
-        variant={ButtonVariants.TERTIARY}
-        onClick={() => {
-          setSearchParams(
-            (prev) => {
-              if (isListView) {
-                prev.delete('view');
-              } else {
-                prev.set('view', 'list');
-              }
-              return prev;
-            },
-            { replace: true },
-          );
-        }}
-      >
-        {isListView ? (
-          <>
-            {buttonsTitles.showMap}
-            <Icon name={IconName.map} size={22} color={'white'} />
-          </>
-        ) : (
-          <>
-            {buttonsTitles.showList}
-            <Icon name={IconName.list} size={22} color={'white'} />
-          </>
-        )}
-      </MapAndListButton>
+        </SearchField>
+        <FilterPill onClick={() => setShowFilterModal(true)} $active={!isEmpty(filters.value)}>
+          <Icon name={IconName.filter} size={20} color={'#1B4C28'} />
+          {buttonsTitles.filter}
+        </FilterPill>
+      </FilterBar>
+
+      {renderListOrMap()}
+
       <EventFilterModal
         isMyEvents={isMyEvents}
         visible={showFilterModal}
         onClose={() => setShowFilterModal(false)}
       />
-    </CopiedFromDSContentLayout>
+      {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
+    </Page>
   );
 };
 
@@ -361,128 +342,124 @@ const Invisible = styled.div`
   height: 16px;
 `;
 
-const Container = styled.div`
-  display: flex;
-  flex-grow: 1;
-  position: relative;
-  overflow-y: auto;
-  align-items: center;
-  flex-direction: column;
-  padding: 20px 0px;
+// Wide, left-aligned page shell (redesigned "Naujausi įvykiai"), replacing the
+// old narrow centered DS layout.
+const Page = styled.div`
   width: 100%;
-  height: 100%;
-  @media ${device.mobileL} {
-    padding: 12px 0px;
+  max-width: 1216px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 0;
+
+  @media ${device.tablet} {
+    padding: 32px 20px;
   }
 `;
 
-const InnerContainer = styled.div`
+const Header = styled.div`
   display: flex;
-  max-width: 800px;
-  margin: auto;
-  width: 100%;
-  gap: 12px;
-  flex-direction: column;
-`;
-
-const FilterRow = styled.div`
-  display: flex;
-  width: 100%;
-  flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  padding: 20px 0 0 0;
-`;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
 
-const CountText = styled.div`
-  font-size: 1.4rem;
-  font-weight: 500;
-  line-height: 17.64px;
-  color: #4b5768;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const FilterButton = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: row;
-  cursor: pointer;
-  gap: 5px;
-`;
-
-const FilterText = styled.div`
-  font-size: 1.6rem;
-  font-weight: 600;
-  line-height: 20.16px;
-  text-align: left;
-  user-select: none;
-  color: ${({ theme }) => theme.colors.tertiary};
-`;
-
-const FilterIconWrapper = styled.div`
-  position: relative;
-`;
-
-const FilterBadge = styled.div`
-  position: absolute;
-  top: 2px;
-  right: 0;
-  width: 10px;
-  height: 10px;
-  border-radius: 10px;
-  border: 1px solid #ffffff;
-  background-color: ${({ theme }) => theme.colors.primary};
-`;
-
-const MapAndListButton = styled(Button)`
-  position: absolute;
-  z-index: 10;
-  bottom: 30px;
-  width: auto;
   @media ${device.mobileL} {
-    bottom: 15px;
+    flex-direction: column;
+    align-items: stretch;
   }
 `;
 
-const SearchRow = styled.div`
-  width: 100%;
-  padding: 8px 0 0;
+const PageTitle = styled.h1`
+  ${font('3xl')};
+  margin: 0;
 `;
 
-const SearchInputWrapper = styled.div`
+const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  background: #f9fafb;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 0 12px;
+  gap: 12px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const RegisterCta = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-radius: 100px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.text.primary};
+  ${font('base', 500)};
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+const ViewToggle = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   gap: 8px;
-  transition: border-color 0.15s;
-  &:focus-within {
-    border-color: ${({ theme }) => theme.colors.primary};
-    background: #fff;
+  padding: 12px 24px;
+  border-radius: 100px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base', 600)};
+  cursor: pointer;
+
+  &:hover {
+    opacity: 0.92;
   }
 `;
 
-const SearchIcon = styled.div`
+const FilterBar = styled.div`
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: stretch;
+  }
+`;
+
+const SearchField = styled.div`
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 20px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  border-radius: 44px;
+  background: ${({ theme }) => theme.colors.white};
+
+  &:focus-within {
+    border-color: ${({ theme }) => theme.colors.grey[500]};
+  }
 `;
 
 const SearchInput = styled.input`
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 1.4rem;
-  color: #1a2a1a;
-  padding: 10px 0;
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
   outline: none;
+
   &::placeholder {
-    color: #9aa4b2;
+    color: ${({ theme }) => theme.colors.grey[500]};
   }
 `;
 
@@ -495,4 +472,29 @@ const ClearButton = styled.div`
   &:hover {
     opacity: 1;
   }
+`;
+
+const FilterPill = styled.button<{ $active: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 24px;
+  border-radius: 44px;
+  border: 1px solid
+    ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.grey[300])};
+  background: ${({ theme }) => theme.colors.white};
+  ${font('base', 600)};
+  color: ${({ theme }) => theme.colors.tertiary};
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+const InnerContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 `;

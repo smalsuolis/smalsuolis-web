@@ -9,13 +9,24 @@ import Icon from './Icons';
 import PreviewMap from './PreviewMap';
 import Tag from './Tag';
 
-const EventCard = ({ event, isOpen = false }: { event: Event; isOpen?: boolean }) => {
+const EventCard = ({
+  event,
+  isOpen = false,
+  onSelect,
+}: {
+  event: Event;
+  isOpen?: boolean;
+  // When provided, clicking the card opens the detail modal (via the parent)
+  // instead of expanding inline. Used by the events list; the standalone Event
+  // page keeps the inline behavior (isOpen).
+  onSelect?: (event: Event) => void;
+}) => {
   const [open, setOpen] = useState(isOpen);
   const { app } = event;
   const appIcon = app?.icon ? svgToUrl(app?.icon) : '';
   return (
     <Container>
-      <PressableView onClick={() => setOpen(!open)}>
+      <PressableView onClick={() => (onSelect ? onSelect(event) : setOpen(!open))}>
         <Row>
           <Column>
             <InnerRow>
@@ -34,7 +45,7 @@ const EventCard = ({ event, isOpen = false }: { event: Event; isOpen?: boolean }
           </div>
         </Row>
       </PressableView>
-      {open && (
+      {!onSelect && open && (
         <>
           <MapContainer>
             <PreviewMap value={event.geom} height={'200px'} />

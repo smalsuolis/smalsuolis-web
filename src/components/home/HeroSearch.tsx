@@ -21,13 +21,16 @@ const HeroSearch = () => {
   const sritysLabel = sritysCount === 0 ? 'Sritys' : `Sritys (${sritysCount})`;
 
   const goToMap = () => {
-    // Go to the map page. Pass the resolved point + filters via router state so
-    // the map centers immediately; mirror them in the URL for linkability.
+    // Go to the map page with the search pre-filled. The resolved point and the
+    // full Sritys selection (apps + per-app categories) travel via router state
+    // so the map opens ready-to-go; address + app ids are also mirrored in the
+    // URL for linkability/refresh (categories are state-only — too nested for a
+    // clean query param, and re-openable via the Sritys modal).
     const params = new URLSearchParams();
     if (address) params.set('address', address);
     if (srities.appIds.length) params.set('app', srities.appIds.join(','));
     navigate(`${slugs.map}?${params.toString()}`, {
-      state: { address, suggestion: selected, appIds: srities.appIds },
+      state: { address, suggestion: selected, srities },
     });
   };
 

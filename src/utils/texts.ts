@@ -14,6 +14,8 @@ export const validationTexts = {
   requirePhotos: 'Privalote įkelti nuotrauką',
   userDeniedLocation: 'Turite leisti nustatyti jūsų buvimo vietą',
   profileUpdated: 'Profilis atnaujintas',
+  dataUpdated: 'Duomenys sėkmingai atnaujinti',
+  updateError: 'Įvyko klaida pabandykite dar kartą',
   registration: 'Registracija sėkminga',
   appsNotSelected: 'Pasirinkite bent vieną sritį',
   [ServerErrors.WRONG_PASSWORD]: 'Neteisingai įvestas el. paštas arba slaptažodis',
@@ -81,6 +83,7 @@ export const descriptions = {
 export const buttonsTitles = {
   subscribeNews: 'Prenumeruoti naujienas',
   resetPassword: 'Atstatyti slaptažodį',
+  reset: 'Atkurti',
   createAccount: 'Sukurti paskyrą',
   update: 'Atnaujinti',
   createPassword: 'Nustatyti slaptažodį',
@@ -121,6 +124,7 @@ export const subtitle = {
   categories: 'Statinių kategorijos',
   date: 'Data',
   hasNotRegistered: 'Neturite paskyros?',
+  hasRegistered: 'Jau turite paskyrą?',
   fewActions: 'Tik keli paspaudimai',
   howItWorks: 'Kaip tai veikia?',
 };

@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { isFuture } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
 import { Event, getTimeLabel, IconName, slugs, subtitle } from '../../utils';
 import api from '../../utils/api';
 import Icon from '../Icons';
+import EventModal from '../EventModal';
 
 // "Naujausi įvykiai" — a flat list of the most recent events. Reuses the same
 // events endpoint, Event type, and getTimeLabel helper the feed/cards use.
@@ -20,6 +22,7 @@ const splitName = (name: string): { title: string; location: string } => {
 
 const RecentEvents = () => {
   const navigate = useNavigate();
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const { data } = useQuery({
     queryKey: ['home-recent-events'],
     queryFn: () => api.getEvents({ page: 1, query: undefined }),
@@ -43,7 +46,7 @@ const RecentEvents = () => {
           const { title, location } = splitName(event.name);
           const future = isFuture(new Date(event.startAt));
           return (
-            <RowLink key={event.id} onClick={() => navigate(slugs.event(String(event.id)))}>
+            <RowLink key={event.id} onClick={() => setSelectedEvent(event)}>
               <RowMain>
                 <NameLine>
                   <NameTitle>{title}</NameTitle>
@@ -63,6 +66,8 @@ const RecentEvents = () => {
           );
         })}
       </List>
+
+      {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </Wrap>
   );
 };

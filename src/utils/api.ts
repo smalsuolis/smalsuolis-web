@@ -6,6 +6,7 @@ import {
   App,
   Category,
   Event,
+  EventsNearResponse,
   LastUpdateResponse,
   Stats,
   Subscription,
@@ -405,6 +406,17 @@ class Api {
     return this.errorWrapper(() =>
       this.AuthApiAxios.get('/addresses/suggest', { params: { search } }),
     );
+  };
+
+  // Events within `radius` metres of a point (lng/lat, EPSG:4326). Powers the
+  // map's address-lookup popup: total count in the circle + recent events.
+  getEventsNear = async (params: {
+    lng: number;
+    lat: number;
+    radius?: number;
+    limit?: number;
+  }): Promise<EventsNearResponse> => {
+    return this.errorWrapper(() => this.AuthApiAxios.get('/events/near', { params }));
   };
 }
 

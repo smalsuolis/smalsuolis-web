@@ -7,6 +7,7 @@ import { DefaultTheme, ThemeProvider } from 'styled-components';
 import Cookies from 'universal-cookie';
 import App from './App';
 import { UserProvider } from './components/UserProvider';
+import { AuthModalProvider } from './components/auth/AuthModalContext';
 import { GlobalStyle, theme } from './styles/index';
 import { ServerErrorCodes, handleAlert } from './utils';
 import api from './utils/api';
@@ -71,7 +72,9 @@ root.render(
       <GlobalStyle />
       <BrowserRouter>
         <UserProvider>
-          <App />
+          <AuthModalProvider>
+            <App />
+          </AuthModalProvider>
           <ToastContainer />
         </UserProvider>
       </BrowserRouter>

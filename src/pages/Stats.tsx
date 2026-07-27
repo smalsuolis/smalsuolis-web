@@ -1,58 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import Icon from '../components/Icons';
-import { device } from '../styles';
-import { Frequency, IconName, timeRangeQuery } from '../utils';
-import { TimeRanges, yearQuery } from '../utils/types';
 import { useQuery } from '@tanstack/react-query';
+import { orderBy } from 'lodash';
+import { device, font } from '../styles';
+import { IconName, timeRangeQuery } from '../utils';
+import { TimeRanges, yearQuery } from '../utils/types';
 import api from '../utils/api';
 import Loader from '../components/Loader';
 import Datepicker from '../components/Datepicker';
-import { orderBy } from 'lodash';
-import {
-  formatRelativeTime,
-  getUpdateStatusColor,
-  calculatePreviousPeriod,
-} from '../utils/functions';
-import Tooltip from '../components/Tooltip';
-
-const StatDelta = ({
-  current,
-  previous = 0,
-  isFetching,
-}: {
-  current?: number;
-  previous?: number;
-  isFetching?: boolean;
-}) => {
-  if (isFetching) {
-    return (
-      <span style={{ display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
-        <MiniSpinner />
-      </span>
-    );
-  }
-
-  if (current === undefined) return null;
-  const diff = current - previous;
-  // Fix floating point errors by rounding to 2 decimal places if it has fractional parts
-  const formattedDiff = diff % 1 !== 0 ? parseFloat(diff.toFixed(2)) : diff;
-  if (formattedDiff === 0) return null;
-
-  const isPositive = formattedDiff > 0;
-  const color = isPositive ? '#10B981' : '#EF4444';
-  const sign = isPositive ? '+' : '';
-
-  return (
-    <span style={{ color, fontSize: '1.4rem', fontWeight: 600, whiteSpace: 'nowrap' }}>
-      {sign}
-      {formattedDiff}
-    </span>
-  );
-};
-
-const bannerUrl = '/stats_banner.png';
+import { calculatePreviousPeriod } from '../utils/functions';
+import Delta from '../components/stats/Delta';
+import BreakdownCard, { BreakdownRow } from '../components/stats/BreakdownCard';
+import CityCard, { CityRow } from '../components/stats/CityCard';
+import SourceCard from '../components/stats/SourceCard';
+import SubscribeBanner from '../components/stats/SubscribeBanner';
 
 const resolveQueryFromKey = (key: string): { $gte: string; $lt: string } => {
   if (/^\d{4}$/.test(key)) return yearQuery(Number(key));
@@ -60,11 +22,43 @@ const resolveQueryFromKey = (key: string): { $gte: string; $lt: string } => {
   return q as { $gte: string; $lt: string };
 };
 
+// Per-appType colors for the city breakdown dots. appType → color.
+const APP_COLORS: Record<string, string> = {
+  infostatyba: '#E5484D',
+  miskoKirtimai: '#1F9D57',
+  zemetvarkosPlanavimas: '#8A33FE',
+  izuvinimas: '#1121DA',
+  savivaldybesZemetvarka: '#FFB400',
+};
+
+const APP_SHORT_LABELS: Record<string, string> = {
+  infostatyba: 'Statyba',
+  miskoKirtimai: 'Kirtimai',
+  zemetvarkosPlanavimas: 'Planavimas',
+  izuvinimas: 'Žuvinimas',
+  savivaldybesZemetvarka: 'Žemės pask.',
+};
+
+// Municipality names come from the registry as e.g. "Vilniaus m. sav." /
+// "Kauno r. sav.". The design shows the plain city/place name, so strip the
+// "m. sav." / "r. sav." / "sav." administrative suffix for display.
+const prettyMunicipality = (name: string): string =>
+  name.replace(/\s+(m\.|r\.)?\s*sav\.?$/i, '').trim();
+
+// Widening ladder for the adaptive default: if the default window has no
+// events (e.g. a source feed went stale), step out to the next wider range so
+// the page opens with data rather than looking empty. Only applied when the
+// user hasn't explicitly picked a range.
+const RANGE_LADDER: TimeRanges[] = [
+  TimeRanges.LAST_7_DAYS,
+  TimeRanges.LAST_28_DAYS,
+  TimeRanges.LAST_90_DAYS,
+  TimeRanges.LAST_365_DAYS,
+  TimeRanges.ALL_TIME,
+];
+
 const Stats = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [deforestationStatsFilter, setDeforestationStatsFilter] = useState('count');
-  const [showAllDeforestationStats, setShowAllDeforestationStats] = useState(false);
-  const [showAllCategoryStats, setShowAllCategoryStats] = useState(false);
 
   const initialRange = searchParams.get('range') ?? TimeRanges.LAST_7_DAYS;
   const initialQuery: { $gte: string; $lt: string } =
@@ -92,8 +86,20 @@ const Stats = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Category list — used to map codes to their display names. Static lookup,
-  // independent of the date filter, so cache aggressively.
+  // Adaptive default range: when the user hasn't explicitly chosen a range and
+  // the current window returned zero events, step out to the next wider range.
+  // Runs at most once per rung and stops at ALL_TIME, so it can't loop.
+  const userPickedRange = !!searchParams.get('range');
+  useEffect(() => {
+    if (userPickedRange || isLoading || !data) return;
+    if (data.count > 0) return;
+    const idx = RANGE_LADDER.indexOf(dateFilter as TimeRanges);
+    if (idx === -1 || idx >= RANGE_LADDER.length - 1) return; // unknown or already widest
+    const next = RANGE_LADDER[idx + 1];
+    setDateFilter(next);
+    setQuery(resolveQueryFromKey(next));
+  }, [data, isLoading, dateFilter, userPickedRange]);
+
   const { data: infostatybaCategories } = useQuery({
     queryKey: ['categories', 'all', 'infostatyba'],
     queryFn: () => api.getAllCategories('infostatyba'),
@@ -108,49 +114,35 @@ const Stats = () => {
     refetchOnWindowFocus: false,
   });
 
-  const mainStatsData = [
+  const byApp = data?.byApp;
+  const prevByApp = previousData?.byApp;
+
+  // ---- Top KPI strip ----------------------------------------------------
+  const kpis = [
+    { label: 'Įvykių', count: data?.count, previous: previousData?.count },
     {
-      label: 'Įvykių',
-      count: data?.count,
-      previousCount: previousData?.count,
-      icon: IconName.heart,
+      label: 'Statyba',
+      count: byApp?.infostatyba?.count,
+      previous: prevByApp?.infostatyba?.count,
     },
     {
-      label: 'Kirtimų leidimų',
-      count: data?.byApp?.miskoKirtimai?.count,
-      previousCount: previousData?.byApp?.miskoKirtimai?.count,
-      icon: IconName.forest,
+      label: 'Kirtimai',
+      count: byApp?.miskoKirtimai?.count,
+      previous: prevByApp?.miskoKirtimai?.count,
     },
     {
-      label: 'Žuvinimų',
-      count: data?.byApp?.izuvinimas?.count,
-      previousCount: previousData?.byApp?.izuvinimas?.count,
-      icon: IconName.fishThin,
+      label: 'Žuvinimas',
+      count: byApp?.izuvinimas?.count,
+      previous: prevByApp?.izuvinimas?.count,
     },
     {
-      label: 'Statybos leidimų',
-      count: data?.byApp?.infostatyba?.count,
-      previousCount: previousData?.byApp?.infostatyba?.count,
-      icon: IconName.house,
-    },
-    {
-      label: 'Žemėtvarkos planavimų',
-      count: data?.byApp?.zemetvarkosPlanavimas?.count,
-      previousCount: previousData?.byApp?.zemetvarkosPlanavimas?.count,
-      icon: IconName.map,
-    },
-    {
-      label: 'Žemės paskirties keitimų',
-      count: data?.byApp?.savivaldybesZemetvarka?.count,
-      previousCount: previousData?.byApp?.savivaldybesZemetvarka?.count,
-      icon: IconName.buildings,
+      label: 'Planavimas',
+      count: byApp?.zemetvarkosPlanavimas?.count,
+      previous: prevByApp?.zemetvarkosPlanavimas?.count,
     },
   ];
 
-  const constructionsStatsByTag = data?.byApp?.infostatyba?.byTag;
-  const constructionsStatsByCategory = data?.byApp?.infostatyba?.byCategory;
-  const deforestationStatsByTag = data?.byApp?.miskoKirtimai?.byTag;
-
+  // ---- "Suskirstymas pagal tipą" cards ---------------------------------
   const categoryNameByCode = (infostatybaCategories ?? []).reduce<Record<string, string>>(
     (acc, c) => {
       acc[c.code] = c.name;
@@ -159,955 +151,317 @@ const Stats = () => {
     {},
   );
 
-  const constructionsStatsByCategoryArray = constructionsStatsByCategory
-    ? Object.keys(constructionsStatsByCategory).reduce<
-        Array<{ code: string; label: string; count: number; previousCount?: number }>
-      >((acc, code) => {
-        acc.push({
-          code,
-          label: categoryNameByCode[code] || code,
-          count: constructionsStatsByCategory[code].count,
-          previousCount: previousData?.byApp?.infostatyba?.byCategory?.[code]?.count,
-        });
-        return acc;
-      }, [])
-    : undefined;
-
-  const sortedCategoryStatsArray = orderBy(
-    constructionsStatsByCategoryArray,
-    (item) => Number(item.count),
-    'desc',
-  );
-
-  const highestCategoryStatsNumber = constructionsStatsByCategory
-    ? Object.values(constructionsStatsByCategory).reduce(
-        (max, v) => (v.count > max ? v.count : max),
-        0,
-      ) || 1
-    : 1;
-
-  const constructionsStatsArray =
-    constructionsStatsByTag &&
-    Object.keys(constructionsStatsByTag).reduce(
-      (acc: Array<{ label: string; count: number; previousCount?: number }>, key) => {
-        acc.push({
-          label: key,
-          count: constructionsStatsByTag[key].count,
-          previousCount: previousData?.byApp?.infostatyba?.byTag?.[key]?.count,
-        });
-        return acc;
-      },
-      [],
-    );
-
-  const sortedConstructionsStatsArray = orderBy(
-    constructionsStatsArray,
-    (item) => Number(item.count),
-    'desc',
-  );
-
-  const highestConstructionsStatsNumber = constructionsStatsByTag
-    ? Object.keys(constructionsStatsByTag).reduce((acc, key) => {
-        return acc < constructionsStatsByTag[key].count ? constructionsStatsByTag[key].count : acc;
-      }, 0)
-    : 1;
-
-  const deforestationStatsArray =
-    deforestationStatsByTag &&
-    Object.keys(deforestationStatsByTag).reduce(
-      (
-        acc: Array<{
-          label: string;
-          count: number;
-          previousCount?: number;
-          area: number;
-          previousArea?: number;
-          calculatedArea: number;
-          previousCalculatedArea?: number;
-        }>,
-        key,
-      ) => {
-        const calculatedArea = (deforestationStatsByTag[key] as any).calculatedArea || 0;
-        const previousCalculatedArea =
-          (previousData?.byApp?.miskoKirtimai?.byTag?.[key] as any)?.calculatedArea || 0;
-        acc.push({
-          label: key,
-          count: deforestationStatsByTag[key].count || 0,
-          previousCount: previousData?.byApp?.miskoKirtimai?.byTag?.[key]?.count,
-          area: deforestationStatsByTag[key].area || 0,
-          previousArea: previousData?.byApp?.miskoKirtimai?.byTag?.[key]?.area,
-          calculatedArea,
-          previousCalculatedArea,
-        });
-        return acc;
-      },
-      [],
-    );
-
-  const sortedDeforestationStatsArray = orderBy(
-    deforestationStatsArray,
-    (item) => Number(item[deforestationStatsFilter as keyof typeof item] || 0),
-    'desc',
-  );
-
-  if (sortedDeforestationStatsArray && sortedDeforestationStatsArray.length > 0) {
-    const totalCount = sortedDeforestationStatsArray.reduce(
-      (acc, item) => acc + Number(item.count || 0),
-      0,
-    );
-    const totalPreviousCount = sortedDeforestationStatsArray.reduce(
-      (acc, item) => acc + Number(item.previousCount || 0),
-      0,
-    );
-    const totalArea = sortedDeforestationStatsArray.reduce(
-      (acc, item) => acc + Number(item.area || 0),
-      0,
-    );
-    const totalPreviousArea = sortedDeforestationStatsArray.reduce(
-      (acc, item) => acc + Number(item.previousArea || 0),
-      0,
-    );
-    const totalCalculatedArea = sortedDeforestationStatsArray.reduce(
-      (acc, item) => acc + Number(item.calculatedArea || 0),
-      0,
-    );
-    const totalPreviousCalculatedArea = sortedDeforestationStatsArray.reduce(
-      (acc, item) => acc + Number(item.previousCalculatedArea || 0),
-      0,
-    );
-
-    sortedDeforestationStatsArray.unshift({
-      label:
-        deforestationStatsFilter === 'count'
-          ? 'Bendras leidimų skaičius'
-          : 'Bendras kertamas plotas',
-      count: totalCount,
-      previousCount: totalPreviousCount,
-      area: totalArea,
-      previousArea: totalPreviousArea,
-      calculatedArea: totalCalculatedArea,
-      previousCalculatedArea: totalPreviousCalculatedArea,
-    });
-  }
-
-  const highestDeforestationStatsNumber = deforestationStatsByTag
-    ? Object.keys(deforestationStatsByTag).reduce((acc, key) => {
-        const amount = deforestationStatsByTag[key][deforestationStatsFilter];
-        return acc < amount ? amount : acc;
-      }, 0)
-    : 1;
-
-  // Get last update data for each app type
-  const getLastUpdateForAppType = (appType: string) => {
-    return lastUpdateData?.byAppType?.find((item) => item.appType === appType);
+  // Build sorted rows from a byTag map, attaching previous counts for deltas.
+  const tagRows = (
+    tagMap?: Record<string, { count: number }>,
+    prevMap?: Record<string, { count: number }>,
+  ): BreakdownRow[] => {
+    if (!tagMap) return [];
+    const total = Object.values(tagMap).reduce((s, v) => s + (v.count || 0), 0);
+    const rows = Object.entries(tagMap).map(([label, v]) => ({
+      label,
+      count: v.count || 0,
+      previousCount: prevMap?.[label]?.count,
+      total,
+    }));
+    return orderBy(rows, (r) => r.count, 'desc');
   };
 
-  const miskoKirtimaiUpdate = getLastUpdateForAppType('miskoKirtimai');
-  const izuvinimasUpdate = getLastUpdateForAppType('izuvinimas');
-  const infostatybaUpdate = getLastUpdateForAppType('infostatyba');
-  const zemetvarkosPlanavimasUpdate = getLastUpdateForAppType('zemetvarkosPlanavimas');
-  const savivaldybeZemetvarkaUpdate = getLastUpdateForAppType('savivaldybesZemetvarka');
+  const categoryRows = (
+    catMap?: Record<string, { count: number }>,
+    prevMap?: Record<string, { count: number }>,
+  ): BreakdownRow[] => {
+    if (!catMap) return [];
+    const total = Object.values(catMap).reduce((s, v) => s + (v.count || 0), 0);
+    const rows = Object.entries(catMap).map(([code, v]) => ({
+      label: categoryNameByCode[code] || code,
+      count: v.count || 0,
+      previousCount: prevMap?.[code]?.count,
+      total,
+    }));
+    return orderBy(rows, (r) => r.count, 'desc');
+  };
 
-  const lastUpdateItems = [
+  // Only app types that carry a real byTag/byCategory breakdown get a card —
+  // currently miskoKirtimai and infostatyba. The other apps (zemetvarkos,
+  // izuvinimas, savivaldybes) have no tag/category data, so they'd render as
+  // empty cards; those are surfaced in the KPI strip and data-source section
+  // instead. Cards with no rows in the current window are filtered out below.
+  const breakdownCards = [
     {
-      label: 'Miško kirtimai',
-      lastUpdate: miskoKirtimaiUpdate?.lastUpdate || null,
-      lastUpdateCount: miskoKirtimaiUpdate?.lastUpdateCount || 0,
       icon: IconName.forest,
+      title: 'Kirtimų leidimai',
+      total: byApp?.miskoKirtimai?.count || 0,
+      rows: tagRows(byApp?.miskoKirtimai?.byTag, prevByApp?.miskoKirtimai?.byTag),
     },
     {
-      label: 'Žuvų įveisimas',
-      lastUpdate: izuvinimasUpdate?.lastUpdate || null,
-      lastUpdateCount: izuvinimasUpdate?.lastUpdateCount || 0,
-      icon: IconName.fishThin,
-    },
-    {
-      label: 'Statybos leidimai',
-      lastUpdate: infostatybaUpdate?.lastUpdate || null,
-      lastUpdateCount: infostatybaUpdate?.lastUpdateCount || 0,
       icon: IconName.house,
+      title: 'Statybų leidimai',
+      total: byApp?.infostatyba?.count || 0,
+      rows: tagRows(byApp?.infostatyba?.byTag, prevByApp?.infostatyba?.byTag),
     },
+    {
+      icon: IconName.buildings,
+      title: 'Statybų leidimai pagal kategoriją',
+      total: byApp?.infostatyba?.count || 0,
+      rows: categoryRows(byApp?.infostatyba?.byCategory, prevByApp?.infostatyba?.byCategory),
+    },
+  ].filter((c) => c.rows.length > 0);
+
+  // ---- "Akyviausi miestai" ---------------------------------------------
+  const byMunicipality = data?.byMunicipality || {};
+  const prevByMunicipality = previousData?.byMunicipality || {};
+
+  const topCities = orderBy(
+    Object.entries(byMunicipality).map(([name, v]) => ({ name, ...v })),
+    (c) => c.count,
+    'desc',
+  ).slice(0, 3);
+
+  const cityRows = (cityName: string, byAppMap: Record<string, number>): CityRow[] => {
+    const cityTotal = Object.values(byAppMap).reduce((s, n) => s + n, 0);
+    const prevCity = prevByMunicipality[cityName]?.byApp || {};
+    return orderBy(
+      Object.entries(byAppMap).map(([appType, count]) => ({
+        label: APP_SHORT_LABELS[appType] || appType,
+        color: APP_COLORS[appType] || '#707070',
+        count,
+        previousCount: prevCity[appType],
+        total: cityTotal,
+      })),
+      (r) => r.count,
+      'desc',
+    );
+  };
+
+  // ---- "Duomenų šaltiniai" ----------------------------------------------
+  const getUpd = (appType: string) => lastUpdateData?.byAppType?.find((i) => i.appType === appType);
+
+  const sourceItems = [
+    { label: 'Miško kirtimai', icon: IconName.forest, upd: getUpd('miskoKirtimai') },
+    { label: 'Žuvų įveisimas', icon: IconName.fishThin, upd: getUpd('izuvinimas') },
+    { label: 'Statybos leidimai', icon: IconName.house, upd: getUpd('infostatyba') },
     {
       label: 'Žemėtvarkos planavimas',
-      lastUpdate: zemetvarkosPlanavimasUpdate?.lastUpdate || null,
-      lastUpdateCount: zemetvarkosPlanavimasUpdate?.lastUpdateCount || 0,
       icon: IconName.map,
+      upd: getUpd('zemetvarkosPlanavimas'),
     },
     {
       label: 'Žemės paskirties keitimas (Vilnius)',
-      lastUpdate: savivaldybeZemetvarkaUpdate?.lastUpdate || null,
-      lastUpdateCount: savivaldybeZemetvarkaUpdate?.lastUpdateCount || 0,
       icon: IconName.buildings,
+      upd: getUpd('savivaldybesZemetvarka'),
     },
   ];
 
   return (
-    <MainContainer>
-      <BannerImageContainer>
-        <Image src={bannerUrl} />
-      </BannerImageContainer>
+    <Page>
+      <Header>
+        <PageTitle>Statistika</PageTitle>
+        <Controls>
+          <ToggleContainer onClick={() => setIsComparisonEnabled((v) => !v)}>
+            <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
+            <ToggleSwitch $isActive={isComparisonEnabled}>
+              <ToggleCircle $isActive={isComparisonEnabled} />
+            </ToggleSwitch>
+          </ToggleContainer>
+          <Datepicker
+            onChange={(filterValue, date) => {
+              setDateFilter(filterValue);
+              setQuery(date);
+              if (filterValue === TimeRanges.CUSTOM) {
+                setSearchParams({ range: filterValue, from: date.$gte, to: date.$lt });
+              } else {
+                setSearchParams({ range: filterValue });
+              }
+            }}
+            value={dateFilter}
+            selectedDates={query}
+          />
+        </Controls>
+      </Header>
+
       {isLoading ? (
         <LoaderContainer>
           <Loader />
         </LoaderContainer>
       ) : (
-        <Content>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: '16px',
-            }}
-          >
-            <Datepicker
-              onChange={(filterValue, date) => {
-                setDateFilter(filterValue);
-                setQuery(date);
-                if (filterValue === TimeRanges.CUSTOM) {
-                  setSearchParams({ range: filterValue, from: date.$gte, to: date.$lt });
-                } else {
-                  setSearchParams({ range: filterValue });
-                }
-              }}
-              value={dateFilter}
-              selectedDates={query}
-            />
-            <DateRangeLabel>
-              {(() => {
-                const today = new Date().toISOString().slice(0, 10);
-                const end =
-                  effectiveQuery.$lt.slice(0, 10) > today ? today : effectiveQuery.$lt.slice(0, 10);
-                return `${effectiveQuery.$gte.slice(0, 10)} – ${end}`;
-              })()}
-            </DateRangeLabel>
-            <ToggleContainer onClick={() => setIsComparisonEnabled(!isComparisonEnabled)}>
-              <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
-              <ToggleSwitch $isActive={isComparisonEnabled}>
-                <ToggleCircle $isActive={isComparisonEnabled} />
-              </ToggleSwitch>
-            </ToggleContainer>
-          </div>
-
-          <Row>
-            <MainStatsWrapper>
-              {mainStatsData.map((item) => (
-                <MainStatsItem key={item.label}>
-                  <IconWrapper>
-                    <StyledIcon name={item.icon} />
-                  </IconWrapper>
-                  <StatsInfoContainer>
-                    <StatsNumber style={{ gap: '4px' }}>
-                      <span style={{ whiteSpace: 'nowrap' }}>{item.count || '0'}</span>
-                      {isComparisonEnabled && (
-                        <StatDelta
-                          current={item.count}
-                          previous={item.previousCount}
-                          isFetching={isPreviousFetching}
-                        />
-                      )}
-                    </StatsNumber>
-                    <StatsLabel>{item.label}</StatsLabel>
-                  </StatsInfoContainer>
-                </MainStatsItem>
-              ))}
-            </MainStatsWrapper>
-            <DetailedStatsWrapper>
-              <StatsHeader>Statybų leidimai</StatsHeader>
-
-              {constructionsStatsByTag ? (
-                sortedConstructionsStatsArray?.map(({ label, count, previousCount }) => {
-                  const statsPercentage = (count * 100) / highestConstructionsStatsNumber;
-                  return (
-                    <>
-                      <DetailedStatsRow
-                        key={label}
-                        style={{
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '8px',
-                        }}
-                      >
-                        <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
-                          {label}
-                        </InfoLabel>
-                        <AmountLabel
-                          style={{
-                            flexShrink: 0,
-                            minWidth: 'auto',
-                            gap: '4px',
-                            marginLeft: 'auto',
-                          }}
-                        >
-                          <span style={{ whiteSpace: 'nowrap' }}>{count}</span>
-                          {isComparisonEnabled && (
-                            <StatDelta
-                              current={count}
-                              previous={previousCount}
-                              isFetching={isPreviousFetching}
-                            />
-                          )}
-                        </AmountLabel>
-                      </DetailedStatsRow>
-                      <InfoBarWrapper>
-                        <InfoBar $percentage={statsPercentage} />
-                      </InfoBarWrapper>
-                    </>
-                  );
-                })
-              ) : (
-                <InfoLabel>Nėra duomenų</InfoLabel>
-              )}
-            </DetailedStatsWrapper>
-
-            <DetailedStatsWrapper>
-              <RowContainer>
-                <StatsHeader>Kirtimų leidimai</StatsHeader>
-                {deforestationStatsByTag && (
-                  <SliderWrapper>
-                    <SliderButton
-                      onClick={() => setDeforestationStatsFilter('count')}
-                      $isActive={deforestationStatsFilter === 'count'}
-                    >
-                      <SwitchLabel>Leidimų skaičius</SwitchLabel>
-                    </SliderButton>
-                    <SliderButton
-                      onClick={() => setDeforestationStatsFilter('area')}
-                      $isActive={deforestationStatsFilter === 'area'}
-                    >
-                      <SwitchLabel>Kertamas plotas</SwitchLabel>
-                    </SliderButton>
-                  </SliderWrapper>
+        <>
+          <KpiStrip>
+            {kpis.map((k) => (
+              <Kpi key={k.label}>
+                <KpiLabel>{k.label}</KpiLabel>
+                <KpiValueRow>
+                  <KpiValue>{(k.count ?? 0).toLocaleString('lt-LT')}</KpiValue>
+                </KpiValueRow>
+                {isComparisonEnabled && (
+                  <Delta current={k.count} previous={k.previous} isFetching={isPreviousFetching} />
                 )}
-              </RowContainer>
-              {deforestationStatsByTag ? (
-                <>
-                  {sortedDeforestationStatsArray
-                    ?.slice(0, 1)
-                    .map(({ label, count, area, previousCount, previousArea }) => {
-                      const safeArea = area || 0;
-                      const safePreviousArea = previousArea || 0;
-                      return (
-                        <div key={label}>
-                          <DetailedStatsRow
-                            style={{
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '8px',
-                            }}
-                          >
-                            <div
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                flex: 1,
-                                minWidth: '200px',
-                              }}
-                            >
-                              <StyledIcon
-                                name={IconName.forest}
-                                style={{
-                                  color: '#000000',
-                                  width: '20px',
-                                  height: '20px',
-                                  flexShrink: 0,
-                                }}
-                              />
-                              <InfoLabel style={{ paddingRight: 0 }}>{label}</InfoLabel>
-                            </div>
-                            <AmountLabel
-                              style={{
-                                fontSize: '1.8rem',
-                                flexShrink: 0,
-                                minWidth: 'auto',
-                                gap: '4px',
-                                marginLeft: 'auto',
-                              }}
-                            >
-                              <span style={{ whiteSpace: 'nowrap' }}>
-                                {deforestationStatsFilter === 'count'
-                                  ? count
-                                  : `${Number(safeArea).toFixed(2)} ha`}
-                              </span>
-                              {isComparisonEnabled && !isPreviousFetching && (
-                                <StatDelta
-                                  current={
-                                    deforestationStatsFilter === 'count'
-                                      ? count
-                                      : Number(safeArea.toFixed(2))
-                                  }
-                                  previous={
-                                    deforestationStatsFilter === 'count'
-                                      ? previousCount
-                                      : Number(safePreviousArea.toFixed(2))
-                                  }
-                                  isFetching={isPreviousFetching}
-                                />
-                              )}
-                            </AmountLabel>
-                          </DetailedStatsRow>
-                          {deforestationStatsFilter === 'area' &&
-                            label === 'Bendras kertamas plotas' && (
-                              <DetailedStatsRow
-                                style={{
-                                  alignItems: 'flex-start',
-                                  justifyContent: 'space-between',
-                                  marginTop: 0,
-                                  flexWrap: 'wrap',
-                                  gap: '8px',
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    flex: 1,
-                                    minWidth: '200px',
-                                  }}
-                                >
-                                  <InfoLabel
-                                    style={{
-                                      fontSize: '1.4rem',
-                                      color: '#6b7280',
-                                      paddingRight: 0,
-                                    }}
-                                  >
-                                    Preliminarus iškirstas plotas pagal kirtimo intensyvumą
-                                  </InfoLabel>
-                                </div>
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    marginLeft: 'auto',
-                                    justifyContent: 'flex-end',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  <AmountLabel
-                                    style={{
-                                      fontSize: '1.4rem',
-                                      color: '#6b7280',
-                                      minWidth: 'auto',
-                                      textAlign: 'right',
-                                      flexShrink: 0,
-                                      gap: '4px',
-                                    }}
-                                  >
-                                    <span style={{ whiteSpace: 'nowrap' }}>
-                                      {Number(
-                                        sortedDeforestationStatsArray[0]?.calculatedArea || 0,
-                                      ).toFixed(2)}{' '}
-                                      ha
-                                    </span>
-                                    {isComparisonEnabled && (
-                                      <StatDelta
-                                        current={Number(
-                                          Number(
-                                            sortedDeforestationStatsArray[0]?.calculatedArea || 0,
-                                          ).toFixed(2),
-                                        )}
-                                        previous={Number(
-                                          Number(
-                                            sortedDeforestationStatsArray[0]
-                                              ?.previousCalculatedArea || 0,
-                                          ).toFixed(2),
-                                        )}
-                                        isFetching={isPreviousFetching}
-                                      />
-                                    )}
-                                  </AmountLabel>
-                                  <div
-                                    style={{
-                                      paddingRight: '2px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                    }}
-                                  >
-                                    <Tooltip
-                                      content={
-                                        <div>
-                                          Apskaičiuojama pagal kirtimo leidimų tipus ir jiems
-                                          priskirtą procentinę dalį nuo numatomo ploto.
-                                          <br />
-                                          <br />
-                                          Plynas, Plynas sanitarinis, Lydimo - 100%
-                                          <br />
-                                          Atvejiniai - 50%
-                                          <br />
-                                          Kiti - 25%
-                                        </div>
-                                      }
-                                    >
-                                      <Icon
-                                        name={IconName.info}
-                                        style={{
-                                          color: '#6b7280',
-                                          fontSize: '1.6rem',
-                                          marginTop: '2px',
-                                          display: 'flex',
-                                        }}
-                                      />
-                                    </Tooltip>
-                                  </div>
-                                </div>
-                              </DetailedStatsRow>
-                            )}
-                          <hr
-                            style={{
-                              border: 'none',
-                              borderTop: '2px solid #e5e7eb',
-                              margin: '16px 0 8px 0',
-                            }}
-                          />
-                        </div>
-                      );
-                    })}
+              </Kpi>
+            ))}
+          </KpiStrip>
 
-                  <CollapsibleContainer $isExpanded={showAllDeforestationStats}>
-                    {sortedDeforestationStatsArray
-                      ?.slice(1)
-                      .map(({ label, count, area, previousCount, previousArea }) => {
-                        const safeArea = area || 0;
-                        const safePreviousArea = previousArea || 0;
-                        const statsPercentage =
-                          ((deforestationStatsFilter === 'count' ? count : safeArea) * 100) /
-                          highestDeforestationStatsNumber;
+          <SectionTitle>Suskirstymas pagal tipą</SectionTitle>
+          <CardGrid>
+            {breakdownCards.map((c) => (
+              <BreakdownCard
+                key={c.title}
+                icon={c.icon}
+                title={c.title}
+                total={c.total}
+                rows={c.rows}
+                showComparison={isComparisonEnabled}
+                isFetching={isPreviousFetching}
+              />
+            ))}
+          </CardGrid>
 
-                        return (
-                          <div key={label}>
-                            <DetailedStatsRow
-                              style={{
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '8px',
-                              }}
-                            >
-                              <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
-                                {label}
-                              </InfoLabel>
-                              <AmountLabel
-                                style={{
-                                  flexShrink: 0,
-                                  minWidth: 'auto',
-                                  gap: '4px',
-                                  marginLeft: 'auto',
-                                }}
-                              >
-                                <span style={{ whiteSpace: 'nowrap' }}>
-                                  {deforestationStatsFilter === 'count'
-                                    ? count
-                                    : `${Number(safeArea).toFixed(2)} ha`}
-                                </span>
-                                {isComparisonEnabled && !isPreviousFetching && (
-                                  <StatDelta
-                                    current={
-                                      deforestationStatsFilter === 'count'
-                                        ? count
-                                        : Number(safeArea.toFixed(2))
-                                    }
-                                    previous={
-                                      deforestationStatsFilter === 'count'
-                                        ? previousCount
-                                        : Number(safePreviousArea.toFixed(2))
-                                    }
-                                    isFetching={isPreviousFetching}
-                                  />
-                                )}
-                              </AmountLabel>
-                            </DetailedStatsRow>
-                            <InfoBarWrapper>
-                              <InfoBar $percentage={statsPercentage || 0} />
-                            </InfoBarWrapper>
-                          </div>
-                        );
-                      })}
-                  </CollapsibleContainer>
-
-                  {sortedDeforestationStatsArray && sortedDeforestationStatsArray.length > 5 && (
-                    <ShowMoreButton
-                      onClick={() => setShowAllDeforestationStats(!showAllDeforestationStats)}
-                    >
-                      {showAllDeforestationStats ? 'Rodyti mažiau' : 'Rodyti daugiau'}
-                      <ChevronIcon
-                        name={IconName.dropdownArrow}
-                        $isExpanded={showAllDeforestationStats}
-                      />
-                    </ShowMoreButton>
-                  )}
-                </>
-              ) : (
-                <InfoLabel>Nėra duomenų</InfoLabel>
-              )}
-            </DetailedStatsWrapper>
-          </Row>
-
-          {/* Statybų leidimai — pasiskirstymas pagal kategoriją (full width
-              because there are too many leaves to fit in the 35% column) */}
-          {constructionsStatsByCategory && (
-            <FullWidthStatsWrapper>
-              <StatsHeader>Statybų leidimai pagal kategoriją</StatsHeader>
-              {sortedCategoryStatsArray
-                .slice(0, 10)
-                .map(({ code, label, count, previousCount }) => {
-                  const statsPercentage = (count * 100) / highestCategoryStatsNumber;
-                  return (
-                    <div key={code}>
-                      <DetailedStatsRow
-                        style={{
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '8px',
-                        }}
-                      >
-                        <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
-                          {label}
-                        </InfoLabel>
-                        <AmountLabel
-                          style={{
-                            flexShrink: 0,
-                            minWidth: 'auto',
-                            gap: '4px',
-                            marginLeft: 'auto',
-                          }}
-                        >
-                          <span style={{ whiteSpace: 'nowrap' }}>{count}</span>
-                          {isComparisonEnabled && (
-                            <StatDelta
-                              current={count}
-                              previous={previousCount}
-                              isFetching={isPreviousFetching}
-                            />
-                          )}
-                        </AmountLabel>
-                      </DetailedStatsRow>
-                      <InfoBarWrapper>
-                        <InfoBar $percentage={statsPercentage} />
-                      </InfoBarWrapper>
-                    </div>
-                  );
-                })}
-              <CollapsibleContainer $isExpanded={showAllCategoryStats}>
-                {sortedCategoryStatsArray.slice(10).map(({ code, label, count, previousCount }) => {
-                  const statsPercentage = (count * 100) / highestCategoryStatsNumber;
-                  return (
-                    <div key={code}>
-                      <DetailedStatsRow
-                        style={{
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '8px',
-                        }}
-                      >
-                        <InfoLabel style={{ flex: 1, paddingRight: 0, minWidth: '200px' }}>
-                          {label}
-                        </InfoLabel>
-                        <AmountLabel
-                          style={{
-                            flexShrink: 0,
-                            minWidth: 'auto',
-                            gap: '4px',
-                            marginLeft: 'auto',
-                          }}
-                        >
-                          <span style={{ whiteSpace: 'nowrap' }}>{count}</span>
-                          {isComparisonEnabled && (
-                            <StatDelta
-                              current={count}
-                              previous={previousCount}
-                              isFetching={isPreviousFetching}
-                            />
-                          )}
-                        </AmountLabel>
-                      </DetailedStatsRow>
-                      <InfoBarWrapper>
-                        <InfoBar $percentage={statsPercentage} />
-                      </InfoBarWrapper>
-                    </div>
-                  );
-                })}
-              </CollapsibleContainer>
-              {sortedCategoryStatsArray.length > 10 && (
-                <ShowMoreButton onClick={() => setShowAllCategoryStats(!showAllCategoryStats)}>
-                  {showAllCategoryStats ? 'Rodyti mažiau' : 'Rodyti daugiau'}
-                  <ChevronIcon name={IconName.dropdownArrow} $isExpanded={showAllCategoryStats} />
-                </ShowMoreButton>
-              )}
-            </FullWidthStatsWrapper>
-          )}
-
-          {/* Last Update Section */}
-          {!isLoadingLastUpdate && lastUpdateData && (
+          {topCities.length > 0 && (
             <>
-              <Separator />
-              <LastUpdateSection>
-                <SectionTitle>Duomenų atnaujinimo laikas</SectionTitle>
-                <LastUpdateGrid>
-                  {lastUpdateItems.map((item) => (
-                    <LastUpdateCard key={item.label}>
-                      <LastUpdateHeader>
-                        <LastUpdateIconWrapper>
-                          <LastUpdateIcon name={item.icon} />
-                        </LastUpdateIconWrapper>
-                        <LastUpdateTitle>{item.label}</LastUpdateTitle>
-                      </LastUpdateHeader>
-                      <LastUpdateBody>
-                        <LastUpdateInfo>
-                          <LastUpdateRow>
-                            <LastUpdateLabel>Paskutinis atnaujinimas:</LastUpdateLabel>
-                            <LastUpdateValue $color={getUpdateStatusColor(item.lastUpdate)}>
-                              {formatRelativeTime(item.lastUpdate)}
-                            </LastUpdateValue>
-                            {item.lastUpdate && (
-                              <LastUpdateValue
-                                style={{ fontSize: '1.4rem', color: '#6b7280', fontWeight: 400 }}
-                              >
-                                {new Date(item.lastUpdate).toLocaleString('lt-LT')}
-                              </LastUpdateValue>
-                            )}
-                          </LastUpdateRow>
-                        </LastUpdateInfo>
-                        {item.lastUpdateCount > 0 && (
-                          <LastUpdateCountBox>
-                            <LastUpdateCountTitle>Gauti</LastUpdateCountTitle>
-                            <LastUpdateCountNumber>
-                              {item.lastUpdateCount.toLocaleString('lt-LT')}
-                            </LastUpdateCountNumber>
-                            <LastUpdateCountLabel>nauji įvykiai</LastUpdateCountLabel>
-                          </LastUpdateCountBox>
-                        )}
-                      </LastUpdateBody>
-                    </LastUpdateCard>
-                  ))}
-                </LastUpdateGrid>
-              </LastUpdateSection>
+              <SectionTitle>Akyviausi miestai</SectionTitle>
+              <CityGrid>
+                {topCities.map((city) => (
+                  <CityCard
+                    key={city.name}
+                    city={prettyMunicipality(city.name)}
+                    rows={cityRows(city.name, city.byApp)}
+                    showComparison={isComparisonEnabled}
+                    isFetching={isPreviousFetching}
+                  />
+                ))}
+              </CityGrid>
             </>
           )}
-        </Content>
+
+          {!isLoadingLastUpdate && lastUpdateData && (
+            <>
+              <SectionTitle>Duomenų šaltiniai</SectionTitle>
+              <SourceGrid>
+                {sourceItems.map((s) => (
+                  <SourceCard
+                    key={s.label}
+                    icon={s.icon}
+                    title={s.label}
+                    lastUpdate={s.upd?.lastUpdate || null}
+                    lastUpdateCount={s.upd?.lastUpdateCount || 0}
+                  />
+                ))}
+              </SourceGrid>
+            </>
+          )}
+
+          <SubscribeBanner />
+        </>
       )}
-    </MainContainer>
+    </Page>
   );
 };
 
-const MainContainer = styled.div`
+export default Stats;
+
+const Page = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 100%;
+  padding: 40px 0;
   @media ${device.desktop} {
-    max-width: 1520px;
+    max-width: 1216px;
   }
-`;
-
-const BannerImageContainer = styled.div`
-  width: 100%;
-  margin-bottom: -5px;
-`;
-
-const Image = styled.img`
-  width: 100%;
-  object-fit: cover;
-  @media ${device.desktop} {
-    border-radius: 32px;
-  }
-`;
-
-const Content = styled.div`
-  padding: 40px 0px;
   @media ${device.tablet} {
-    flex-wrap: wrap;
-    background-color: ${({ theme }) => theme.colors.background};
-    padding: 40px 24px;
-    margin-top: 0px;
+    padding: 32px 20px;
   }
 `;
 
-const Row = styled.div`
-  align-items: center;
-  flex-direction: row;
+const Header = styled.div`
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: start;
-  margin-top: 40px;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 32px;
+`;
+
+const PageTitle = styled.h1`
+  ${font('3xl')};
+  margin: 0;
+`;
+
+const Controls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+`;
+
+const KpiStrip = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  @media ${device.mobileL} {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+`;
+
+const Kpi = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const KpiLabel = styled.div`
+  font-size: 1.4rem;
+  color: ${({ theme }) => theme.colors.grey[600]};
+`;
+
+const KpiValueRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+`;
+
+const KpiValue = styled.div`
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: ${({ theme }) => theme.colors.text?.primary};
+  line-height: 1.1;
+`;
+
+const SectionTitle = styled.h2`
+  ${font('xl')};
+  font-weight: 600;
+  margin: 48px 0 20px;
+`;
+
+const CardGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
   @media ${device.tablet} {
-    flex-wrap: wrap;
-    background-color: ${({ theme }) => theme.colors.background};
-    flex-direction: column;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media ${device.mobileL} {
+    grid-template-columns: 1fr;
   }
 `;
 
-const MainStatsWrapper = styled.div`
-  flex-direction: column;
-  width: 30%;
+const CityGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
   @media ${device.tablet} {
-    width: 100%;
+    grid-template-columns: 1fr;
   }
 `;
 
-const MainStatsItem = styled.div`
-  display: flex;
-  flex-direction: row;
-  background-color: white;
-  border-radius: 32px;
-  padding: 16px;
-  gap: 16px;
-  margin-bottom: 24px;
-`;
-
-const IconWrapper = styled.div`
-  width: 64px;
-  height: 64px;
-  border-radius: 32px;
-  background-color: ${({ theme }) => theme.colors.primary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const StyledIcon = styled(Icon)`
-  height: 32px;
-  width: 32px;
-  color: ${({ theme }) => theme.colors.tertiary};
-`;
-
-const StatsInfoContainer = styled.div`
-  flex-direction: column;
-`;
-
-const StatsNumber = styled.div`
-  color: ${({ theme }) => theme.colors.text?.secondary};
-  font-size: 2rem;
-  font-weight: 800;
-  line-height: 40px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-`;
-
-const StatsLabel = styled.div`
-  color: ${({ theme }) => theme.colors.text?.secondary};
-  font-size: 1.6rem;
-  font-weight: 400;
-  line-height: 22px;
-`;
-
-const DetailedStatsWrapper = styled.div`
-  flex-direction: column;
-  background-color: white;
-  border-radius: 32px;
-  padding: 32px;
-  width: 35%;
-  display: flex;
-  @media ${device.tablet} {
-    width: 100%;
+const SourceGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  @media ${device.mobileL} {
+    grid-template-columns: 1fr;
   }
-`;
-
-const FullWidthStatsWrapper = styled.div`
-  flex-direction: column;
-  background-color: white;
-  border-radius: 32px;
-  padding: 32px;
-  width: 100%;
-  display: flex;
-  margin-top: 24px;
-`;
-
-const StatsHeader = styled.div`
-  color: black;
-  font-size: 1.8rem;
-  font-weight: 600;
-  line-height: 26px;
-  margin-bottom: 32px;
-  min-width: 200px;
-`;
-
-const InfoLabel = styled.div`
-  color: #0e0e0e;
-  font-size: 1.6rem;
-  font-weight: 500;
-  line-height: 20px;
-  word-wrap: break-word;
-  padding-right: 16px;
-`;
-
-const AmountLabel = styled.div`
-  color: #0e0e0e;
-  font-size: 1.6rem;
-  font-weight: 500;
-  line-height: 18px;
-  min-width: 100px;
-  text-align: end;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-`;
-
-const SwitchLabel = styled.div`
-  color: #0e0e0e;
-  font-size: 1.4rem;
-  font-weight: 500;
-  line-height: 18px;
-`;
-
-const InfoBarWrapper = styled.div`
-  height: 8px;
-  width: 100%;
-  background-color: ${({ theme }) => theme.colors.background};
-  border-radius: 10px;
-`;
-
-const InfoBar = styled.div<{ $percentage: number }>`
-  height: 8px;
-  width: ${({ $percentage }) => `${$percentage}%`};
-  background-color: ${({ theme }) => theme.colors.primary};
-  border-radius: 10px;
-`;
-
-const DetailedStatsRow = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
-  margin-top: 12px;
-  width: 100%;
-  flex-wrap: wrap;
-`;
-
-const SliderWrapper = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  padding: 8px;
-  background-color: ${({ theme }) => theme.colors.background};
-  border-radius: 32px;
-  align-self: center;
-  margin-bottom: 32px;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-`;
-
-const SliderButton = styled.div<{ $isActive: boolean }>`
-  border-radius: 32px;
-  padding: 12px;
-  cursor: pointer;
-  background-color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primary : theme.colors.background};
-`;
-
-const RowContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  flex-wrap: wrap;
 `;
 
 const LoaderContainer = styled.div`
@@ -1115,195 +469,6 @@ const LoaderContainer = styled.div`
   width: 100%;
   margin-top: 40px;
   justify-content: center;
-  align-items: center;
-`;
-
-const Separator = styled.hr`
-  border: none;
-  border-top: 1px solid #e5e7eb;
-  margin: 64px 0 40px 0;
-  width: 100%;
-`;
-
-const LastUpdateSection = styled.div`
-  margin-top: 40px;
-  margin-bottom: 20px;
-`;
-
-const SectionTitle = styled.h2`
-  color: ${({ theme }) => theme.colors.text?.secondary};
-  font-size: 2.4rem;
-  font-weight: 700;
-  margin-bottom: 24px;
-  @media ${device.tablet} {
-    font-size: 2rem;
-  }
-`;
-
-const LastUpdateGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  @media ${device.tablet} {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const LastUpdateCard = styled.div`
-  background-color: white;
-  border-radius: 32px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
-const LastUpdateHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.background};
-`;
-
-const LastUpdateIconWrapper = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
-  flex-shrink: 0;
-  background-color: ${({ theme }) => theme.colors.primary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const LastUpdateIcon = styled(Icon)`
-  height: 24px;
-  width: 24px;
-  color: ${({ theme }) => theme.colors.tertiary};
-`;
-
-const LastUpdateTitle = styled.div`
-  color: ${({ theme }) => theme.colors.text?.secondary};
-  font-size: 1.8rem;
-  font-weight: 600;
-  line-height: 24px;
-`;
-
-const LastUpdateBody = styled.div`
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-`;
-
-const LastUpdateInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-`;
-
-const LastUpdateRow = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const LastUpdateCountBox = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: ${({ theme }) => theme.colors.background};
-  border-radius: 16px;
-  padding: 12px 16px;
-  min-width: 80px;
-  flex-shrink: 0;
-`;
-
-const LastUpdateCountTitle = styled.div`
-  color: ${({ theme }) => theme.colors.text?.secondary};
-  font-size: 1.4rem;
-  font-weight: 700;
-  text-align: center;
-`;
-
-const LastUpdateCountNumber = styled.div`
-  color: ${({ theme }) => theme.colors.text?.secondary};
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1.2;
-  text-align: center;
-  @media ${device.tablet} {
-    font-size: 1.8rem;
-  }
-`;
-
-const LastUpdateCountLabel = styled.div`
-  color: #6b7280;
-  font-size: 1.2rem;
-  font-weight: 400;
-  text-align: center;
-  margin-top: 2px;
-`;
-
-const LastUpdateLabel = styled.div`
-  color: #6b7280;
-  font-size: 1.4rem;
-  font-weight: 400;
-  line-height: 18px;
-`;
-
-const LastUpdateValue = styled.div<{ $color?: string }>`
-  color: ${({ $color, theme }) => $color || theme.colors.text?.secondary};
-  font-size: 1.6rem;
-  font-weight: 600;
-  line-height: 20px;
-`;
-
-const CollapsibleContainer = styled.div<{ $isExpanded: boolean }>`
-  max-height: ${({ $isExpanded }) => ($isExpanded ? '2000px' : '220px')};
-  overflow: hidden;
-  transition: max-height 0.4s ease-in-out;
-`;
-
-const ShowMoreButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  margin-top: 16px;
-  background: none;
-  border: none;
-  color: ${({ theme }) => theme.colors.primary};
-  font-size: 1.6rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s;
-
-  &:hover {
-    opacity: 0.8;
-  }
-`;
-
-const ChevronIcon = styled(Icon)<{ $isExpanded: boolean }>`
-  width: 24px;
-  height: 24px;
-  color: currentColor;
-  transform: ${({ $isExpanded }) => ($isExpanded ? 'rotate(180deg)' : 'rotate(0deg)')};
-  transition: transform 0.4s ease-in-out;
-  margin-top: 3px;
-`;
-
-const DateRangeLabel = styled.div`
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text?.secondary};
-  margin-top: 4px;
 `;
 
 const ToggleContainer = styled.div`
@@ -1316,14 +481,15 @@ const ToggleContainer = styled.div`
 const ToggleLabel = styled.span`
   font-size: 1.4rem;
   font-weight: 500;
-  color: ${({ theme }) => theme.colors.text?.secondary || '#374151'};
+  color: ${({ theme }) => theme.colors.text?.primary};
 `;
 
 const ToggleSwitch = styled.div<{ $isActive: boolean }>`
   width: 44px;
   height: 24px;
   border-radius: 12px;
-  background-color: ${({ $isActive, theme }) => ($isActive ? theme.colors.primary : '#D1D5DB')};
+  background-color: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.primary : theme.colors.grey[400]};
   position: relative;
   transition: background-color 0.3s ease;
 `;
@@ -1332,30 +498,10 @@ const ToggleCircle = styled.div<{ $isActive: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: white;
+  background-color: ${({ theme }) => theme.colors.white};
   position: absolute;
   top: 2px;
   left: ${({ $isActive }) => ($isActive ? '22px' : '2px')};
   transition: left 0.3s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 `;
-
-const MiniSpinner = styled.div`
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(0, 0, 0, 0.1);
-  border-left-color: ${({ theme }) => theme.colors.primary};
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-export default Stats;

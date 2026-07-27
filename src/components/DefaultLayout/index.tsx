@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { AppRoute } from '@aplinkosministerija/design-system';
 import { device } from '../../styles';
 import TopNav from './TopNav';
+import Footer from '../home/Footer';
 
 export interface DefaultLayoutProps {
   loggedIn: boolean;
@@ -29,6 +30,7 @@ const DefaultLayout = (props: DefaultLayoutProps) => {
       <ScrollableContainer>
         <TopNav {...props} />
         {fullBleed ? children : <InnerContainer>{children}</InnerContainer>}
+        <Footer />
       </ScrollableContainer>
     </Container>
   );

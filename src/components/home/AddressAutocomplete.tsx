@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import styled from 'styled-components';
 import { font } from '../../styles';
-import { AddressSuggestion, IconName } from '../../utils';
+import { AddressSuggestion, IconName, useRecentAddresses } from '../../utils';
 import api from '../../utils/api';
 import Icon from '../Icons';
 
@@ -24,6 +24,10 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const { recents, add: addRecent, remove: removeRecent } = useRecentAddresses();
+
+  // Show the recent-searches list when the field is focused with no query yet.
+  const showRecents = open && debounced.length < 3 && recents.length > 0;
 
   // Debounce the query term (300ms, matching the events feed search).
   useEffect(() => {
@@ -50,6 +54,7 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
   const pick = (s: AddressSuggestion) => {
     onChange(s.label);
     onSelect(s);
+    addRecent(s);
     setOpen(false);
     setHighlight(-1);
   };
@@ -86,7 +91,7 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
             onSelect(null);
             setOpen(true);
           }}
-          onFocus={() => value.trim().length >= 3 && setOpen(true)}
+          onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
         />
       </InputRow>
@@ -108,6 +113,39 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
               {s.label}
             </Option>
           ))}
+        </Dropdown>
+      )}
+
+      {showRecents && (
+        <Dropdown>
+          <RecentsHeader>Neseniai ieškota</RecentsHeader>
+          {/* Scrollable: all recents (up to 10) live here, but only ~4 show at
+              once (RecentsList max-height) so the dropdown stays compact. */}
+          <RecentsList>
+            {recents.map((r) => (
+              <RecentRow key={r.label}>
+                <RecentLabel
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    pick(r);
+                  }}
+                >
+                  <RecentIcon name={IconName.time} />
+                  <span>{r.label}</span>
+                </RecentLabel>
+                <RemoveButton
+                  aria-label="Pašalinti"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    removeRecent(r.label);
+                  }}
+                >
+                  <Icon name={IconName.close} />
+                </RemoveButton>
+              </RecentRow>
+            ))}
+          </RecentsList>
         </Dropdown>
       )}
     </Wrap>
@@ -175,4 +213,73 @@ const Empty = styled.div`
   ${font('base')};
   padding: 12px 14px;
   color: ${({ theme }) => theme.colors.grey[600]};
+`;
+
+const RecentsHeader = styled.div`
+  ${font('base', 600)};
+  font-size: 1.3rem;
+  padding: 8px 14px 4px;
+  color: ${({ theme }) => theme.colors.grey[600]};
+`;
+
+// ~4 rows visible at once (each ≈ 44px); the rest scroll.
+const RecentsList = styled.div`
+  max-height: 180px;
+  overflow-y: auto;
+`;
+
+const RecentRow = styled.div`
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+  }
+`;
+
+const RecentLabel = styled.div`
+  ${font('base')};
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 4px 11px 14px;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.text.primary};
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+`;
+
+const RecentIcon = styled(Icon)`
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  color: ${({ theme }) => theme.colors.grey[500]};
+`;
+
+const RemoveButton = styled.button`
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.grey[500]};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.text.primary};
+    background: ${({ theme }) => theme.colors.grey[300]};
+  }
+
+  svg {
+    font-size: 1.5rem;
+  }
 `;

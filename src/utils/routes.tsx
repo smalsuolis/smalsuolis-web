@@ -4,11 +4,9 @@ import About from '../pages/About';
 import { default as CreatePassword } from '../pages/CreatePassword';
 import EventPage from '../pages/Event';
 import Events from '../pages/Events';
-import RemindPassword from '../pages/ForgotPassword';
-import Login from '../pages/Login';
+import AuthRouteRedirect from '../components/auth/AuthRouteRedirect';
 import MyEvents from '../pages/MyEvents';
 import Profile from '../pages/Profile';
-import Registration from '../pages/Registration';
 import ResetPassword from '../pages/ResetPassword';
 import Subscription from '../pages/Subscription';
 import Subscriptions from '../pages/Subscriptions';
@@ -50,7 +48,7 @@ export const routes: AppRoute[] = [
     slug: slugs.map,
   },
   {
-    component: <Login />,
+    component: <AuthRouteRedirect type="login" />,
     loggedIn: false,
     title: titles.login,
     slug: slugs.login,
@@ -81,12 +79,12 @@ export const routes: AppRoute[] = [
     slug: slugs.subscription(':id'),
   },
   {
-    component: <RemindPassword />,
+    component: <AuthRouteRedirect type="forgot" />,
     title: titles.forgotPassword,
     slug: slugs.forgotPassword,
   },
   {
-    component: <Registration />,
+    component: <AuthRouteRedirect type="register" />,
     title: titles.registration,
     loggedIn: false,
     slug: slugs.registration,

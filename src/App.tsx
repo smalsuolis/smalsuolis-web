@@ -7,6 +7,8 @@ import { UserContext, UserContextType } from './components/UserProvider';
 import { IconName, useGetCurrentRoute, useLogout, routes, slugs } from './utils';
 import Icon from './components/Icons';
 import DefaultLayout from './components/DefaultLayout';
+import { useAuthModal } from './components/auth/AuthModalContext';
+import AuthModalRoot from './components/auth/AuthModalRoot';
 
 function App() {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ function App() {
   const { isLoading, loggedIn, subscriptionsCount } = useContext<UserContextType>(UserContext);
   const currentRoute = useGetCurrentRoute();
   const { mutateAsync: logout } = useLogout();
+  const { open: openAuthModal } = useAuthModal();
 
   if (isLoading) return <LoaderComponent />;
 
@@ -30,7 +33,10 @@ function App() {
 
   // Home and the map page render edge-to-edge (own hero / full-viewport map),
   // outside the padded inner content container.
-  const isFullBleed = currentRoute?.slug === slugs.home || currentRoute?.slug === slugs.map;
+  const isFullBleed =
+    currentRoute?.slug === slugs.home ||
+    currentRoute?.slug === slugs.map ||
+    currentRoute?.slug === slugs.about;
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -51,7 +57,7 @@ function App() {
       onGoHome={() => {
         navigate('/');
       }}
-      onLogin={() => navigate(slugs.login)}
+      onLogin={() => openAuthModal('login')}
       onLogout={() => logout()}
       onRouteSelected={(slug) => {
         const eventsPages = [slugs.events, slugs.myEvents];
@@ -72,6 +78,7 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to={mainPage} />} />
       </Routes>
+      <AuthModalRoot />
     </DefaultLayout>
   );
 }

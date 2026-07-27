@@ -1,17 +1,22 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuthModal } from '../auth/AuthModalContext';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
-import { slugs } from '../../utils';
+import { IconName, slugs } from '../../utils';
+import Icon from '../Icons';
 
-// Multi-column site footer. Link columns route within the app where a matching
-// page exists; informational columns are plain text.
+// Multi-column site footer, shared across pages. Link columns route within the
+// app or open external data sources; "Duomenų šaltiniai" hrefs match the Figma.
 const Footer = () => {
   const navigate = useNavigate();
+  const { open: openAuthModal } = useAuthModal();
 
   return (
     <Wrap>
       <Inner>
-        <Brand>smalsuolis</Brand>
+        <Brand onClick={() => navigate(slugs.home)}>
+          <Icon name={IconName.sidebarLogo} />
+        </Brand>
 
         <Columns>
           <Column>
@@ -30,17 +35,38 @@ const Footer = () => {
 
           <Column>
             <ColTitle>Duomenų šaltiniai</ColTitle>
-            <ColText>Infostatyba</ColText>
-            <ColText>Miško kirtimų leidimai</ColText>
-            <ColText>Įžuvinimai</ColText>
+            <ColLink
+              as="a"
+              href="https://get.data.gov.lt/datasets/gov/ssva/infostatyba/Statinys"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Infostatyba
+            </ColLink>
+            <ColLink
+              as="a"
+              href="https://lkmp.alisas.lt/static/lkmp-data.geojson.zip"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Miško kirtimų leidimai
+            </ColLink>
+            <ColLink
+              as="a"
+              href="https://zuvinimas.biip.lt/api/public/fishStockings"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Įžuvinimai
+            </ColLink>
           </Column>
 
           <Column>
             <ColTitle>Navigacija</ColTitle>
-            <ColLink onClick={() => navigate(slugs.events)}>Žemėlapis</ColLink>
+            <ColLink onClick={() => navigate(slugs.map)}>Žemėlapis</ColLink>
             <ColLink onClick={() => navigate(slugs.stats)}>Statistika</ColLink>
             <ColLink onClick={() => navigate(slugs.about)}>Apie mus</ColLink>
-            <ColLink onClick={() => navigate(slugs.login)}>Prisijungti</ColLink>
+            <ColLink onClick={() => openAuthModal('login')}>Prisijungti</ColLink>
           </Column>
         </Columns>
       </Inner>
@@ -76,9 +102,15 @@ const Inner = styled.div`
 `;
 
 const Brand = styled.div`
-  ${font('lg', 700)};
-  color: ${({ theme }) => theme.colors.text.primary};
   flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  svg {
+    height: 24px;
+    width: auto;
+  }
 `;
 
 const Columns = styled.div`
