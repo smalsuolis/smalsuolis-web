@@ -74,7 +74,10 @@ const CategoryBrowse = () => {
         {chips.map((chip) => (
           <Chip key={chip.key} onClick={() => navigate(slugs.events)}>
             <IconCircle $bg={chip.bg}>
-              <img src={chip.icon} alt="" width={16} height={16} />
+              {/* Height-constrained, auto width: the icons aren't all square
+                  (the žuvinimas one is 10×13), so forcing 16×16 would stretch
+                  them. */}
+              <ChipIcon src={chip.icon} alt="" />
             </IconCircle>
             <ChipLabel>{chip.label}</ChipLabel>
             {chip.count !== undefined && <Count>{compact(chip.count)}</Count>}
@@ -134,6 +137,13 @@ const IconCircle = styled.span<{ $bg: string }>`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+`;
+
+const ChipIcon = styled.img`
+  height: 16px;
+  width: auto;
+  max-width: 16px;
+  display: block;
 `;
 
 // DS category chip: label Regular 18px black, count Regular 18px grey-600

@@ -1,24 +1,36 @@
-import { Button, CheckBox, ContentLayout } from '@aplinkosministerija/design-system';
+import { Button, CheckBox } from '@aplinkosministerija/design-system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import styled from 'styled-components';
 import EmptyState from '../components/EmptyState';
 import LoaderComponent from '../components/LoaderComponent';
 import Popup from '../components/Popup';
-import SubscriptionCard from '../components/SubscriptionCard';
-import { ButtonVariants, device } from '../styles';
-import { App, IconName, slugs, Subscription, useGetCurrentRoute, useInfinityLoad } from '../utils';
+import SubscriptionModal from '../components/SubscriptionModal';
+import SubscriptionRow from '../components/SubscriptionRow';
+import { ButtonVariants, checkmarkNudge, device } from '../styles';
+import { App, slugs, Subscription, useInfinityLoad } from '../utils';
 import api from '../utils/api';
 
+const PlusIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
 const Subscriptions = () => {
-  const currentRoute = useGetCurrentRoute();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const observerRef = useRef<any>(null);
+  // `id` is present when mounted on /prenumeratos/:id — the form modal opens
+  // over the list, so old links and emails still resolve.
+  const { id } = useParams();
   const [anyEventsCountNull, setAnyEventsCountNull] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [modalId, setModalId] = useState<string | undefined>(id);
+  const modalVisible = !!id || modalId !== undefined;
 
   const {
     data: subscriptions,
@@ -137,15 +149,27 @@ const Subscriptions = () => {
     setSelectedIds(checked ? new Set(visibleIds) : new Set());
   };
 
+  // Opening/closing keeps the URL in step so the modal is linkable, but the list
+  // stays mounted underneath rather than navigating away to a separate page.
+  const openModal = (subscriptionId?: string) => {
+    setModalId(subscriptionId ?? 'nauja');
+    navigate(slugs.subscription(subscriptionId ?? 'nauja'), { replace: true });
+  };
+
+  const closeModal = () => {
+    setModalId(undefined);
+    navigate(slugs.subscriptions, { replace: true });
+  };
+
   const renderContent = () => {
     if (isLoading) return <LoaderComponent />;
 
     if (emptySubscriptions) {
       return (
         <EmptyState
-          title="Jūs neturite prenumeratų"
-          description="Kad galėtumėte matyti naujienas jūsų pasirinktomis temomis bei gautumėte naujienlaiškius elektroniniu paštu, sukurkite naują prenumeratą."
-          icon={IconName.airBallon}
+          title="Sužinokite, kas vyksta šalia"
+          description="Pridėkite teritoriją ir stebėkite, kas planuojama jūsų kieme, rajone ar mieste."
+          image="/empty_search.png"
         />
       );
     }
@@ -191,9 +215,9 @@ const Subscriptions = () => {
               {page?.data.map((subscription) => {
                 return (
                   <React.Fragment key={`subscription-${subscription?.id}`}>
-                    <SubscriptionCard
+                    <SubscriptionRow
                       subscription={subscription}
-                      onClick={() => navigate(slugs.subscription(subscription?.id?.toString()))}
+                      onClick={() => openModal(subscription?.id?.toString())}
                       onToggleActive={(active) => toggleActive({ id: subscription.id, active })}
                       selected={selectedIds.has(subscription.id)}
                       onSelect={(checked) => toggleSelect(subscription.id, checked)}
@@ -212,18 +236,27 @@ const Subscriptions = () => {
   };
 
   return (
-    <ContentLayout currentRoute={currentRoute}>
+    <>
       <Container>
-        <ButtonsContainer>
-          <NewSubscriptionButton onClick={() => navigate(slugs.subscription('nauja'))}>
-            Nauja teritorija
-          </NewSubscriptionButton>
-        </ButtonsContainer>
+        <PageHeader>
+          <PageTitle>Prenumeratos</PageTitle>
+          <AddButton type="button" onClick={() => openModal()}>
+            <PlusIcon />
+            Pridėti naują
+          </AddButton>
+        </PageHeader>
         {renderContent()}
       </Container>
+      <SubscriptionModal
+        visible={modalVisible}
+        id={id ?? modalId}
+        onClose={closeModal}
+        onSaved={clearSelection}
+      />
       <Popup
         visible={showBulkDelete}
         onClose={() => setShowBulkDelete(false)}
+        image="/warning_triangle.png"
         title={`Ar tikrai norite ištrinti pažymėtas prenumeratas (${selectedIds.size})?`}
         subTitle="Šio veiksmo nebus galima atšaukti ar redaguoti"
         allow
@@ -241,40 +274,43 @@ const Subscriptions = () => {
           </PopupButton>
         </PopupActions>
       </Popup>
-    </ContentLayout>
+    </>
   );
 };
 
 export default Subscriptions;
 
+// Full-bleed page: the nav's 1216px content width is matched here rather than
+// inherited from DefaultLayout's padded grey container.
 const Container = styled.div`
   display: flex;
-  overflow-y: auto;
   flex-direction: column;
-  padding: 32px 0;
   width: 100%;
+  max-width: 1216px;
+  margin: 0 auto;
+  padding: 40px 32px 64px;
 
   @media ${device.mobileL} {
-    padding: 0;
+    padding: 24px 20px 48px;
   }
 `;
 
 const SubscriptionsContainer = styled.div`
   display: flex;
-  max-width: 800px;
-  margin: auto;
   width: 100%;
-  gap: 12px;
   flex-direction: column;
 `;
 
+// No horizontal padding: the select-all checkbox has to sit on the same left
+// edge as the per-row checkboxes below it, which are flush with the row.
 const SelectionBar = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 4px;
+  padding: 8px 0;
   flex-wrap: wrap;
+  ${checkmarkNudge};
 `;
 
 const SelectAllRow = styled.div`
@@ -299,26 +335,53 @@ const BulkButton = styled(Button)`
   font-size: 1.3rem;
 `;
 
-const ButtonsContainer = styled.div`
+const PageHeader = styled.div`
   display: flex;
-  flex-direction: row;
-  width: 100%;
-  margin-bottom: 16px;
-  margin-left: auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+`;
+
+const PageTitle = styled.h1`
+  margin: 0;
+  font-size: 3.2rem;
+  font-weight: 500;
+
+  @media ${device.mobileL} {
+    font-size: 2.8rem;
+  }
+`;
+
+const AddButton = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 24px;
+  background: #1a1a1a;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  @media ${device.mobileL} {
+    width: 100%;
+  }
 `;
 
 const Invisible = styled.div`
   width: 10px;
   height: 16px;
-`;
-
-const NewSubscriptionButton = styled.a`
-  color: #1f5c2e;
-  text-decoration: underline;
-  float: right;
-  width: fit-content;
-  margin-left: auto;
-  cursor: pointer;
 `;
 
 const PopupActions = styled.div`

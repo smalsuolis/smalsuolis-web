@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { Button, PasswordField } from '@aplinkosministerija/design-system';
 import { useFormik } from 'formik';
 import { useState } from 'react';
-import { ButtonVariants } from '../styles';
+import { ButtonVariants, device } from '../styles';
 
 const SuccessIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -145,7 +145,7 @@ const Header = styled.div`
   gap: 16px 24px;
   margin-bottom: 8px;
 
-  @media (max-width: 768px) {
+  @media ${device.mobileL} {
     flex-direction: column;
     align-items: stretch;
   }
@@ -166,7 +166,8 @@ const Alert = styled.div<{ $variant: 'success' | 'error' }>`
   font-size: 1.4rem;
   font-weight: 500;
   border-radius: 4px;
-  border-left: 4px solid
+  /* Accent bar sits on the trailing edge, per the design. */
+  border-right: 4px solid
     ${({ theme, $variant }) => ($variant === 'error' ? theme.colors.danger : theme.colors.success)};
   color: ${({ theme, $variant }) =>
     $variant === 'error' ? theme.colors.danger : theme.colors.success};

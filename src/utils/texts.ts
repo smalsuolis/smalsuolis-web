@@ -131,6 +131,8 @@ export const subtitle = {
 
 export const subscriptionFrequencyTitles = {
   [Frequency.DAY]: 'kas dieną',
-  [Frequency.WEEK]: 'kas savaitę',
-  [Frequency.MONTH]: 'kas mėnesį',
+  [Frequency.WEEK]: 'Savaitė',
+  [Frequency.MONTH]: 'Mėnuo',
+  [Frequency.YEAR]: 'Metai',
+  [Frequency.ALL]: 'Visi',
 };

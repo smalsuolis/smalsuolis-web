@@ -36,7 +36,9 @@ function App() {
   const isFullBleed =
     currentRoute?.slug === slugs.home ||
     currentRoute?.slug === slugs.map ||
-    currentRoute?.slug === slugs.about;
+    currentRoute?.slug === slugs.about ||
+    currentRoute?.slug === slugs.subscriptions ||
+    currentRoute?.slug === slugs.subscription(':id');
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {

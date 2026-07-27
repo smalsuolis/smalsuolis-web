@@ -88,10 +88,15 @@ const HeroSearch = () => {
 
 export default HeroSearch;
 
+// The exported Figma artwork (green field + swept line texture), stretched to
+// the hero box so the whole sweep stays visible rather than being scaled up and
+// cropped. Flat base green backs it for any rounding gap.
 const Hero = styled.div`
   position: relative;
   width: 100%;
-  background: linear-gradient(120deg, #d6f5de 0%, #9fe8b2 50%, #73dc8c 100%);
+  background:
+    url('/frame.svg') center / 100% 100% no-repeat,
+    #7eec9b;
   padding-top: 96px;
   padding-bottom: 88px;
 
@@ -106,6 +111,8 @@ const Hero = styled.div`
 `;
 
 const HeroInner = styled.div`
+  position: relative;
+  z-index: 1;
   max-width: 1216px;
   margin: 0 auto;
   padding: 0 32px;
@@ -154,6 +161,7 @@ const SupportCopy = styled.p`
 
 const SearchBarWrap = styled.div`
   position: absolute;
+  z-index: 1;
   left: 0;
   right: 0;
   bottom: -40px;

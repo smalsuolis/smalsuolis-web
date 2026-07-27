@@ -1,20 +1,22 @@
 import { useStorage } from '@aplinkosministerija/design-system';
 import { useQuery } from '@tanstack/react-query';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { device, font } from '../styles';
 import {
+  App,
   buttonsTitles,
   Event,
   Filters,
   IconName,
   inputLabels,
   isEmpty,
+  slugs,
   Subscription,
+  TimeRangeItem,
   timeRangeItems,
   useGetCurrentRoute,
-  useInfinityLoad,
 } from '../utils';
 import { TimeRanges } from '../utils/types';
 import api from '../utils/api';
@@ -22,6 +24,8 @@ import EmptyState from './EmptyState';
 import EventRow from './EventRow';
 import EventFilterModal from './EventFilterModal';
 import EventModal from './EventModal';
+import Pagination from './Pagination';
+import PeriodDropdown from './PeriodDropdown';
 import Icon from './Icons';
 import LoaderComponent from './LoaderComponent';
 import MapView from './MapView';
@@ -46,6 +50,7 @@ const EventsContainer = ({
   const filters = useStorage<Filters>('filters', {}, true);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
   const [search, setSearch] = useState(searchInput);
@@ -143,6 +148,8 @@ const EventsContainer = ({
         prev.delete('from');
         prev.delete('to');
         prev.delete('categories');
+        // A changed filter invalidates the current page number.
+        prev.delete('page');
 
         const { apps, timeRange, categories } = filters.value;
 
@@ -171,11 +178,15 @@ const EventsContainer = ({
       setSearch(searchInput);
       setSearchParams(
         (prev) => {
+          // Compare BEFORE writing: this effect also runs on mount, and a
+          // shared ?q=…&page=3 link must keep its page.
+          const changed = searchInput !== (prev.get('q') ?? '');
           if (searchInput) {
             prev.set('q', searchInput);
           } else {
             prev.delete('q');
           }
+          if (changed) prev.delete('page');
           return prev;
         },
         { replace: true },
@@ -185,7 +196,8 @@ const EventsContainer = ({
   }, [searchInput]);
 
   const currentRoute = useGetCurrentRoute();
-  const observerRef = useRef<any>(null);
+  const listTopRef = useRef<HTMLDivElement>(null);
+  const page = Math.max(1, Number(searchParams.get('page')) || 1);
 
   const getFilter = () => {
     const { apps, timeRange, subscriptions, categories } = filters.value;
@@ -224,20 +236,43 @@ const EventsContainer = ({
     };
   };
 
+  // The inline mobile app filter is single-select (the frame shows one value in
+  // the pill); multi-select stays in the modal. Reuses PeriodDropdown's shape.
+  const appOptions = allApps.map((app: App) => ({
+    key: String(app.id),
+    name: app.name,
+    query: {} as any,
+  }));
+  const selectedAppKey = filters.value.apps?.length === 1 ? String(filters.value.apps[0].id) : '';
+
+  // Paged (not infinite) so any page is linkable: ?page=N rides alongside the
+  // existing q / apps / range / categories params.
   const {
     data: events,
     isFetching,
     isLoading,
-  } = useInfinityLoad(
-    [queryKey, filters, search],
-    apiEndpoint,
-    observerRef,
-    { query: getFilter() },
-    isListView,
-  );
+  } = useQuery({
+    queryKey: [queryKey, filters.value, search, page],
+    queryFn: () => apiEndpoint({ query: getFilter(), page }),
+    enabled: isListView,
+    placeholderData: (previous: any) => previous,
+  });
+
+  const setPage = (next: number) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (next > 1) params.set('page', String(next));
+        else params.delete('page');
+        return params;
+      },
+      { replace: false },
+    );
+    listTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const renderListContent = () => {
-    if (isEmpty(events?.pages?.[0]?.data)) {
+    if (isEmpty(events?.rows)) {
       return (
         <EmptyState
           title={emptyStateTitle}
@@ -248,17 +283,11 @@ const EventsContainer = ({
     }
     return (
       <InnerContainer>
-        {events?.pages.map((page, pageIndex) => {
-          return (
-            <React.Fragment key={pageIndex}>
-              {page.data.map((event: Event) => (
-                <EventRow key={event.id} event={event} onSelect={setSelectedEvent} />
-              ))}
-            </React.Fragment>
-          );
-        })}
-        {observerRef && <Invisible ref={observerRef} />}
+        {events?.rows.map((event: Event) => (
+          <EventRow key={event.id} event={event} onSelect={setSelectedEvent} />
+        ))}
         {isFetching && <LoaderComponent />}
+        <Pagination page={page} totalPages={events?.totalPages ?? 1} onChange={setPage} />
       </InnerContainer>
     );
   };
@@ -275,18 +304,37 @@ const EventsContainer = ({
     }
   };
 
-  const toggleView = () =>
+  // "Rodyti žemėlapį" goes back to the full-size map page, carrying the current
+  // filters over. The two pages name some params differently (map: ?app= &
+  // ?range=, list: ?apps= & ?range=), so translate rather than pass through.
+  const goToMap = () => {
+    const params = new URLSearchParams();
+    const { apps, categories, timeRange } = filters.value;
+
+    if (apps?.length) params.set('app', apps.map((a) => a.id).join(','));
+    if (categories?.length) params.set('categories', categories.map((c) => c.id).join(','));
+    if (timeRange) params.set('range', timeRange.key);
+
+    const query = params.toString();
+    navigate(query ? `${slugs.map}?${query}` : slugs.map);
+  };
+
+  const toggleView = () => {
+    if (isListView) {
+      goToMap();
+      return;
+    }
     setSearchParams(
       (prev) => {
-        if (isListView) prev.delete('view');
-        else prev.set('view', 'list');
+        prev.set('view', 'list');
         return prev;
       },
       { replace: true },
     );
+  };
 
   return (
-    <Page>
+    <Page ref={listTopRef}>
       <Header>
         <PageTitle>{currentRoute?.title ?? 'Naujausi įvykiai'}</PageTitle>
         <HeaderActions>
@@ -317,6 +365,32 @@ const EventsContainer = ({
             </ClearButton>
           )}
         </SearchField>
+        {/* Mobile shows the two most-used filters inline (per the Figma frame)
+            so the active selection is visible without opening the modal; the
+            pill stays for everything else. Desktop keeps the pill alone. */}
+        <InlineFilters>
+          <PeriodDropdown
+            options={appOptions}
+            value={selectedAppKey}
+            onChange={(option) => {
+              const app = allApps.find((a) => String(a.id) === option.key);
+              filters.setValue({
+                ...filters.value,
+                apps: app ? [app] : undefined,
+              });
+            }}
+          />
+          <PeriodDropdown
+            options={timeRangeItems}
+            value={filters.value.timeRange?.key ?? ''}
+            onChange={(option) =>
+              filters.setValue({
+                ...filters.value,
+                timeRange: option as TimeRangeItem,
+              })
+            }
+          />
+        </InlineFilters>
         <FilterPill onClick={() => setShowFilterModal(true)} $active={!isEmpty(filters.value)}>
           <Icon name={IconName.filter} size={20} color={'#1B4C28'} />
           {buttonsTitles.filter}
@@ -336,11 +410,6 @@ const EventsContainer = ({
 };
 
 export default EventsContainer;
-
-const Invisible = styled.div`
-  width: 10px;
-  height: 16px;
-`;
 
 // Wide, left-aligned page shell (redesigned "Naujausi įvykiai"), replacing the
 // old narrow centered DS layout.
@@ -471,6 +540,18 @@ const ClearButton = styled.div`
   opacity: 0.7;
   &:hover {
     opacity: 1;
+  }
+`;
+
+// Inline dropdowns are a mobile-only affordance; on desktop the filter modal
+// carries everything and the bar stays a search field + pill.
+const InlineFilters = styled.div`
+  display: none;
+
+  @media ${device.mobileL} {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 `;
 

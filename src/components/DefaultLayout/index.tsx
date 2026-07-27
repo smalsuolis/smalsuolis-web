@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react';
 import Div100vh from 'react-div-100vh';
+import { useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { AppRoute } from '@aplinkosministerija/design-system';
 import { device } from '../../styles';
@@ -24,10 +26,23 @@ export interface DefaultLayoutProps {
 
 const DefaultLayout = (props: DefaultLayoutProps) => {
   const { children, fullBleed } = props;
+  const { pathname } = useLocation();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Client-side route changes keep the previous scroll offset, so navigating
+  // from the bottom of one page lands mid-way down the next. Reset to the top on
+  // every path change. Scrolling happens on this container, not the window, so
+  // window.scrollTo would be a no-op here.
+  //
+  // Keyed on pathname only: query-string changes (filters, ?page=, ?view=) must
+  // not yank the user back to the top.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0, left: 0 });
+  }, [pathname]);
 
   return (
     <Container>
-      <ScrollableContainer>
+      <ScrollableContainer ref={scrollRef}>
         <TopNav {...props} />
         {fullBleed ? children : <InnerContainer>{children}</InnerContainer>}
         <Footer />

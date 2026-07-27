@@ -1,10 +1,35 @@
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { Event, getTimeLabel, IconName, slugs } from '../utils';
 import { device, font } from '../styles';
 import Icon from './Icons';
 import PreviewMap from './PreviewMap';
+
+const CopyIcon = () => (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <rect x="9" y="9" width="11" height="11" rx="2.5" stroke="currentColor" strokeWidth="1.8" />
+    <path
+      d="M5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const ArrowIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M5 12h14m0 0-6-6m6 6-6 6"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 // The location line shown under the title = everything after the first comma of
 // the combined `name` ("Type, location, address"). Same split RecentEvents uses.
@@ -55,10 +80,14 @@ const EventModal = ({ event, onClose }: { event: Event; onClose: () => void }) =
           </HeaderText>
           <HeaderActions>
             {event.id && (
-              <CopyLinkButton onClick={copyPermalink} aria-label="Kopijuoti nuorodą">
-                <Icon name={IconName.openInNew} />
-                <CopyLabel>{copied ? 'Nukopijuota' : 'Nuoroda'}</CopyLabel>
-              </CopyLinkButton>
+              <IconAction
+                onClick={copyPermalink}
+                title="Kopijuoti nuorodą"
+                aria-label="Kopijuoti nuorodą"
+              >
+                <CopyIcon />
+                {copied && <Tooltip role="status">Nukopijuota</Tooltip>}
+              </IconAction>
             )}
             <CloseButton onClick={onClose} aria-label="Uždaryti">
               <Icon name={IconName.close} />
@@ -76,11 +105,21 @@ const EventModal = ({ event, onClose }: { event: Event; onClose: () => void }) =
           </Body>
         )}
 
-        {event.url && (
-          <VisitButton onClick={() => window.open(event.url, '_blank', 'noopener')}>
-            Aplankykite svetainę
-          </VisitButton>
-        )}
+        <Actions>
+          {event.url && (
+            <VisitButton onClick={() => window.open(event.url, '_blank', 'noopener')}>
+              Aplankykite svetainę
+            </VisitButton>
+          )}
+          {/* The modal is a quick look; this opens the full record in-app,
+              which is also what the copied link points to. */}
+          {event.id && (
+            <OpenPageLink to={slugs.event(String(event.id))}>
+              Atidaryti visą įvykio puslapį
+              <ArrowIcon />
+            </OpenPageLink>
+          )}
+        </Actions>
       </Modal>
     </Overlay>
   );
@@ -167,30 +206,64 @@ const HeaderActions = styled.div`
   flex-shrink: 0;
 `;
 
-const CopyLinkButton = styled.button`
+const IconAction = styled.button`
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  width: 32px;
   height: 32px;
-  padding: 0 10px;
   border-radius: 100px;
   cursor: pointer;
+  background: none;
+  border: none;
   color: ${({ theme }) => theme.colors.grey[600]};
-  ${font('base', 500)};
 
   &:hover {
     background: ${({ theme }) => theme.colors.background};
     color: ${({ theme }) => theme.colors.text.primary};
   }
-
-  svg {
-    font-size: 1.6rem;
-  }
 `;
 
-const CopyLabel = styled.span`
-  @media ${device.mobileL} {
-    display: none;
+// Transient confirmation after copying; sits under the icon so it never shifts
+// the header layout.
+const Tooltip = styled.span`
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.text.primary};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base', 500)};
+  font-size: 1.2rem;
+  white-space: nowrap;
+  pointer-events: none;
+`;
+
+const Actions = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 4px;
+`;
+
+const OpenPageLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  ${font('base', 500)};
+  color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  svg {
+    flex-shrink: 0;
   }
 `;
 

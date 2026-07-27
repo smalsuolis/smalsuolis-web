@@ -160,6 +160,17 @@ const MapPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, appIds, periodKey]);
 
+  // Switch to the list view, carrying the current filters. The events page uses
+  // different param names than the map (?apps= vs ?app=), and reads them via
+  // its own URL-init effect, so translate here.
+  const goToList = () => {
+    const params = new URLSearchParams({ view: 'list' });
+    if (appIds.length) params.set('apps', appIds.join(','));
+    if (selectedCategoryIds.length) params.set('categories', selectedCategoryIds.join(','));
+    if (periodKey) params.set('range', periodKey);
+    navigate(`${slugs.events}?${params.toString()}`);
+  };
+
   // Count of events within SEARCH_RADIUS_M of the selected address, for the
   // sleek nearby chip. Only the count is needed here (per-pin detail comes from
   // the map iframe's own click popups).
@@ -260,7 +271,7 @@ const MapPage = () => {
             Dar neturite paskyros? Užsiregistruokite
           </RegisterCta>
         )}
-        <ListToggle onClick={() => navigate(`${slugs.events}?view=list`)}>
+        <ListToggle onClick={goToList}>
           <Icon name={IconName.list} />
           Rodyti įvykių sąrašą
         </ListToggle>
@@ -351,10 +362,14 @@ const ChipClose = styled.button`
 
 // Bottom controls over the map: register CTA (left) + list-view toggle (right).
 // On mobile they stack and center (per the mobile Figma frame).
+//
+// The right inset clears the map iframe's own zoom / locate / layer controls,
+// which the embed draws hard against its right edge — they're cross-origin, so
+// we move around them rather than restyling them.
 const BottomBar = styled.div`
   position: absolute;
   left: 24px;
-  right: 24px;
+  right: 72px;
   bottom: 24px;
   z-index: 22;
   display: flex;
@@ -370,6 +385,8 @@ const BottomBar = styled.div`
   @media ${device.mobileL} {
     left: 12px;
     right: 12px;
+    /* Stacked on mobile the bar spans the full width, so it clears the side
+       controls by sitting below them instead. */
     bottom: 12px;
     flex-direction: column;
     align-items: stretch;

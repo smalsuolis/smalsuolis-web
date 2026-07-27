@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { DefaultLayoutProps, Modal } from '@aplinkosministerija/design-system';
 import { device, font } from '../../../styles';
 import Icon from '../../Icons';
-import { IconName } from '../../../utils';
+import { IconName, slugs } from '../../../utils';
 
 interface Props extends DefaultLayoutProps {
   visible: boolean;
@@ -50,6 +50,19 @@ const MobileMenu = ({
         </Links>
 
         <Footer>
+          {/* Profilis has no icon, so filterMenuRoutes leaves it out of the list
+              above — on desktop it lives in the account dropdown, and here it
+              sits beside the logout action. */}
+          {loggedIn && (
+            <ProfileLink
+              onClick={() => {
+                onRouteSelected(slugs.profile);
+                onClose();
+              }}
+            >
+              Profilis
+            </ProfileLink>
+          )}
           <LoginButton
             onClick={() => {
               if (loggedIn) {
@@ -123,8 +136,22 @@ const NavLink = styled.div<{ $isActive: boolean }>`
 `;
 
 const Footer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-top: auto;
   padding-top: 32px;
+`;
+
+const ProfileLink = styled.button`
+  width: 100%;
+  ${font('base', 500)};
+  padding: 16px;
+  border-radius: 100px;
+  background: none;
+  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
 `;
 
 const LoginButton = styled.button`

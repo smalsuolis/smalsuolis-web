@@ -3,13 +3,20 @@ import { device } from '../styles';
 import Icon from './Icons';
 import { Modal } from '@aplinkosministerija/design-system';
 
-const Popup = ({ title, subTitle, onClose, visible = false, children }: any) => {
+// `image` renders an illustration above the title (e.g. the red warning
+// triangle on destructive confirmations); when set, the corner close button is
+// dropped so the dialog reads as a focused confirmation.
+const Popup = ({ title, subTitle, onClose, visible = false, image, children }: any) => {
   return (
     <Modal visible={visible} onClose={onClose}>
       <Container>
-        <IconContainer onClick={onClose}>
-          <StyledIcon name="close" />
-        </IconContainer>
+        {image ? (
+          <Illustration src={image} alt="" aria-hidden="true" />
+        ) : (
+          <IconContainer onClick={onClose}>
+            <StyledIcon name="close" />
+          </IconContainer>
+        )}
         <Title>{title}</Title>
         {subTitle && <Subtitle>{subTitle}</Subtitle>}
         {children}
@@ -21,6 +28,13 @@ const Popup = ({ title, subTitle, onClose, visible = false, children }: any) => 
 const StyledIcon = styled(Icon)`
   cursor: pointer;
   font-size: 2.4rem;
+`;
+
+const Illustration = styled.img`
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin: 8px auto 0;
 `;
 
 const Container = styled.div<{ width?: string; $backgroundImg?: boolean }>`

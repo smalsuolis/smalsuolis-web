@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
 import Icon from '../Icons';
-import { IconName } from '../../utils';
+import { IconName, slugs } from '../../utils';
 import MobileMenu from './MobileMenu';
 import { DefaultLayoutProps } from './index';
 
@@ -23,6 +23,28 @@ const TopNav = (props: DefaultLayoutProps) => {
   } = props;
   const [showMenu, setShowMenu] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+
+  // Click-to-toggle, dismissed by an outside click or Escape. Closing on
+  // mouseleave instead would snatch the menu away as the pointer crosses the
+  // gap between the avatar and the panel below it.
+  useEffect(() => {
+    if (!accountOpen) return;
+
+    const onPointerDown = (e: MouseEvent) => {
+      if (!accountRef.current?.contains(e.target as Node)) setAccountOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setAccountOpen(false);
+    };
+
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [accountOpen]);
 
   return (
     <Bar>
@@ -33,7 +55,13 @@ const TopNav = (props: DefaultLayoutProps) => {
           {menuRoutes.map((route: any, index: number) => (
             <NavLink
               key={`topnav_${route.slug}_${index}`}
-              $isActive={!!currentRoute?.slug && currentRoute.slug.includes(route.slug)}
+              // Exact match, plus nested routes under a section (e.g.
+              // /prenumeratos/:id highlights Prenumeratos). A plain `includes`
+              // would light up "/" — the home slug — on every page.
+              $isActive={
+                currentRoute?.slug === route.slug ||
+                (route.slug !== slugs.home && !!currentRoute?.slug?.startsWith(`${route.slug}/`))
+              }
               onClick={() => onRouteSelected(route.slug)}
             >
               {route.title}
@@ -43,18 +71,48 @@ const TopNav = (props: DefaultLayoutProps) => {
 
         <Right>
           {loggedIn ? (
-            <AccountWrapper
-              onMouseLeave={() => setAccountOpen(false)}
-              onClick={() => setAccountOpen((o) => !o)}
-            >
-              <Avatar>
-                <Icon name={IconName.person} />
-              </Avatar>
-              <Chevron name={IconName.dropdownArrow} $open={accountOpen} />
+            <AccountWrapper ref={accountRef}>
+              <AccountTrigger
+                type="button"
+                onClick={() => setAccountOpen((o) => !o)}
+                aria-haspopup="menu"
+                aria-expanded={accountOpen}
+              >
+                <Avatar>
+                  <Icon name={IconName.person} />
+                </Avatar>
+                <Chevron name={IconName.dropdownArrow} $open={accountOpen} />
+              </AccountTrigger>
               {accountOpen && (
-                <AccountMenu>
-                  <AccountItem onClick={() => onRouteSelected('/profilis')}>Profilis</AccountItem>
-                  <AccountItem onClick={() => onLogout()}>Atsijungti</AccountItem>
+                <AccountMenu role="menu">
+                  <AccountCard>
+                    {[
+                      { label: 'Mano profilis', slug: slugs.profile },
+                      { label: 'Prenumeratos', slug: slugs.subscriptions },
+                      { label: 'Mano įvykiai', slug: slugs.myEvents },
+                    ].map((item) => (
+                      <AccountItem
+                        key={item.slug}
+                        role="menuitem"
+                        onClick={() => {
+                          onRouteSelected(item.slug);
+                          setAccountOpen(false);
+                        }}
+                      >
+                        {item.label}
+                      </AccountItem>
+                    ))}
+                    <AccountItem
+                      role="menuitem"
+                      $muted
+                      onClick={() => {
+                        setAccountOpen(false);
+                        onLogout();
+                      }}
+                    >
+                      Atsijungti
+                    </AccountItem>
+                  </AccountCard>
                 </AccountMenu>
               )}
             </AccountWrapper>
@@ -146,12 +204,20 @@ const AccountWrapper = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  cursor: pointer;
 
   @media ${device.mobileL} {
     display: none;
   }
+`;
+
+const AccountTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 `;
 
 const Avatar = styled.div`
@@ -174,26 +240,42 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
   transition: transform 0.15s ease;
 `;
 
+// Anchored flush to the trigger; the 8px visual offset comes from padding, so
+// the gap belongs to the panel's own hit area instead of being dead space.
 const AccountMenu = styled.div`
   position: absolute;
-  top: calc(100% + 8px);
+  top: 100%;
   right: 0;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  padding: 6px;
-  min-width: 160px;
+  padding-top: 10px;
+  min-width: 232px;
   z-index: 30;
 `;
 
-const AccountItem = styled.div`
-  ${font('base', 500)};
-  padding: 10px 12px;
-  border-radius: 8px;
+// Square-cornered white panel on a soft, wide-spread shadow — the card reads as
+// a flat sheet rather than a rounded popover.
+const AccountCard = styled.div`
+  background: ${({ theme }) => theme.colors.white};
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+`;
+
+// Full-bleed rows separated by hairlines that run the whole panel width.
+// `$muted` marks the terminal action (Atsijungti), which sits on a faint grey
+// to set it apart from the navigation entries above it.
+const AccountItem = styled.div<{ $muted?: boolean }>`
+  ${font('base', 400)};
+  padding: 18px 24px;
   cursor: pointer;
+  white-space: nowrap;
+  color: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ $muted }) => ($muted ? '#f7f7f7' : 'transparent')};
+
+  & + & {
+    border-top: 1px solid #eeeeee;
+  }
+
   &:hover {
-    background: ${({ theme }) => theme.colors.grey[300]};
+    background: ${({ $muted }) => ($muted ? '#f0f0f0' : '#fafafa')};
   }
 `;
 

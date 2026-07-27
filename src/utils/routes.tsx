@@ -8,7 +8,6 @@ import AuthRouteRedirect from '../components/auth/AuthRouteRedirect';
 import MyEvents from '../pages/MyEvents';
 import Profile from '../pages/Profile';
 import ResetPassword from '../pages/ResetPassword';
-import Subscription from '../pages/Subscription';
 import Subscriptions from '../pages/Subscriptions';
 import { IconName } from './constants';
 import { titles } from './texts';
@@ -39,6 +38,7 @@ export const routes: AppRoute[] = [
   {
     component: <Home />,
     title: titles.home,
+    icon: <Icon name={IconName.home} />,
     slug: slugs.home,
   },
   {
@@ -73,7 +73,9 @@ export const routes: AppRoute[] = [
   },
 
   {
-    component: <Subscription />,
+    // The subscription form is a modal over the list now; this route keeps old
+    // links (bookmarks, newsletter emails) working by opening it on mount.
+    component: <Subscriptions />,
     title: titles.subscription,
     loggedIn: true,
     slug: slugs.subscription(':id'),
@@ -96,25 +98,19 @@ export const routes: AppRoute[] = [
     slug: slugs.createAccount,
   },
   {
+    // Mano/Visi įvykiai stay routable but are kept out of the top nav (no icon
+    // ⇒ filterMenuRoutes skips them): the nav is Pagrindinis / Žemėlapis /
+    // Prenumeratos / Statistika / Apie mus.
     title: titles.myEvents,
     description: 'Visi atrinkti įvykiai',
-    icon: <Icon name={IconName.list} />,
     loggedIn: true,
     component: <MyEvents />,
     slug: slugs.myEvents,
   },
   {
     title: titles.allEvents,
-    icon: <Icon name={IconName.fourSquares} />,
     component: <Events />,
     slug: slugs.events,
-  },
-
-  {
-    component: <About />,
-    title: titles.about,
-    icon: <Icon name={IconName.book} />,
-    slug: slugs.about,
   },
   {
     component: <Stats />,
@@ -123,10 +119,18 @@ export const routes: AppRoute[] = [
     slug: slugs.stats,
   },
   {
+    component: <About />,
+    title: titles.about,
+    icon: <Icon name={IconName.book} />,
+    slug: slugs.about,
+  },
+  {
+    // No icon: filterMenuRoutes only surfaces routes that have one, and Profilis
+    // is reached from the account dropdown (and the mobile menu) instead of the
+    // top-level nav.
     component: <Profile />,
     title: titles.profile,
     loggedIn: true,
-    icon: <Icon name={IconName.profile} />,
     slug: slugs.profile,
   },
 ];

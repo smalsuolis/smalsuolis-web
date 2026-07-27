@@ -184,3 +184,16 @@ export const device = {
   tablet: `(max-width: 1280px)`,
   desktop: `(min-width: 869px)`,
 };
+
+/**
+ * The design-system CheckBox draws its tick via a ::after on an inner 14px
+ * label offset `left: 2px` inside an 18px box, starting at `left: 1px`. After
+ * the -45deg rotation the glyph ends up crowding the box's right edge. Shifting
+ * it a pixel left re-centres it. Apply to any container that renders a DS
+ * CheckBox.
+ */
+export const checkmarkNudge = css`
+  label::after {
+    left: 0px;
+  }
+`;

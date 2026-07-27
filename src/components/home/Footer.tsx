@@ -21,14 +21,13 @@ const Footer = () => {
         <Columns>
           <Column>
             <ColTitle>Smalsuolio komanda</ColTitle>
-            <ColText>Valstybės tarnautojai, kurie daro daugiau, nei kad prašoma.</ColText>
-            <ColLink onClick={() => navigate(slugs.about)}>Mūsų komanda</ColLink>
+            <ColText>Valstybės tarnautojai, kurie daro daugiau, nei kad prašoma</ColText>
           </Column>
 
           <Column>
             <ColTitle>Pastabos</ColTitle>
-            <ColText>Jei turi komentarų ar pastabų. Visuomet jų laukiame.</ColText>
-            <ColLink as="a" href="mailto:esu@smalsuolis.lt">
+            <ColText>Jei turi komentarų ar pastabų Visuomet jų laukiame</ColText>
+            <ColLink $strong as="a" href="mailto:esu@smalsuolis.lt">
               esu@smalsuolis.lt
             </ColLink>
           </Column>
@@ -80,35 +79,32 @@ export default Footer;
 
 const Wrap = styled.footer`
   width: 100%;
-  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  margin-top: 40px;
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 const Inner = styled.div`
   max-width: 1216px;
   margin: 0 auto;
-  padding: 56px 32px 40px;
-  display: flex;
-  gap: 64px;
-
-  @media ${device.tablet} {
-    flex-direction: column;
-    gap: 40px;
-  }
+  padding: 80px 32px 0;
+  display: grid;
+  /* Logo occupies its own first column, top-aligned with the headings. */
+  grid-template-columns: 220px 1fr;
+  gap: 32px;
 
   @media ${device.mobileL} {
-    padding: 40px 20px 32px;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 56px 20px 0;
   }
 `;
 
 const Brand = styled.div`
-  flex-shrink: 0;
   cursor: pointer;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 
   svg {
-    height: 24px;
+    height: 26px;
     width: auto;
   }
 `;
@@ -116,38 +112,47 @@ const Brand = styled.div`
 const Columns = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 32px;
-  flex: 1;
+  gap: 24px;
 
+  /* Single stacked column on phones — the 2-up grid cramped the longer
+     link labels. */
   @media ${device.mobileL} {
-    grid-template-columns: 1fr 1fr;
-    gap: 32px 24px;
+    grid-template-columns: 1fr;
+    gap: 28px;
   }
 `;
 
 const Column = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 `;
 
+// Headings sit at regular weight, only a step up in size from the links —
+// hierarchy comes from colour (near-black vs. grey), not weight.
 const ColTitle = styled.div`
-  ${font('base', 700)};
+  ${font('base', 400)};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 `;
 
 const ColText = styled.div`
-  ${font('base')};
+  ${font('base', 400)};
   font-size: 1.4rem;
+  line-height: 1.45;
   color: ${({ theme }) => theme.colors.grey[600]};
 `;
 
-const ColLink = styled.div`
-  ${font('base')};
+// `$strong` marks the actionable link that closes a text column (Mūsų komanda,
+// the contact address) — near-black against the grey body copy above it.
+const ColLink = styled.div<{ $strong?: boolean }>`
+  ${font('base', 400)};
   font-size: 1.4rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  line-height: 1.45;
+  color: ${({ theme, $strong }) => ($strong ? theme.colors.text.primary : theme.colors.grey[600])};
   cursor: pointer;
+  width: fit-content;
+  text-decoration: none;
 
   &:hover {
     color: ${({ theme }) => theme.colors.text.primary};
@@ -157,12 +162,12 @@ const ColLink = styled.div`
 const Copyright = styled.div`
   max-width: 1216px;
   margin: 0 auto;
-  padding: 24px 32px 40px;
-  ${font('base')};
+  padding: 48px 32px 32px;
+  ${font('base', 400)};
   font-size: 1.3rem;
-  color: ${({ theme }) => theme.colors.grey[500]};
+  color: ${({ theme }) => theme.colors.text.primary};
 
   @media ${device.mobileL} {
-    padding: 24px 20px 32px;
+    padding: 32px 20px 24px;
   }
 `;

@@ -7,7 +7,8 @@ import { App, AppType, buttonsTitles, Category, filterModalTitle, IconName } fro
 import { timeRangeQuery, TimeRanges } from '../../utils/types';
 import api from '../../utils/api';
 import Icon from '../Icons';
-import CategoryTree from './CategoryTree';
+import SritysCheckList from '../SritysCheckList';
+import { useCategoryLeafIds } from '../../utils/sritys';
 
 const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
 
@@ -32,9 +33,6 @@ interface Props {
 // component + selection logic). Shared by the homepage hero and the events/map
 // page. Footer shows a live result count.
 const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props) => {
-  // Which top-level app rows are expanded (independent of their checked state).
-  const [expandedApps, setExpandedApps] = useState<Set<number>>(new Set());
-
   const { data: apps = [] } = useQuery({
     queryKey: ['apps', 'all'],
     queryFn: () => api.getAllApps(),
@@ -49,19 +47,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
 
   // Total number of selectable leaf categories (for the infostatyba app's
   // empty/partial/full checkbox state).
-  const categoryLeafIds = useMemo(() => {
-    const hasChild = new Set(categories.map((c: Category) => c.parent).filter(Boolean));
-    return categories
-      .filter((c: Category) => !hasChild.has(c.id) && c.code !== 'kita' && !c.hidden)
-      .map((c: Category) => c.id);
-  }, [categories]);
-
-  const toggleAppExpand = (id: number) =>
-    setExpandedApps((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  const categoryLeafIds = useCategoryLeafIds(categories);
 
   // All category ids selected across every app (per-app selections flattened).
   const allSelectedCategoryIds = useMemo(
@@ -131,40 +117,6 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
     onChange({ ...value, categoriesByApp: next });
   };
 
-  // An infostatyba app's checkbox is a parent over its category leaves: all
-  // leaves selected → all, some → partial, none → none. Checking it cascades to
-  // every leaf (they visibly tick). Non-infostatyba apps are simple on/off.
-  const appState = (app: App): 'none' | 'partial' | 'all' => {
-    const isInfostatyba = app.key.startsWith(AppType.INFO_CONSTRUCTION);
-    if (!isInfostatyba) return value.appIds.includes(app.id) ? 'all' : 'none';
-    const selected = catsFor(app.id).length;
-    if (selected === 0) return 'none';
-    if (selected >= categoryLeafIds.length) return 'all';
-    return 'partial';
-  };
-
-  const toggleAppNode = (app: App) => {
-    const isInfostatyba = app.key.startsWith(AppType.INFO_CONSTRUCTION);
-    if (!isInfostatyba) {
-      onChange({
-        ...value,
-        appIds: value.appIds.includes(app.id)
-          ? value.appIds.filter((v) => v !== app.id)
-          : [...value.appIds, app.id],
-      });
-      return;
-    }
-    // Toggle the whole infostatyba app: fully selected → clear all its
-    // categories; otherwise → select ALL its category leaves (cascade down).
-    const next = { ...value.categoriesByApp };
-    if (appState(app) === 'all') {
-      delete next[app.id];
-    } else {
-      next[app.id] = [...categoryLeafIds];
-    }
-    onChange({ ...value, categoriesByApp: next });
-  };
-
   const clearAll = () => onChange({ appIds: [], categoriesByApp: {} });
 
   return (
@@ -180,43 +132,14 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
         <SectionLabel>Sritys</SectionLabel>
 
         <AppList>
-          {apps.map((app: App) => {
-            const isInfostatyba = app.key.startsWith(AppType.INFO_CONSTRUCTION);
-            const hasChildren = isInfostatyba && categories.length > 0;
-            const state = appState(app);
-            const isOpen = expandedApps.has(app.id);
-            return (
-              <div key={app.id}>
-                <AppRow>
-                  <Checkbox
-                    $state={state}
-                    onClick={() => toggleAppNode(app)}
-                    role="checkbox"
-                    aria-checked={state === 'partial' ? 'mixed' : state === 'all'}
-                  >
-                    {state === 'all' && <Check />}
-                    {state === 'partial' && <Dash />}
-                  </Checkbox>
-                  <AppName onClick={() => toggleAppNode(app)}>{app.name}</AppName>
-                  {/* Any item with subitems is expandable, regardless of selection. */}
-                  {hasChildren && (
-                    <ExpandBtn onClick={() => toggleAppExpand(app.id)} aria-label="Išskleisti">
-                      <Chevron name={IconName.dropdownArrow} $open={isOpen} />
-                    </ExpandBtn>
-                  )}
-                </AppRow>
-                {hasChildren && isOpen && (
-                  <TreeWrap>
-                    <CategoryTree
-                      options={categories}
-                      value={catsFor(app.id)}
-                      onChange={(ids) => setCatsFor(app.id, ids)}
-                    />
-                  </TreeWrap>
-                )}
-              </div>
-            );
-          })}
+          <SritysCheckList
+            apps={apps}
+            categories={categories}
+            appIds={value.appIds}
+            onAppIdsChange={(ids) => onChange({ ...value, appIds: ids })}
+            catsFor={catsFor}
+            onCatsChange={setCatsFor}
+          />
         </AppList>
 
         <Footer>
@@ -290,79 +213,11 @@ const AppList = styled.div`
   overflow-y: auto;
 `;
 
-const AppRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 4px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
-`;
-
-const Checkbox = styled.span<{ $state: 'none' | 'partial' | 'all' }>`
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: 1px solid
-    ${({ $state, theme }) => ($state === 'none' ? theme.colors.grey[500] : theme.colors.primary)};
-  background: ${({ $state, theme }) => ($state === 'none' ? 'transparent' : theme.colors.primary)};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Dash = styled.span`
-  width: 10px;
-  height: 2px;
-  border-radius: 2px;
-  background: ${({ theme }) => theme.colors.text.primary};
-`;
-
-// CSS-drawn checkmark with a 2px stroke to match the Dash weight (the icon-font
-// check rendered too heavy next to the thin dash).
-const Check = styled.span`
-  width: 6px;
-  height: 11px;
-  margin-top: -2px;
-  border: solid ${({ theme }) => theme.colors.text.primary};
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-`;
-
-const AppName = styled.span`
-  ${font('base', 500)};
-  color: ${({ theme }) => theme.colors.text.primary};
-  cursor: pointer;
-  flex: 1;
-`;
-
-const ExpandBtn = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  background: transparent;
-  flex-shrink: 0;
-`;
-
 const Chevron = styled(Icon)<{ $open: boolean }>`
   font-size: 1.8rem;
   color: ${({ theme }) => theme.colors.grey[600]};
   transform: ${({ $open }) => ($open ? 'rotate(180deg)' : 'rotate(0deg)')};
   transition: transform 0.15s ease;
-`;
-
-const TreeWrap = styled.div`
-  padding: 4px 0 8px 34px;
-
-  @media ${device.mobileL} {
-    padding-left: 16px;
-  }
 `;
 
 const Footer = styled.div`

@@ -378,6 +378,13 @@ const Header = styled.div`
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 32px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
 `;
 
 const PageTitle = styled.h1`
@@ -385,11 +392,20 @@ const PageTitle = styled.h1`
   margin: 0;
 `;
 
+// On mobile the period picker and the comparison toggle stack full-width under
+// the title, matching the frame, instead of wrapping at their natural widths.
 const Controls = styled.div`
   display: flex;
   align-items: center;
   gap: 24px;
   flex-wrap: wrap;
+
+  @media ${device.mobileL} {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
 `;
 
 const KpiStrip = styled.div`
@@ -398,9 +414,12 @@ const KpiStrip = styled.div`
   gap: 24px;
   padding-bottom: 32px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
+
+  /* Two per row on mobile (2/2/2 rather than the design's 3+2) — five tiles
+     leave the last one alone on its row, which is intended. */
   @media ${device.mobileL} {
     grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    gap: 24px 16px;
   }
 `;
 
