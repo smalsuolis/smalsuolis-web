@@ -1,6 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
-import { createContext } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { createContext, useEffect } from 'react';
 import api from '../utils/api';
+import { timeRangeQuery, TimeRanges } from '../utils/types';
+
+const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
 
 export type UserContextType = {
   data: any;
@@ -21,6 +24,19 @@ const defaultValue: UserContextType = {
 export const UserContext: any = createContext<UserContextType>(defaultValue);
 
 export const UserProvider = ({ children }: any) => {
+  const queryClient = useQueryClient();
+
+  // Prefetch the all-time stats at app startup so the StatRow numbers (homepage,
+  // Apie mus) are already cached by the time any of those pages render — no
+  // late pop-in. Shares the ['home-stats', ALL_TIME] key those components use.
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ['home-stats', ALL_TIME],
+      queryFn: () => api.getStats(ALL_TIME),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient]);
+
   const {
     data,
     error: userError,

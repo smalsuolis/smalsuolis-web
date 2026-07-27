@@ -1,19 +1,24 @@
 import Div100vh from 'react-div-100vh';
 import styled from 'styled-components';
-import MenuButton from './MenuButton';
-import { DefaultLayoutProps, device, Modal } from '@aplinkosministerija/design-system';
+import { DefaultLayoutProps, Modal } from '@aplinkosministerija/design-system';
+import { device, font } from '../../../styles';
 import Icon from '../../Icons';
-import { IconName } from '../../../utils';
+import { IconName, slugs } from '../../../utils';
 
 interface Props extends DefaultLayoutProps {
   visible: boolean;
   onClose: () => void;
 }
+
+// New-design mobile menu: a clean white full-screen panel matching the top nav.
+// Nav links use the DS treatment (black text, active in Bold); a single
+// login/logout action sits at the bottom.
 const MobileMenu = ({
   visible = true,
   loggedIn,
   currentRoute,
   menuRoutes,
+  logo,
   onLogin,
   onLogout,
   onRouteSelected,
@@ -21,107 +26,140 @@ const MobileMenu = ({
 }: Props) => {
   return (
     <Modal visible={visible} onClose={onClose}>
-      <Container>
-        <InnerContainer>
-          <Header>
-            <IconContainer onClick={onClose}>
-              <StyledIcon name="close" />
-              Uždaryti
-            </IconContainer>
-          </Header>
-          <Headings>
-            <Title>Meniu</Title>
-            <Subtitle>Pasirinkite dominančią sritį</Subtitle>
-          </Headings>
-          {menuRoutes?.map((route, index: number) => {
-            return (
-              <MenuButton
-                key={`menu_button_${index}`}
-                isActive={route.slug === currentRoute?.slug}
-                label={route.title || ''}
-                icon={route.icon}
-                onClick={() => {
-                  onRouteSelected(route.slug);
-                  onClose();
-                }}
-              />
-            );
-          })}
-          <MenuButton
-            label={loggedIn ? 'Atsijungti' : 'Prisijungti'}
-            icon={<Icon name={IconName.logout} />}
+      <Panel>
+        <Header>
+          <div onClick={onClose}>{logo}</div>
+          <CloseButton onClick={onClose} aria-label="Uždaryti">
+            <Icon name={IconName.close} />
+          </CloseButton>
+        </Header>
+
+        <Links>
+          {menuRoutes?.map((route, index) => (
+            <NavLink
+              key={`m_menu_${route.slug}_${index}`}
+              $isActive={route.slug === currentRoute?.slug}
+              onClick={() => {
+                onRouteSelected(route.slug);
+                onClose();
+              }}
+            >
+              {route.title}
+            </NavLink>
+          ))}
+        </Links>
+
+        <Footer>
+          {/* Profilis has no icon, so filterMenuRoutes leaves it out of the list
+              above — on desktop it lives in the account dropdown, and here it
+              sits beside the logout action. */}
+          {loggedIn && (
+            <ProfileLink
+              onClick={() => {
+                onRouteSelected(slugs.profile);
+                onClose();
+              }}
+            >
+              Profilis
+            </ProfileLink>
+          )}
+          <LoginButton
             onClick={() => {
               if (loggedIn) {
                 onLogout();
               } else {
                 onLogin();
-                onClose();
               }
+              onClose();
             }}
-          />
-        </InnerContainer>
-      </Container>
+          >
+            {loggedIn ? 'Atsijungti' : 'Prisijungti'}
+          </LoginButton>
+        </Footer>
+      </Panel>
     </Modal>
   );
 };
 
-const StyledIcon = styled(Icon)`
-  cursor: pointer;
-  font-size: 2.4rem;
-`;
+export default MobileMenu;
 
-const Container = styled(Div100vh)`
+const Panel = styled(Div100vh)`
   width: 100%;
-`;
+  background: ${({ theme }) => theme.colors.white};
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px 32px;
 
-const InnerContainer = styled.div`
-  background-color: white;
-  position: relative;
-  width: 100%;
-  min-height: 100%;
-  padding: 0 16px 24px 16px;
   @media ${device.desktop} {
-    max-width: 700px;
-    padding: 40px;
-    flex-basis: auto;
-    border-radius: 16px;
+    max-width: 480px;
     min-height: fit-content;
+    border-radius: 16px;
+    padding: 24px;
   }
 `;
 
-const IconContainer = styled.div`
-  align-items: center;
-  display: flex;
-  font-weight: 600;
-  gap: 4px;
-  text-decoration: none;
-  margin: 0 0 0 auto;
-`;
-
 const Header = styled.div`
-  align-items: center;
   display: flex;
-  gap: 8px;
-  height: 48px;
+  align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
+  height: 64px;
+  flex-shrink: 0;
 `;
 
-const Headings = styled.div`
-  margin: 16px 0 32px 0;
+const CloseButton = styled.button`
+  display: flex;
+  align-items: center;
   justify-content: center;
+  font-size: 2.4rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
 `;
 
-const Title = styled.div`
-  font-size: 32px;
-  font-weight: 800;
-  text-align: center;
+const Links = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 24px;
 `;
 
-const Subtitle = styled.div`
-  line-height: 26px;
-  margin-top: 4px;
-  text-align: center;
+const NavLink = styled.div<{ $isActive: boolean }>`
+  cursor: pointer;
+  padding: 14px 8px;
+  border-radius: 12px;
+  color: ${({ theme }) => theme.colors.text.primary};
+  ${({ $isActive }) => font('2xl', $isActive ? 700 : 400)};
+  opacity: ${({ $isActive }) => ($isActive ? 1 : 0.7)};
+
+  &:active {
+    background: ${({ theme }) => theme.colors.grey[300]};
+  }
 `;
 
-export default MobileMenu;
+const Footer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 32px;
+`;
+
+const ProfileLink = styled.button`
+  width: 100%;
+  ${font('base', 500)};
+  padding: 16px;
+  border-radius: 100px;
+  background: none;
+  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+`;
+
+const LoginButton = styled.button`
+  width: 100%;
+  ${font('base', 500)};
+  padding: 16px;
+  border-radius: 100px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  cursor: pointer;
+`;

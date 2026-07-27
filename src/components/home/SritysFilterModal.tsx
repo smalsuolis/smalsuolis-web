@@ -1,0 +1,261 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Modal } from '@aplinkosministerija/design-system';
+import styled, { keyframes } from 'styled-components';
+import { device, font } from '../../styles';
+import { App, AppType, buttonsTitles, Category, filterModalTitle, IconName } from '../../utils';
+import { timeRangeQuery, TimeRanges } from '../../utils/types';
+import api from '../../utils/api';
+import Icon from '../Icons';
+import SritysCheckList from '../SritysCheckList';
+import { useCategoryLeafIds } from '../../utils/sritys';
+
+const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
+
+export interface SritysValue {
+  appIds: number[];
+  // Category selection is per-app: the 4 infostatyba apps (statyba / remontas /
+  // griovimas / paskirties-keitimas) share the same category list but select it
+  // independently. Keyed by app id → selected leaf category ids for that app.
+  categoriesByApp: Record<number, number[]>;
+}
+
+interface Props {
+  visible: boolean;
+  value: SritysValue;
+  onChange: (value: SritysValue) => void;
+  onApply: () => void;
+  onClose: () => void;
+}
+
+// "Filtravimas pagal sritis" modal. The event-type (app) checkbox list, plus the
+// hierarchical infostatyba category tree (reusing the existing Categories
+// component + selection logic). Shared by the homepage hero and the events/map
+// page. Footer shows a live result count.
+const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props) => {
+  const { data: apps = [] } = useQuery({
+    queryKey: ['apps', 'all'],
+    queryFn: () => api.getAllApps(),
+    staleTime: Infinity,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories', 'all', 'infostatyba'],
+    queryFn: () => api.getAllCategories('infostatyba'),
+    staleTime: Infinity,
+  });
+
+  // Total number of selectable leaf categories (for the infostatyba app's
+  // empty/partial/full checkbox state).
+  const categoryLeafIds = useCategoryLeafIds(categories);
+
+  // All category ids selected across every app (per-app selections flattened).
+  const allSelectedCategoryIds = useMemo(
+    () => Object.values(value.categoriesByApp).flat(),
+    [value.categoriesByApp],
+  );
+
+  // Apps that have at least one category selected.
+  const appsWithCategories = useMemo(
+    () =>
+      Object.entries(value.categoriesByApp)
+        .filter(([, ids]) => ids.length > 0)
+        .map(([id]) => Number(id)),
+    [value.categoriesByApp],
+  );
+
+  // Build the events query for the live count. Best-effort aggregate: match any
+  // whole-selected app OR any app that has categories, narrowed by the union of
+  // selected categories. (Per-app category precision would need an OR query the
+  // count endpoint doesn't support; this is close enough for a live preview.)
+  const query = useMemo(() => {
+    const appIds = Array.from(new Set([...value.appIds, ...appsWithCategories]));
+    return {
+      ...(appIds.length ? { app: { $in: appIds } } : null),
+      ...(allSelectedCategoryIds.length ? { categoryGroup: allSelectedCategoryIds } : null),
+    };
+  }, [value.appIds, appsWithCategories, allSelectedCategoryIds]);
+
+  const hasFilters = value.appIds.length > 0 || allSelectedCategoryIds.length > 0;
+
+  // Default (no filters) total: reuse the SAME cached query the homepage stat
+  // row already loaded (api.getStats(ALL_TIME).count). Because it's shared cache,
+  // the number is already in memory before the modal opens — it shows instantly,
+  // no modal-specific request, no loading state.
+  const { data: statsData } = useQuery({
+    queryKey: ['home-stats', ALL_TIME],
+    queryFn: () => api.getStats(ALL_TIME),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Filtered count: fetched fresh for the current filter query. No placeholder —
+  // `data` is only ever the real result for the current query key (undefined
+  // while a new query loads).
+  const { data: filteredCount } = useQuery({
+    queryKey: ['events', 'count', query],
+    queryFn: () => api.getEventsCount({ query }),
+    enabled: hasFilters,
+    staleTime: 60 * 1000,
+  });
+
+  const freshCount = hasFilters ? filteredCount : statsData?.count;
+
+  // Hold the last real count so the button never blanks while a new one loads;
+  // it updates (and the label fades once) only when fresh data arrives.
+  const [settledCount, setSettledCount] = useState<number | undefined>(undefined);
+  useEffect(() => {
+    if (freshCount !== undefined) setSettledCount(freshCount);
+  }, [freshCount]);
+
+  // This app's own selected category ids (independent per app).
+  const catsFor = (appId: number): number[] => value.categoriesByApp[appId] ?? [];
+
+  const setCatsFor = (appId: number, ids: number[]) => {
+    const next = { ...value.categoriesByApp };
+    if (ids.length) next[appId] = ids;
+    else delete next[appId];
+    onChange({ ...value, categoriesByApp: next });
+  };
+
+  const clearAll = () => onChange({ appIds: [], categoriesByApp: {} });
+
+  return (
+    <Modal visible={visible} onClose={onClose}>
+      <Panel>
+        <Header>
+          <Title>{filterModalTitle}</Title>
+          <CloseButton onClick={onClose} aria-label={buttonsTitles.close}>
+            <Icon name={IconName.close} />
+          </CloseButton>
+        </Header>
+
+        <SectionLabel>Sritys</SectionLabel>
+
+        <AppList>
+          <SritysCheckList
+            apps={apps}
+            categories={categories}
+            appIds={value.appIds}
+            onAppIdsChange={(ids) => onChange({ ...value, appIds: ids })}
+            catsFor={catsFor}
+            onCatsChange={setCatsFor}
+          />
+        </AppList>
+
+        <Footer>
+          <ClearLink onClick={clearAll}>{buttonsTitles.clearAll}</ClearLink>
+          <ApplyButton onClick={onApply}>
+            {/* Show the last SETTLED count and key the fade on it, so the label
+                fades exactly once — when the real number lands — never toward a
+                stale placeholder. */}
+            <FadeText key={settledCount ?? 'none'}>
+              {settledCount === undefined
+                ? 'Rodyti rezultatus'
+                : buttonsTitles.showResults(settledCount)}
+            </FadeText>
+          </ApplyButton>
+        </Footer>
+      </Panel>
+    </Modal>
+  );
+};
+
+export default SritysFilterModal;
+
+const Panel = styled.div`
+  background: ${({ theme }) => theme.colors.white};
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+
+  @media ${device.desktop} {
+    max-width: 640px;
+    height: auto;
+    max-height: 80vh;
+    border-radius: 20px;
+    padding: 32px;
+  }
+`;
+
+const Header = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+`;
+
+const Title = styled.div`
+  ${font('2xl', 700)};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const CloseButton = styled.button`
+  display: flex;
+  font-size: 2.4rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+`;
+
+const SectionLabel = styled.div`
+  ${font('base', 700)};
+  color: ${({ theme }) => theme.colors.text.primary};
+  margin-bottom: 12px;
+`;
+
+const AppList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  overflow-y: auto;
+`;
+
+const Chevron = styled(Icon)<{ $open: boolean }>`
+  font-size: 1.8rem;
+  color: ${({ theme }) => theme.colors.grey[600]};
+  transform: ${({ $open }) => ($open ? 'rotate(180deg)' : 'rotate(0deg)')};
+  transition: transform 0.15s ease;
+`;
+
+const Footer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+`;
+
+const ClearLink = styled.button`
+  ${font('base', 500)};
+  color: ${({ theme }) => theme.colors.tertiary};
+  text-decoration: underline;
+  cursor: pointer;
+  background: transparent;
+`;
+
+const ApplyButton = styled.button`
+  ${font('base', 500)};
+  padding: 14px 28px;
+  border-radius: 100px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  cursor: pointer;
+  white-space: nowrap;
+`;
+
+const fadeIn = keyframes`
+  from { opacity: 0.35; }
+  to { opacity: 1; }
+`;
+
+// Remounted (via key) whenever the count changes, so the new number fades in
+// instead of snapping. ~150ms, subtle.
+const FadeText = styled.span`
+  display: inline-block;
+  animation: ${fadeIn} 0.15s ease-out;
+`;

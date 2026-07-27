@@ -53,14 +53,17 @@ const StyledButton = styled.button<{ $variant: Variant; $size: Size }>`
   justify-content: center;
   gap: 8px;
   border: none;
-  border-radius: 100px;
+  /* Design-system Button: pill radius 54px, Plus Jakarta Sans Regular 16px,
+     56px tall via 8px/24px padding (md). See Figma DS component node 130:688. */
+  border-radius: 54px;
   cursor: pointer;
   white-space: nowrap;
   transition:
     background 0.15s ease,
     filter 0.15s ease;
-  ${font('base', 500)};
-  padding: ${({ $size }) => ($size === 'lg' ? '16px 32px' : '12px 24px')};
+  ${font('base', 400)};
+  padding: ${({ $size }) => ($size === 'lg' ? '16px 32px' : '8px 24px')};
+  min-height: ${({ $size }) => ($size === 'lg' ? '64px' : '56px')};
 
   &:disabled {
     opacity: 0.5;

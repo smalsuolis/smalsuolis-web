@@ -3,11 +3,11 @@ import { device } from '../styles';
 import Icon from './Icons';
 import { Button, Modal, useStorage } from '@aplinkosministerija/design-system';
 import FilterPicker from './FilterPicker';
-import Categories from './Categories';
+import SritysCheckList from './SritysCheckList';
+import { isInfostatyba } from '../utils/sritys';
 import { useContext, useEffect, useState } from 'react';
 import {
   App,
-  AppType,
   Category,
   Filters,
   IconName,
@@ -91,6 +91,10 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     onClose();
   };
 
+  // Categories only apply while an infostatyba app is actually selected; the
+  // picks stay in local state so toggling the app back on restores them.
+  const infostatybaSelected = selectedApps.some((app) => isInfostatyba(app));
+
   const onFilterClick = () => {
     setFilters({
       ...(selectedApps.length > 0 ? { apps: selectedApps } : null),
@@ -126,55 +130,43 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
     }
   };
 
+  // Sritys + categories share one control (SritysCheckList) with the homepage /
+  // map filter and the subscription form. This modal stores whole App/Category
+  // objects, so the id-based component is bridged back to them here.
   const renderApps = () => {
-    if (loadingApps) {
+    if (loadingApps || loadingCategories) {
       return <Loader />;
     }
-    if (apps?.length > 0) {
-      return (
-        <FilterGroup>
-          <Subtitle>{subtitle.apps}</Subtitle>
-          <FilterPicker
-            allowMultipleSelection
-            getItemKey={(item) => item.key}
-            data={apps}
-            selectedItems={selectedApps}
-            setSelectedItems={(items) => setSelectedApps(items)}
-          />
-        </FilterGroup>
-      );
-    }
-  };
+    if (!apps?.length) return null;
 
-  // Categories are only relevant when an infostatyba app is selected.
-  // We hide the section when none is selected but preserve selectedCategories
-  // in state so the user can toggle the app on/off without losing their picks.
-  const infostatybaSelected = selectedApps.some((app) =>
-    app.key.startsWith(AppType.INFO_CONSTRUCTION),
-  );
+    const appsById = new Map(apps.map((a) => [a.id, a]));
+    const categoriesById = new Map(categories.map((c) => [c.id, c]));
 
-  const renderCategories = () => {
-    if (!infostatybaSelected) return null;
-    if (loadingCategories) {
-      return <Loader />;
-    }
-    if (categories.length === 0) return null;
-    const selectedIds = selectedCategories.map((c) => c.id);
     return (
-      <>
-        <Divider />
-        <FilterGroup>
-          <Subtitle>{subtitle.categories}</Subtitle>
-          <Categories
-            options={categories}
-            value={selectedIds}
-            onChange={(ids) => {
-              const byId = new Map(categories.map((c) => [c.id, c]));
-              setSelectedCategories(ids.map((id) => byId.get(id)).filter(Boolean) as Category[]);
-            }}
-          />
-        </FilterGroup>
-      </>
+      <FilterGroup>
+        <Subtitle>{subtitle.apps}</Subtitle>
+        <SritysCheckList
+          apps={apps}
+          categories={categories}
+          appIds={selectedApps.map((a) => a.id)}
+          onAppIdsChange={(ids) =>
+            setSelectedApps(ids.map((id) => appsById.get(id)).filter(Boolean) as App[])
+          }
+          // One flat category list shared across the infostatyba apps — the
+          // events query filters by categoryGroup, not per app.
+          catsFor={() => selectedCategories.map((c) => c.id)}
+          onCatsChange={(appId, ids) => {
+            setSelectedCategories(
+              ids.map((id) => categoriesById.get(id)).filter(Boolean) as Category[],
+            );
+            // Picking categories implies the owning app is selected.
+            if (ids.length && !selectedApps.some((a) => a.id === appId)) {
+              const app = appsById.get(appId);
+              if (app) setSelectedApps([...selectedApps, app]);
+            }
+          }}
+        />
+      </FilterGroup>
     );
   };
 
@@ -200,7 +192,6 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
 
         {renderSubs()}
         {renderApps()}
-        {renderCategories()}
 
         <Divider />
 
@@ -343,15 +334,6 @@ const Divider = styled.hr`
   border: none;
   border-top: 1px solid #e5e7eb;
   margin: 0;
-`;
-
-const CategoriesHint = styled.div`
-  font-family: Plus Jakarta Sans;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 18px;
-  color: #666;
-  margin-top: -8px;
 `;
 
 const FilterButton = styled(Button)`

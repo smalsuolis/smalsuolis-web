@@ -7,6 +7,8 @@ import { UserContext, UserContextType } from './components/UserProvider';
 import { IconName, useGetCurrentRoute, useLogout, routes, slugs } from './utils';
 import Icon from './components/Icons';
 import DefaultLayout from './components/DefaultLayout';
+import { useAuthModal } from './components/auth/AuthModalContext';
+import AuthModalRoot from './components/auth/AuthModalRoot';
 
 function App() {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ function App() {
   const { isLoading, loggedIn, subscriptionsCount } = useContext<UserContextType>(UserContext);
   const currentRoute = useGetCurrentRoute();
   const { mutateAsync: logout } = useLogout();
+  const { open: openAuthModal } = useAuthModal();
 
   if (isLoading) return <LoaderComponent />;
 
@@ -28,7 +31,14 @@ function App() {
       : slugs.newSubscription
     : slugs.home;
 
-  const isHome = currentRoute?.slug === slugs.home;
+  // Home and the map page render edge-to-edge (own hero / full-viewport map),
+  // outside the padded inner content container.
+  const isFullBleed =
+    currentRoute?.slug === slugs.home ||
+    currentRoute?.slug === slugs.map ||
+    currentRoute?.slug === slugs.about ||
+    currentRoute?.slug === slugs.subscriptions ||
+    currentRoute?.slug === slugs.subscription(':id');
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
@@ -41,7 +51,7 @@ function App() {
   return (
     <DefaultLayout
       loggedIn={loggedIn}
-      fullBleed={isHome}
+      fullBleed={isFullBleed}
       currentRoute={currentRoute}
       menuRoutes={menuRoutes || []}
       logo={<Icon name={IconName.sidebarLogo} />}
@@ -49,7 +59,7 @@ function App() {
       onGoHome={() => {
         navigate('/');
       }}
-      onLogin={() => navigate(slugs.login)}
+      onLogin={() => openAuthModal('login')}
       onLogout={() => logout()}
       onRouteSelected={(slug) => {
         const eventsPages = [slugs.events, slugs.myEvents];
@@ -70,6 +80,7 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to={mainPage} />} />
       </Routes>
+      <AuthModalRoot />
     </DefaultLayout>
   );
 }

@@ -98,5 +98,7 @@ export enum Frequency {
   DAY = 'DAY',
   WEEK = 'WEEK',
   MONTH = 'MONTH',
+  YEAR = 'YEAR',
+  ALL = 'ALL',
   CUSTOM = 'CUSTOM',
 }

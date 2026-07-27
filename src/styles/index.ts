@@ -113,7 +113,7 @@ export const theme: Theme = {
 export const typography = {
   '6xl': { size: 6.4, lineHeight: 1.2, weight: 700, tracking: '-0.02em' },
   '5xl': { size: 4.8, lineHeight: 1.5, weight: 400, tracking: '-0.02em' },
-  '3xl': { size: 3.0, lineHeight: 1.3, weight: 500, tracking: '-0.02em' },
+  '3xl': { size: 3.0, lineHeight: 1.3, weight: 500, tracking: '-0.05em' },
   '2xl': { size: 2.4, lineHeight: 1.3, weight: 500, tracking: '-0.01em' },
   xl: { size: 2.0, lineHeight: 1.5, weight: 400, tracking: '-0.01em' },
   lg: { size: 1.8, lineHeight: 1.5, weight: 400, tracking: '-0.01em' },
@@ -184,3 +184,16 @@ export const device = {
   tablet: `(max-width: 1280px)`,
   desktop: `(min-width: 869px)`,
 };
+
+/**
+ * The design-system CheckBox draws its tick via a ::after on an inner 14px
+ * label offset `left: 2px` inside an 18px box, starting at `left: 1px`. After
+ * the -45deg rotation the glyph ends up crowding the box's right edge. Shifting
+ * it a pixel left re-centres it. Apply to any container that renders a DS
+ * CheckBox.
+ */
+export const checkmarkNudge = css`
+  label::after {
+    left: 0px;
+  }
+`;

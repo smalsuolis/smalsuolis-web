@@ -60,6 +60,37 @@ export interface Event {
   category?: Category;
 }
 
+// A single event returned by the /events/near lookup (a lightweight row, not
+// the full Event — enough for the map popup's recent-events list).
+export interface NearEvent {
+  id: string;
+  name: string;
+  startAt: string;
+  url?: string;
+  appId?: number;
+  appName?: string;
+  appKey?: string;
+}
+
+// Response of the /events/near lookup: total events in the radius + the most
+// recent few, for the map's address popup.
+export interface EventsNearResponse {
+  count: number;
+  radius: number;
+  events: NearEvent[];
+}
+
+// Address autocomplete suggestion from the boundaries registry (via the API's
+// /addresses/suggest endpoint). `geometry` is a GeoJSON Point in EPSG:4326.
+export interface AddressSuggestion {
+  code: number;
+  label: string;
+  geometry: {
+    type: 'Point';
+    coordinates: [number, number];
+  };
+}
+
 export interface User {
   id?: string;
   email?: string;
@@ -264,6 +295,15 @@ export interface Stats {
       count: number;
     };
   };
+  // Per-municipality breakdown, keyed by municipality name. Each has a total
+  // count plus a per-appType split. Feeds the "Akyviausi miestai" cards.
+  byMunicipality?: Record<
+    string,
+    {
+      count: number;
+      byApp: Record<string, number>;
+    }
+  >;
   count: number;
 }
 

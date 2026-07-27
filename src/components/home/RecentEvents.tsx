@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { isFuture } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
 import { Event, getTimeLabel, IconName, slugs, subtitle } from '../../utils';
 import api from '../../utils/api';
 import Icon from '../Icons';
+import EventModal from '../EventModal';
 
 // "Naujausi įvykiai" — a flat list of the most recent events. Reuses the same
 // events endpoint, Event type, and getTimeLabel helper the feed/cards use.
@@ -20,6 +22,7 @@ const splitName = (name: string): { title: string; location: string } => {
 
 const RecentEvents = () => {
   const navigate = useNavigate();
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const { data } = useQuery({
     queryKey: ['home-recent-events'],
     queryFn: () => api.getEvents({ page: 1, query: undefined }),
@@ -43,7 +46,7 @@ const RecentEvents = () => {
           const { title, location } = splitName(event.name);
           const future = isFuture(new Date(event.startAt));
           return (
-            <RowLink key={event.id} onClick={() => navigate(slugs.event(String(event.id)))}>
+            <RowLink key={event.id} onClick={() => setSelectedEvent(event)}>
               <RowMain>
                 <NameLine>
                   <NameTitle>{title}</NameTitle>
@@ -63,6 +66,8 @@ const RecentEvents = () => {
           );
         })}
       </List>
+
+      {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </Wrap>
   );
 };
@@ -82,17 +87,19 @@ const Header = styled.div`
   margin-bottom: 16px;
 `;
 
+// DS "Naujausi įvykiai" heading: Medium 30px, tight tracking. Node 116:1910.
 const Title = styled.h2`
-  ${font('2xl')};
+  ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
 
+// DS "Rodyti visus įvykius" link: Regular 20px black. Node 116:1912.
 const SeeAll = styled.button`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  ${font('base', 500)};
+  ${font('xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
   background: transparent;
@@ -161,12 +168,14 @@ const Tags = styled.div`
   gap: 8px;
 `;
 
+// DS event tag ("Category" chip): white bg, 1px grey-300 border, radius 128px,
+// padding 12px 20px, Medium 16px text in grey-700 (#333). Figma node 116:1926.
 const Tag = styled.span`
   ${font('base', 500)};
-  font-size: 1.3rem;
-  padding: 6px 14px;
-  border-radius: 100px;
+  padding: 12px 20px;
+  border-radius: 128px;
   border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.grey[700]};
 `;
 

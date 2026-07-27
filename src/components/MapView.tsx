@@ -12,11 +12,17 @@ interface MapProps {
   preview?: boolean;
   filters?: any;
   geom?: any;
+  // Non-fullscreen iframe height. Defaults to 60vh (events-feed usage); the
+  // dedicated map page passes 100% to fill its container.
+  height?: string;
+  // The dedicated map page already fills the viewport, so it hides the custom
+  // fullscreen toggle (the maps iframe has its own controls).
+  hideFullscreen?: boolean;
 }
 
 const src = `${mapsHost}/smalsuolis?preview=1`;
 
-const MapView = ({ error, filters, geom }: MapProps) => {
+const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapProps) => {
   const iframeRef = useRef<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
@@ -42,24 +48,26 @@ const MapView = ({ error, filters, geom }: MapProps) => {
   return (
     <Container $showModal={showModal} $error={!!error}>
       <InnerContainer $showModal={showModal}>
-        <StyledButton
-          $popup={showModal}
-          onClick={(e) => {
-            e.preventDefault();
+        {!hideFullscreen && (
+          <StyledButton
+            $popup={showModal}
+            onClick={(e) => {
+              e.preventDefault();
 
-            setShowModal(!showModal);
-          }}
-        >
-          <StyledIconContainer>
-            <StyledIcon name={showModal ? IconName.exitFullScreen : IconName.fullscreen} />
-          </StyledIconContainer>
-        </StyledButton>
+              setShowModal(!showModal);
+            }}
+          >
+            <StyledIconContainer>
+              <StyledIcon name={showModal ? IconName.exitFullScreen : IconName.fullscreen} />
+            </StyledIconContainer>
+          </StyledButton>
+        )}
         <StyledIframe
           allow="geolocation *"
           ref={iframeRef}
           src={src}
           $width={'100%'}
-          $height={showModal ? '100%' : '60vh'}
+          $height={showModal ? '100%' : height}
           style={{ border: 0 }}
           allowFullScreen={true}
           aria-hidden="false"
@@ -76,6 +84,7 @@ const Container = styled.div<{
   $error: boolean;
 }>`
   width: 100%;
+  height: 100%;
   ${({ $showModal }) =>
     $showModal &&
     `

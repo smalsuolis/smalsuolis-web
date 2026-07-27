@@ -74,7 +74,10 @@ const CategoryBrowse = () => {
         {chips.map((chip) => (
           <Chip key={chip.key} onClick={() => navigate(slugs.events)}>
             <IconCircle $bg={chip.bg}>
-              <img src={chip.icon} alt="" width={16} height={16} />
+              {/* Height-constrained, auto width: the icons aren't all square
+                  (the žuvinimas one is 10×13), so forcing 16×16 would stretch
+                  them. */}
+              <ChipIcon src={chip.icon} alt="" />
             </IconCircle>
             <ChipLabel>{chip.label}</ChipLabel>
             {chip.count !== undefined && <Count>{compact(chip.count)}</Count>}
@@ -94,8 +97,9 @@ const Wrap = styled.div`
   gap: 24px;
 `;
 
+// DS section heading: Medium 30px, tight tracking. Node 116:1907.
 const Title = styled.h2`
-  ${font('2xl')};
+  ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   text-align: center;
@@ -135,12 +139,21 @@ const IconCircle = styled.span<{ $bg: string }>`
   flex-shrink: 0;
 `;
 
+const ChipIcon = styled.img`
+  height: 16px;
+  width: auto;
+  max-width: 16px;
+  display: block;
+`;
+
+// DS category chip: label Regular 18px black, count Regular 18px grey-600
+// (#707070). Figma nodes 116:2779 / 116:2780.
 const ChipLabel = styled.span`
-  ${font('base', 500)};
+  ${font('lg')};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Count = styled.span`
-  ${font('base', 500)};
-  color: ${({ theme }) => theme.colors.grey[500]};
+  ${font('lg')};
+  color: ${({ theme }) => theme.colors.grey[600]};
 `;

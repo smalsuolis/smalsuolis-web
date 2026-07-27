@@ -6,7 +6,6 @@ import StatRow from '../components/home/StatRow';
 import CategoryBrowse from '../components/home/CategoryBrowse';
 import RecentEvents from '../components/home/RecentEvents';
 import CtaCards from '../components/home/CtaCards';
-import Footer from '../components/home/Footer';
 
 // Public landing page. Rendered full-bleed (outside the padded inner layout)
 // so the hero and footer reach the window edges. Content sections are width-
@@ -37,11 +36,7 @@ const Home = () => {
         <RecentEvents />
       </Section>
 
-      <Section>
-        <CtaCards />
-      </Section>
-
-      <Footer />
+      <CtaCards />
     </Page>
   );
 };
@@ -72,10 +67,11 @@ const Page = styled.div`
 
   @media ${device.mobileL} {
     & > section {
-      margin-top: 56px;
+      margin-top: 48px;
     }
     & > section:first-of-type {
-      margin-top: 96px;
+      /* Search bar overhangs the hero by ~24px on mobile; clear it. */
+      margin-top: 48px;
     }
   }
 `;

@@ -14,6 +14,8 @@ export const validationTexts = {
   requirePhotos: 'Privalote įkelti nuotrauką',
   userDeniedLocation: 'Turite leisti nustatyti jūsų buvimo vietą',
   profileUpdated: 'Profilis atnaujintas',
+  dataUpdated: 'Duomenys sėkmingai atnaujinti',
+  updateError: 'Įvyko klaida pabandykite dar kartą',
   registration: 'Registracija sėkminga',
   appsNotSelected: 'Pasirinkite bent vieną sritį',
   [ServerErrors.WRONG_PASSWORD]: 'Neteisingai įvestas el. paštas arba slaptažodis',
@@ -41,6 +43,7 @@ export const inputLabels = {
 
 export const titles = {
   home: 'Pagrindinis',
+  map: 'Žemėlapis',
   about: 'Apie mus',
   stats: 'Statistika',
   myEvents: 'Mano įvykiai',
@@ -80,6 +83,7 @@ export const descriptions = {
 export const buttonsTitles = {
   subscribeNews: 'Prenumeruoti naujienas',
   resetPassword: 'Atstatyti slaptažodį',
+  reset: 'Atkurti',
   createAccount: 'Sukurti paskyrą',
   update: 'Atnaujinti',
   createPassword: 'Nustatyti slaptažodį',
@@ -100,7 +104,11 @@ export const buttonsTitles = {
   map: 'Smalsuolio žemėlapis',
   beCurious: 'Tapk smalsiu',
   ourTeam: 'Mūsų komanda',
+  clearAll: 'Išvalyti viską',
+  showResults: (n: number) => `Rodyti ${n.toLocaleString('lt-LT')} rezultatus`,
 };
+
+export const filterModalTitle = 'Filtravimas pagal sritis';
 
 export const subtitle = {
   about: 'Domina, kas vyksta aplinkui tave?',
@@ -116,12 +124,15 @@ export const subtitle = {
   categories: 'Statinių kategorijos',
   date: 'Data',
   hasNotRegistered: 'Neturite paskyros?',
+  hasRegistered: 'Jau turite paskyrą?',
   fewActions: 'Tik keli paspaudimai',
   howItWorks: 'Kaip tai veikia?',
 };
 
 export const subscriptionFrequencyTitles = {
   [Frequency.DAY]: 'kas dieną',
-  [Frequency.WEEK]: 'kas savaitę',
-  [Frequency.MONTH]: 'kas mėnesį',
+  [Frequency.WEEK]: 'Savaitė',
+  [Frequency.MONTH]: 'Mėnuo',
+  [Frequency.YEAR]: 'Metai',
+  [Frequency.ALL]: 'Visi',
 };

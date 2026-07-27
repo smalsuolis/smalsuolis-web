@@ -1,8 +1,29 @@
 import Axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 import Cookies from 'universal-cookie';
-import { App, Category, Event, LastUpdateResponse, Stats, Subscription } from './types';
+import {
+  AddressSuggestion,
+  App,
+  Category,
+  Event,
+  EventsNearResponse,
+  LastUpdateResponse,
+  Stats,
+  Subscription,
+} from './types';
 const cookies = new Cookies();
+
+// Send event queries as a JSON string. axios serializes a raw nested object with
+// indexed brackets (query[categoryGroup][0]=…), which the API's query parser
+// mis-reads for arrays like categoryGroup — silently dropping the filter. A JSON
+// string parses reliably (matching how getStats/getAllCategories already send
+// their queries). Pass-through for empty/undefined or already-stringified queries.
+const stringifyQuery = (query: any): any => {
+  if (query === undefined || query === null) return query;
+  if (typeof query === 'string') return query;
+  if (typeof query === 'object' && Object.keys(query).length === 0) return undefined;
+  return JSON.stringify(query);
+};
 
 interface Get {
   resource: string;
@@ -224,7 +245,7 @@ class Api {
   }): Promise<GetAllResponse<Event>> => {
     return this.get({
       resource: Resources.EVENTS,
-      query,
+      query: stringifyQuery(query),
       populate: ['geom', 'app'],
       sort: ['-startAt', 'id'],
       page,
@@ -234,7 +255,7 @@ class Api {
   getEventsCount = async ({ query }: { query: any }): Promise<number> => {
     return this.getCount({
       resource: Resources.EVENTS,
-      query,
+      query: stringifyQuery(query),
     });
   };
 
@@ -255,7 +276,7 @@ class Api {
   }): Promise<GetAllResponse<Event>> => {
     return this.get({
       resource: Resources.NEWSFEED,
-      query,
+      query: stringifyQuery(query),
       populate: ['geom', 'app'],
       sort: ['-startAt', 'id'],
       page,
@@ -265,7 +286,7 @@ class Api {
   getNewsfeedCount = async ({ query }: { query: any }): Promise<number> => {
     return this.getCount({
       resource: Resources.NEWSFEED,
-      query,
+      query: stringifyQuery(query),
     });
   };
 
@@ -377,6 +398,25 @@ class Api {
 
   getLastUpdate = async (): Promise<LastUpdateResponse> => {
     return this.errorWrapper(() => this.AuthApiAxios.get('/integrations/last-update'));
+  };
+
+  // Address autocomplete backed by the boundaries registry (see the API's
+  // boundaries.service). Returns suggestions with a GeoJSON Point geometry.
+  suggestAddresses = async (search: string): Promise<AddressSuggestion[]> => {
+    return this.errorWrapper(() =>
+      this.AuthApiAxios.get('/addresses/suggest', { params: { search } }),
+    );
+  };
+
+  // Events within `radius` metres of a point (lng/lat, EPSG:4326). Powers the
+  // map's address-lookup popup: total count in the circle + recent events.
+  getEventsNear = async (params: {
+    lng: number;
+    lat: number;
+    radius?: number;
+    limit?: number;
+  }): Promise<EventsNearResponse> => {
+    return this.errorWrapper(() => this.AuthApiAxios.get('/events/near', { params }));
   };
 }
 
