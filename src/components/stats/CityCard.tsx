@@ -48,6 +48,8 @@ const CityCard = ({
 export default CityCard;
 
 const Card = styled.div`
+  /* Shrink inside the grid track rather than widening the page. */
+  min-width: 0;
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.grey[300]};
   border-radius: 16px;
@@ -68,7 +70,7 @@ const Rows = styled.div`
 
 const Row = styled.div`
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 10px;
   padding: 9px 0;

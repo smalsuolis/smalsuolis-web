@@ -42,6 +42,8 @@ const SourceCard = ({
 export default SourceCard;
 
 const Card = styled.div`
+  /* Shrink inside the grid track rather than widening the page. */
+  min-width: 0;
   background: ${({ theme }) => theme.colors.white};
   border: 1px solid ${({ theme }) => theme.colors.grey[300]};
   border-radius: 16px;
@@ -93,6 +95,11 @@ const Title = styled.div`
   font-size: 1.6rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text?.primary};
+  /* Long source names ellipsize instead of widening the card. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const Meta = styled.div`

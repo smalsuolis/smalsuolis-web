@@ -83,6 +83,9 @@ const Card = styled.div`
   padding: 24px;
   display: flex;
   flex-direction: column;
+  /* Lets the card shrink inside its grid track instead of forcing the page
+     wider than the viewport. */
+  min-width: 0;
 `;
 
 const Header = styled.div`
@@ -147,7 +150,7 @@ const Rows = styled.div`
 
 const Row = styled.div`
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 12px;
   padding: 10px 0;

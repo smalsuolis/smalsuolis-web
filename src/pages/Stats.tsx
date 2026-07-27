@@ -410,7 +410,7 @@ const Controls = styled.div`
 
 const KpiStrip = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 24px;
   padding-bottom: 32px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
@@ -418,7 +418,7 @@ const KpiStrip = styled.div`
   /* Two per row on mobile (2/2/2 rather than the design's 3+2) — five tiles
      leave the last one alone on its row, which is intended. */
   @media ${device.mobileL} {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px 16px;
   }
 `;
@@ -455,31 +455,37 @@ const SectionTitle = styled.h2`
 
 const CardGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* minmax(0,1fr): grid items default to min-width:auto, so a long label
+     would push the track past the viewport instead of ellipsizing. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
   @media ${device.tablet} {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   @media ${device.mobileL} {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
 const CityGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* minmax(0,1fr): grid items default to min-width:auto, so a long label
+     would push the track past the viewport instead of ellipsizing. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
   @media ${device.tablet} {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 
 const SourceGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  /* minmax(0,1fr): grid items default to min-width:auto, so a long label
+     would push the track past the viewport instead of ellipsizing. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   @media ${device.mobileL} {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 `;
 

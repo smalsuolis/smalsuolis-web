@@ -101,6 +101,10 @@ const Hero = styled.div`
   padding-bottom: 88px;
 
   @media ${device.mobileL} {
+    /* Flat green on phones, per the mobile design: the artwork is a 1440x436
+       landscape sweep, and squeezing it into a ~390px portrait band distorts
+       the line work into noise. */
+    background: #92e9ac;
     /* The hero is pulled up under the 64px-tall transparent nav; clear it so
        the heading sits below the logo/burger row (nav height + breathing room). */
     padding-top: 88px;
