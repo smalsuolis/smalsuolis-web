@@ -19,6 +19,10 @@ import { useAuthModal } from '../components/auth/AuthModalContext';
 // the /events/near lookup, so the map view and the popup count agree.
 const SEARCH_RADIUS_M = 2000;
 
+// Matches the nav / footer content column, so the floating map controls line up
+// with the rest of the site instead of hugging the viewport edges.
+const CONTENT_MAX_WIDTH = '1216px';
+
 // The smalsuolis map iframe draws incoming geometry with dataProjection EPSG:3346
 // (LKS94) — hardcoded in its route. Address suggestions come in EPSG:4326
 // (lng/lat), so we must convert to 3346 before sending, or the point lands far
@@ -308,10 +312,11 @@ const Page = styled.div`
 
 // Sleek nearby-count chip: a compact white pill top-ish over the map (below the
 // controls), not a big card. Shows the count for the searched address.
+// Aligned to the content column's left edge (see Controls), not the viewport.
 const NearbyChip = styled.div`
   position: absolute;
-  left: 24px;
-  top: 96px;
+  left: max(32px, calc((100% - ${CONTENT_MAX_WIDTH}) / 2 + 32px));
+  top: 84px;
   z-index: 22;
   display: flex;
   align-items: center;
@@ -368,8 +373,13 @@ const ChipClose = styled.button`
 // we move around them rather than restyling them.
 const BottomBar = styled.div`
   position: absolute;
-  left: 24px;
-  right: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: ${CONTENT_MAX_WIDTH};
+  /* Right padding clears the map iframe's own zoom / locate controls, which the
+     embed draws hard against its right edge. */
+  padding: 0 72px 0 32px;
   bottom: 24px;
   z-index: 22;
   display: flex;
@@ -383,10 +393,9 @@ const BottomBar = styled.div`
   }
 
   @media ${device.mobileL} {
-    left: 12px;
-    right: 12px;
     /* Stacked on mobile the bar spans the full width, so it clears the side
        controls by sitting below them instead. */
+    padding: 0 20px;
     bottom: 12px;
     flex-direction: column;
     align-items: stretch;
@@ -461,11 +470,16 @@ const MapWrap = styled.div`
 
 // Three floating controls across the top of the map. Each is its own rounded
 // pill (matching the design), not one unified bar.
+// Floating over the map, but aligned to the same 1216px content column the nav
+// and the rest of the site use, rather than the viewport edges.
 const Controls = styled.div`
   position: absolute;
   top: 24px;
-  left: 24px;
-  right: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: ${CONTENT_MAX_WIDTH};
+  padding: 0 32px;
   z-index: 20;
   display: flex;
   align-items: flex-start;
@@ -475,13 +489,13 @@ const Controls = styled.div`
     flex-direction: column;
     align-items: stretch;
     top: 12px;
-    left: 12px;
-    right: 12px;
+    padding: 0 20px;
     gap: 12px;
   }
 `;
 
 const pillShadow = '0 8px 28px rgba(0, 0, 0, 0.14)';
+
 
 const SearchPill = styled.div`
   /* Fixed-ish width on the left; the period pill is pushed to the far right via

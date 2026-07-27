@@ -149,7 +149,7 @@ const Heading = styled.h1`
 
 const SupportCopy = styled.p`
   ${font('lg')};
-  color: ${({ theme }) => theme.colors.grey[700]};
+  color: ${({ theme }) => theme.colors.text.primary};
   margin: 0 0 8px 0;
   max-width: 380px;
 

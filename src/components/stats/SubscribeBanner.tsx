@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import { useAuthModal } from '../auth/AuthModalContext';
 
 // Green CTA at the bottom of the stats page, on the exported Figma artwork
-// (public/tapk_smalsiu.svg). Drives registration.
+// (public/tapk_smalsiu.png). Drives registration.
 const SubscribeBanner = () => {
   const { open } = useAuthModal();
   return (
