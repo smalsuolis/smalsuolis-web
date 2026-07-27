@@ -321,6 +321,19 @@ const EventsContainer = ({
 
   const toggleView = () => {
     if (isListView) {
+      // Mano įvykiai renders its own map, scoped to the user's subscriptions —
+      // leaving for the global map page would drop that scope. Only the
+      // all-events list hands off to /zemelapis.
+      if (isMyEvents) {
+        setSearchParams(
+          (prev) => {
+            prev.delete('view');
+            return prev;
+          },
+          { replace: true },
+        );
+        return;
+      }
       goToMap();
       return;
     }
