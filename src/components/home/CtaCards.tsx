@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { device, font } from '../../styles';
+import { CONTENT_WIDTH, device, font } from '../../styles';
 import Button from '../ui/Button';
 import { useAuthModal } from '../auth/AuthModalContext';
 
@@ -42,7 +42,9 @@ export default CtaCards;
 // rounded. The whole component spans full width; no Section wrapper.
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Design: 836 + 24 gap + 580 in a 1440 band — the image panel is the wider
+     of the two, not an equal half. */
+  grid-template-columns: 836fr 580fr;
   gap: 24px;
   width: 100%;
   margin-top: 80px;
@@ -57,12 +59,13 @@ const Grid = styled.div`
 // Inner content aligns to the page's centered content column (max-width 1216 +
 // 32px gutter), even though the card background bleeds to the screen edge. On
 // screens narrower than the column, falls back to the card's own 48px padding.
-const contentGutter = 'max(48px, calc((100vw - 1216px) / 2 + 32px))';
+const contentGutter = `max(48px, calc((100vw - ${CONTENT_WIDTH}) / 2 + 32px))`;
 
 const Card = styled.div`
   border-radius: 32px;
   padding: 48px;
-  min-height: 320px;
+  /* Design frame height for the band. */
+  min-height: 538px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;

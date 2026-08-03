@@ -8,7 +8,7 @@ import LoaderComponent from '../components/LoaderComponent';
 import Popup from '../components/Popup';
 import SubscriptionModal from '../components/SubscriptionModal';
 import SubscriptionRow from '../components/SubscriptionRow';
-import { ButtonVariants, checkmarkNudge, device } from '../styles';
+import { ButtonVariants, CONTENT_WIDTH, checkmarkNudge, device } from '../styles';
 import { App, slugs, Subscription, useInfinityLoad } from '../utils';
 import api from '../utils/api';
 
@@ -286,7 +286,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 1216px;
+  max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
   padding: 40px 32px 64px;
 

@@ -7,7 +7,7 @@ import MapView from '../components/MapView';
 import AddressAutocomplete from '../components/home/AddressAutocomplete';
 import SritysFilterModal, { SritysValue } from '../components/home/SritysFilterModal';
 import PeriodDropdown from '../components/PeriodDropdown';
-import { device, font } from '../styles';
+import { CONTENT_WIDTH, device, font } from '../styles';
 import { AddressSuggestion, App, Category, IconName, slugs } from '../utils';
 import { statsTimeRangeItems, TimeRanges } from '../utils/types';
 import Icon from '../components/Icons';
@@ -21,7 +21,7 @@ const SEARCH_RADIUS_M = 2000;
 
 // Matches the nav / footer content column, so the floating map controls line up
 // with the rest of the site instead of hugging the viewport edges.
-const CONTENT_MAX_WIDTH = '1216px';
+const CONTENT_MAX_WIDTH = CONTENT_WIDTH;
 
 // The smalsuolis map iframe draws incoming geometry with dataProjection EPSG:3346
 // (LKS94) — hardcoded in its route. Address suggestions come in EPSG:4326
@@ -321,7 +321,8 @@ const NearbyChip = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px 10px 16px;
+  height: 40px;
+  padding: 0 12px 0 16px;
   background: ${({ theme }) => theme.colors.white};
   border-radius: 100px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
@@ -405,7 +406,8 @@ const BottomBar = styled.div`
 const RegisterCta = styled.button`
   display: inline-flex;
   align-items: center;
-  padding: 14px 24px;
+  height: 40px;
+  padding: 0 24px;
   border-radius: 100px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
@@ -428,7 +430,8 @@ const ListToggle = styled.button`
   align-items: center;
   gap: 8px;
   margin-left: auto;
-  padding: 14px 24px;
+  height: 40px;
+  padding: 0 24px;
   border-radius: 100px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
@@ -503,7 +506,7 @@ const SearchPill = styled.div`
   width: 380px;
   max-width: 100%;
   min-width: 0;
-  min-height: 56px;
+  height: 40px;
   display: flex;
   align-items: center;
   padding: 0 16px;
@@ -522,7 +525,7 @@ const CategoryPill = styled.button<{ $active: boolean }>`
   justify-content: space-between;
   gap: 16px;
   min-width: 240px;
-  min-height: 56px;
+  height: 40px;
   padding: 12px 20px;
   border-radius: 44px;
   background: ${({ theme }) => theme.colors.white};

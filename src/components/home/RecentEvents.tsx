@@ -48,12 +48,12 @@ const RecentEvents = () => {
           return (
             <RowLink key={event.id} onClick={() => setSelectedEvent(event)}>
               <RowMain>
-                <NameLine>
-                  <NameTitle>{title}</NameTitle>
+                <NameTitle>{title}</NameTitle>
+                <MetaLine>
                   {location && <NameLocation>{location}</NameLocation>}
-                  <MetaDot>·</MetaDot>
+                  {location && <MetaDot>·</MetaDot>}
                   <MetaDate>{getTimeLabel(event)}</MetaDate>
-                </NameLine>
+                </MetaLine>
                 <Tags>
                   <Tag>{event.app?.name || '—'}</Tag>
                   {future && <Tag>{subtitle.future}</Tag>}
@@ -135,11 +135,14 @@ const RowMain = styled.div`
   min-width: 0;
 `;
 
-const NameLine = styled.div`
+// Design (Project Info): the title owns the first line at full width; location
+// and date sit on a second line separated by a dot. Keeping all three on one
+// line made long land-planning titles wrap unpredictably.
+const MetaLine = styled.div`
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 `;
 
 const NameTitle = styled.span`

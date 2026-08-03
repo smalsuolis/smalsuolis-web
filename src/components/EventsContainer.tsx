@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { device, font } from '../styles';
+import { CONTENT_WIDTH, device, font } from '../styles';
 import {
   App,
   buttonsTitles,
@@ -428,7 +428,7 @@ export default EventsContainer;
 // old narrow centered DS layout.
 const Page = styled.div`
   width: 100%;
-  max-width: 1216px;
+  max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
   display: flex;
   flex-direction: column;

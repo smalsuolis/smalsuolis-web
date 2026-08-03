@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { device, font } from '../../styles';
+import { CONTENT_WIDTH, device, font } from '../../styles';
 import { AddressSuggestion, IconName, slugs } from '../../utils';
 import Button from '../ui/Button';
 import Icon from '../Icons';
@@ -88,16 +88,20 @@ const HeroSearch = () => {
 
 export default HeroSearch;
 
-// The exported Figma artwork (green field + swept line texture), stretched to
-// the hero box so the whole sweep stays visible rather than being scaled up and
-// cropped. Flat base green backs it for any rounding gap.
+// Flattened PNG export of the Figma hero band (1440x436). The SVG version drew
+// its line work through a color-dodge blend, which Figma resolves to soft white
+// but a CSS background-image renders as dark strokes — hence "linijos tamsios"
+// in QA. The PNG bakes the intended result in.
+//
+// Padding follows the design frame: the 1440x436 band puts the heading at
+// y=160, measured from the top of the hero (the 80px navbar overlays it).
 const Hero = styled.div`
   position: relative;
   width: 100%;
   background:
-    url('/frame.svg') center / 100% 100% no-repeat,
+    url('/hero_bg.png') center / 100% 100% no-repeat,
     #7eec9b;
-  padding-top: 96px;
+  padding-top: 160px;
   padding-bottom: 88px;
 
   @media ${device.mobileL} {
@@ -117,7 +121,7 @@ const Hero = styled.div`
 const HeroInner = styled.div`
   position: relative;
   z-index: 1;
-  max-width: 1216px;
+  max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
   padding: 0 32px;
 
@@ -163,12 +167,14 @@ const SupportCopy = styled.p`
   }
 `;
 
+// Design: the 1312x140 search card sits at y=362 in a 436-tall hero, so it
+// hangs 66px past the bottom edge.
 const SearchBarWrap = styled.div`
   position: absolute;
   z-index: 1;
   left: 0;
   right: 0;
-  bottom: -40px;
+  bottom: -66px;
   padding: 0 32px;
 
   @media ${device.mobileL} {

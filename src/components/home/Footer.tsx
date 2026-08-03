@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuthModal } from '../auth/AuthModalContext';
 import styled from 'styled-components';
-import { device, font } from '../../styles';
+import { CONTENT_WIDTH, device, font } from '../../styles';
 import { IconName, slugs } from '../../utils';
 import Icon from '../Icons';
 
@@ -83,7 +83,7 @@ const Wrap = styled.footer`
 `;
 
 const Inner = styled.div`
-  max-width: 1216px;
+  max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
   padding: 80px 32px 0;
   display: grid;
@@ -160,7 +160,7 @@ const ColLink = styled.div<{ $strong?: boolean }>`
 `;
 
 const Copyright = styled.div`
-  max-width: 1216px;
+  max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
   padding: 48px 32px 32px;
   ${font('base', 400)};

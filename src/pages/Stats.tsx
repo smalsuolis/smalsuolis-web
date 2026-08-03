@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useQuery } from '@tanstack/react-query';
 import { orderBy } from 'lodash';
-import { device, font } from '../styles';
+import { CONTENT_WIDTH, device, font } from '../styles';
 import { IconName, timeRangeQuery } from '../utils';
 import { TimeRanges, yearQuery } from '../utils/types';
 import api from '../utils/api';
@@ -222,7 +222,9 @@ const Stats = () => {
       rows: tagRows(byApp?.izuvinimas?.byTag, prevByApp?.izuvinimas?.byTag),
     },
     {
-      icon: IconName.mapLocation,
+      // Not mapLocation: that name exists in the enum but has no case in the
+      // Icons switch, so it renders as an empty chip.
+      icon: IconName.scales,
       title: 'Žemės paskirties keitimai',
       total: byApp?.savivaldybesZemetvarka?.count || 0,
       rows: tagRows(
@@ -390,7 +392,7 @@ const Page = styled.div`
   flex-direction: column;
   padding: 40px 0;
   @media ${device.desktop} {
-    max-width: 1216px;
+    max-width: ${CONTENT_WIDTH};
   }
   @media ${device.tablet} {
     padding: 32px 20px;

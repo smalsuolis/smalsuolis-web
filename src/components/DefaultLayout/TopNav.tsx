@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { device, font } from '../../styles';
+import { CONTENT_WIDTH, device, font } from '../../styles';
 import Icon from '../Icons';
 import { IconName, slugs } from '../../utils';
 import MobileMenu from './MobileMenu';
@@ -145,7 +145,7 @@ const Bar = styled.header`
 `;
 
 const Inner = styled.nav`
-  max-width: 1216px;
+  max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
   height: 72px;
   display: flex;

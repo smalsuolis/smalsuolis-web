@@ -177,6 +177,12 @@ export const GlobalStyle = createGlobalStyle`
   
 `;
 
+/**
+ * Site content column. The Figma frames are 1440 wide with 56px gutters, so the
+ * content measures 1328 — not the 1216 (1280 - 2x32) this project used before.
+ */
+export const CONTENT_WIDTH = '1328px';
+
 export const device = {
   mobileS: `(max-width: 320px)`,
   mobileM: `(max-width: 425px)`,
