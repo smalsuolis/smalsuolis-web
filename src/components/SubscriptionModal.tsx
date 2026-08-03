@@ -471,9 +471,19 @@ const ClearLink = styled.button`
   font-size: 1.4rem;
 `;
 
+// Black pill, per the design — the DS Button defaults to the green primary,
+// which is used for map/list actions rather than modal confirmation.
 const SubmitButton = styled(Button)`
   min-width: 140px;
   height: 44px;
+  background-color: ${({ theme }) => theme.colors.black};
+  border-color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+
+  &:hover:not(:disabled) {
+    background-color: ${({ theme }) => theme.colors.grey[700]};
+    border-color: ${({ theme }) => theme.colors.grey[700]};
+  }
 
   @media ${device.mobileL} {
     width: 100%;

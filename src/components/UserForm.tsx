@@ -1,4 +1,4 @@
-import { ContentLayout, TextField } from '@aplinkosministerija/design-system';
+import { TextField } from '@aplinkosministerija/design-system';
 import { buttonsTitles, inputLabels, PasswordForm, useGetCurrentRoute, User } from '../utils';
 import PasswordCheckListContainer from './PasswordCheckListContainer';
 import styled from 'styled-components';
@@ -73,7 +73,7 @@ const UserForm = ({
   const heading = title ?? currentRoute?.title;
 
   return (
-    <ContentLayout currentRoute={currentRoute}>
+    <Page>
       <PasswordContainer noValidate onSubmit={handleSubmit}>
         <Header>
           {heading && <Title>{heading}</Title>}
@@ -124,11 +124,24 @@ const UserForm = ({
           {buttonsTitles.update}
         </StyledButton>
       </PasswordContainer>
-    </ContentLayout>
+    </Page>
   );
 };
 
 export default UserForm;
+
+// Own page shell: ContentLayout also renders the route title, which duplicated
+// the heading this form already draws.
+const Page = styled.div`
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+
+  @media ${device.mobileL} {
+    padding: 24px 20px 48px;
+  }
+`;
 
 const PasswordContainer = styled.form`
   display: flex;
@@ -180,6 +193,15 @@ const Alert = styled.div<{ $variant: 'success' | 'error' }>`
   }
 `;
 
+// Black pill, per the design — the DS primary variant renders green.
 const StyledButton = styled(Button)`
   margin-top: 32px;
+  background-color: ${({ theme }) => theme.colors.black};
+  border-color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+
+  &:hover:not(:disabled) {
+    background-color: ${({ theme }) => theme.colors.grey[700]};
+    border-color: ${({ theme }) => theme.colors.grey[700]};
+  }
 `;
