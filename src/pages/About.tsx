@@ -123,11 +123,13 @@ const Page = styled.div`
   }
 `;
 
-// Hero: solid brand-green band (#7eec9b), heading centered. Height ~436 on
-// desktop; the nav floats over it (transparent).
+// Hero: the same 1440x436 green band as the homepage, artwork included — the
+// Figma About frame carries an identical texture layer, not flat green.
 const Hero = styled.div`
   width: 100%;
-  background: #7eec9b;
+  background:
+    url('/hero_bg.png') center / 100% 100% no-repeat,
+    #7eec9b;
   min-height: 436px;
   display: flex;
   align-items: center;

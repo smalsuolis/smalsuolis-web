@@ -331,14 +331,16 @@ const BottomBar = styled.div`
   }
 `;
 
+// White pill over the map, per the design — the black treatment is reserved
+// for the primary "Rodyti įvykių sąrašą" action on the other side of the bar.
 const RegisterCta = styled.button`
   display: inline-flex;
   align-items: center;
   height: 40px;
   padding: 0 24px;
   border-radius: 100px;
-  background: ${({ theme }) => theme.colors.black};
-  color: ${({ theme }) => theme.colors.white};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.text.primary};
   ${font('base', 500)};
   cursor: pointer;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
