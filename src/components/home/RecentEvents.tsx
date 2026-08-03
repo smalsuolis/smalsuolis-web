@@ -183,27 +183,18 @@ const Tag = styled.span`
 `;
 
 const ArrowCircle = styled.div`
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  /* Design (Project Info): a plain 24px arrow at the row's right edge, not a
+     bordered circle. */
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  width: 24px;
+  height: 24px;
   color: ${({ theme }) => theme.colors.text.primary};
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease;
 
   svg {
-    font-size: 1.8rem;
-  }
-
-  ${RowLink}:hover & {
-    background: ${({ theme }) => theme.colors.primary};
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  @media ${device.mobileL} {
-    display: none;
+    font-size: 2rem;
   }
 `;

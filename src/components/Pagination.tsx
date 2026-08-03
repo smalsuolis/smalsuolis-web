@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../styles';
 
@@ -54,6 +55,23 @@ const Pagination = ({
   totalPages: number;
   onChange: (page: number) => void;
 }) => {
+  // Clicking an ellipsis turns it into a number input, so a distant page is
+  // reachable without stepping through the range.
+  const [jumpAt, setJumpAt] = useState<number | null>(null);
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (jumpAt !== null) inputRef.current?.focus();
+  }, [jumpAt]);
+
+  const commitJump = () => {
+    const n = Number(draft);
+    if (n >= 1 && n <= totalPages) onChange(n);
+    setJumpAt(null);
+    setDraft('');
+  };
+
   if (totalPages <= 1) return null;
 
   const go = (next: number) => {
@@ -77,7 +95,36 @@ const Pagination = ({
 
       {buildPages(page, totalPages).map((item, i) =>
         item === 'gap' ? (
-          <Gap key={`gap-${i}`}>…</Gap>
+          jumpAt === i ? (
+            <JumpInput
+              key={`gap-${i}`}
+              ref={inputRef}
+              type="number"
+              min={1}
+              max={totalPages}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commitJump}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitJump();
+                if (e.key === 'Escape') {
+                  setJumpAt(null);
+                  setDraft('');
+                }
+              }}
+              aria-label={`Įveskite puslapio numerį (1–${totalPages})`}
+            />
+          ) : (
+            <Gap
+              key={`gap-${i}`}
+              type="button"
+              onClick={() => setJumpAt(i)}
+              title={`Pereiti į puslapį (1–${totalPages})`}
+              aria-label="Pereiti į puslapį"
+            >
+              …
+            </Gap>
+          )
         ) : (
           <Cell
             key={item}
@@ -169,12 +216,53 @@ const Flip = styled.span`
   transform: rotate(180deg);
 `;
 
-const Gap = styled.span`
+const Gap = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 24px;
+  min-width: 32px;
   height: 44px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
   color: ${({ theme }) => theme.colors.text.primary};
   ${font('base', 500)};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background};
+  }
+
+  @media ${device.mobileL} {
+    height: 38px;
+    min-width: 28px;
+  }
+`;
+
+// Replaces the ellipsis in place, so the row's height and rhythm don't shift.
+const JumpInput = styled.input`
+  width: 64px;
+  height: 44px;
+  padding: 0 8px;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px solid ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme.colors.white};
+  color: ${({ theme }) => theme.colors.text.primary};
+  ${font('base', 500)};
+  outline: none;
+
+  /* Hide the spinners — the arrows are redundant next to the pager itself. */
+  appearance: textfield;
+  -moz-appearance: textfield;
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  @media ${device.mobileL} {
+    width: 56px;
+    height: 38px;
+  }
 `;

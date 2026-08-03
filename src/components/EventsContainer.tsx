@@ -403,11 +403,19 @@ const EventsContainer = ({
               })
             }
           />
+          {/* The design shows only the two dropdowns, but the modal still
+              carries subscriptions, categories and custom date ranges that
+              they don't cover — kept as a compact icon-only trigger beside
+              them rather than dropped. */}
+          <FilterPill
+            onClick={() => setShowFilterModal(true)}
+            $active={!isEmpty(filters.value)}
+            title={buttonsTitles.filter}
+            aria-label={buttonsTitles.filter}
+          >
+            <Icon name={IconName.filter} size={20} color={'#1B4C28'} />
+          </FilterPill>
         </InlineFilters>
-        <FilterPill onClick={() => setShowFilterModal(true)} $active={!isEmpty(filters.value)}>
-          <Icon name={IconName.filter} size={20} color={'#1B4C28'} />
-          {buttonsTitles.filter}
-        </FilterPill>
       </FilterBar>
 
       {renderListOrMap()}
@@ -558,23 +566,31 @@ const ClearButton = styled.div`
 
 // Inline dropdowns are a mobile-only affordance; on desktop the filter modal
 // carries everything and the bar stays a search field + pill.
+// Design: search on the left, category + period dropdowns on the right — at
+// every breakpoint, not just mobile. They stack under the search on phones.
 const InlineFilters = styled.div`
-  display: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
 
   @media ${device.mobileL} {
-    display: flex;
+    width: 100%;
+    margin-left: 0;
     flex-direction: column;
-    gap: 12px;
+    align-items: stretch;
   }
 `;
 
 const FilterPill = styled.button<{ $active: boolean }>`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  min-height: 52px;
-  padding: 0 24px;
-  border-radius: 44px;
+  height: 40px;
+  width: 40px;
+  flex-shrink: 0;
+  border-radius: 100px;
   border: 1px solid
     ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.grey[300])};
   background: ${({ theme }) => theme.colors.white};

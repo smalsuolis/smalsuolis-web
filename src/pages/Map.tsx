@@ -175,21 +175,6 @@ const MapPage = () => {
     navigate(`${slugs.events}?${params.toString()}`);
   };
 
-  // Count of events within SEARCH_RADIUS_M of the selected address, for the
-  // sleek nearby chip. Only the count is needed here (per-pin detail comes from
-  // the map iframe's own click popups).
-  const { data: nearbyData } = useQuery({
-    queryKey: ['events-near', selected?.geometry.coordinates],
-    queryFn: () =>
-      api.getEventsNear({
-        lng: selected!.geometry.coordinates[0],
-        lat: selected!.geometry.coordinates[1],
-        radius: SEARCH_RADIUS_M,
-        limit: 1,
-      }),
-    enabled: !!selected,
-  });
-  const nearbyCount = selected ? nearbyData?.count : undefined;
 
   // When an address is selected, draw a 3346 circle around it (correct location
   // + a sensible zoom). When nothing is selected, geom is undefined so we don't
@@ -233,7 +218,17 @@ const MapPage = () => {
     <Page>
       <Controls>
         <SearchPill>
-          <AddressAutocomplete value={address} onChange={setAddress} onSelect={setSelected} />
+          {/* Emptying the field also drops the resolved point and remounts the
+              map back to its default view — the nearby chip used to own that
+              reset, and it isn't in the design. */}
+          <AddressAutocomplete
+            value={address}
+            onChange={(text) => {
+              setAddress(text);
+              if (!text.trim() && selected) clearSelection();
+            }}
+            onSelect={setSelected}
+          />
         </SearchPill>
         <CategoryPill type="button" onClick={() => setFilterOpen(true)} $active={hasCategory}>
           <PillLabel>{categoryLabel}</PillLabel>
@@ -251,21 +246,6 @@ const MapPage = () => {
       <MapWrap>
         <MapView key={mapKey} geom={geom} filters={filters} height="100%" hideFullscreen />
       </MapWrap>
-
-      {/* Sleek nearby-count chip instead of a big floating card: the map iframe
-          already shows per-pin detail popups on click, so here we only surface
-          the "N events within the radius" summary for the searched address. */}
-      {selected && (
-        <NearbyChip>
-          <NearbyCount>
-            {nearbyCount === undefined ? '…' : nearbyCount.toLocaleString('lt-LT')}
-          </NearbyCount>
-          <NearbyLabel>įvykių {Math.round(SEARCH_RADIUS_M / 1000)} km spinduliu</NearbyLabel>
-          <ChipClose onClick={clearSelection} aria-label="Išvalyti">
-            <Icon name={IconName.close} />
-          </ChipClose>
-        </NearbyChip>
-      )}
 
       {/* Bottom controls (Figma): register CTA left, list-view toggle right. On
           mobile they stack and center. */}
@@ -310,61 +290,9 @@ const Page = styled.div`
   }
 `;
 
-// Sleek nearby-count chip: a compact white pill top-ish over the map (below the
-// controls), not a big card. Shows the count for the searched address.
-// Aligned to the content column's left edge (see Controls), not the viewport.
-const NearbyChip = styled.div`
-  position: absolute;
-  left: max(32px, calc((100% - ${CONTENT_MAX_WIDTH}) / 2 + 32px));
-  top: 84px;
-  z-index: 22;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 12px 0 16px;
-  background: ${({ theme }) => theme.colors.white};
-  border-radius: 100px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
 
-  @media ${device.mobileL} {
-    left: 12px;
-    right: 12px;
-    top: auto;
-    bottom: 108px;
-    justify-content: center;
-  }
-`;
 
-const NearbyCount = styled.span`
-  ${font('lg', 700)};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
 
-const NearbyLabel = styled.span`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[600]};
-`;
-
-const ChipClose = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.grey[500]};
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
-    background: ${({ theme }) => theme.colors.background};
-  }
-
-  svg {
-    font-size: 1.4rem;
-  }
-`;
 
 // Bottom controls over the map: register CTA (left) + list-view toggle (right).
 // On mobile they stack and center (per the mobile Figma frame).
