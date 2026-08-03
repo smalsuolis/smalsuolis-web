@@ -76,7 +76,7 @@ const Trigger = styled.button`
   justify-content: space-between;
   gap: 16px;
   width: 100%;
-  min-height: 56px;
+  height: 40px;
   padding: 12px 20px;
   border-radius: 44px;
   background: ${({ theme }) => theme.colors.white};

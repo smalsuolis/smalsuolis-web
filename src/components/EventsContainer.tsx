@@ -531,7 +531,9 @@ const SearchField = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 52px;
+  /* 40px to match the dropdowns beside it — the design's filter row is one
+     consistent control height (Figma: search input 422x40). */
+  height: 40px;
   padding: 0 20px;
   border: 1px solid ${({ theme }) => theme.colors.grey[300]};
   border-radius: 44px;
