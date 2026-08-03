@@ -383,6 +383,7 @@ const EventsContainer = ({
             pill stays for everything else. Desktop keeps the pill alone. */}
         <InlineFilters>
           <PeriodDropdown
+            placeholder="Sritys"
             options={appOptions}
             value={selectedAppKey}
             onChange={(option) => {
@@ -394,6 +395,7 @@ const EventsContainer = ({
             }}
           />
           <PeriodDropdown
+            placeholder="Data"
             options={timeRangeItems}
             value={filters.value.timeRange?.key ?? ''}
             onChange={(option) =>

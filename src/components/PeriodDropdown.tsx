@@ -16,10 +16,14 @@ const PeriodDropdown = ({
   options,
   value,
   onChange,
+  placeholder = 'Pasirinkite',
 }: {
   options: PeriodOption[];
   value: string;
   onChange: (option: PeriodOption) => void;
+  // Shown when nothing is selected. The events filters pass a meaningful
+  // label ("Sritys", "Data") rather than a generic prompt.
+  placeholder?: string;
 }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -37,7 +41,7 @@ const PeriodDropdown = ({
   return (
     <Wrap ref={ref}>
       <Trigger type="button" onClick={() => setOpen((v) => !v)}>
-        <Label>{current?.name ?? 'Pasirinkite'}</Label>
+        <Label>{current?.name ?? placeholder}</Label>
         <Chevron name={IconName.dropdownArrow} $open={open} />
       </Trigger>
       {open && (

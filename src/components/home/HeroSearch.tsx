@@ -101,10 +101,15 @@ const Hero = styled.div`
   background:
     url('/hero_bg.png') center / 100% 100% no-repeat,
     #7eec9b;
+  /* Fixed 436px band, per the design frame — the height was previously
+     content-driven, so it collapsed to whatever the heading needed and the
+     green stopped right at the search card. */
+  min-height: 436px;
   padding-top: 160px;
   padding-bottom: 88px;
 
   @media ${device.mobileL} {
+    min-height: 0;
     /* Flat green on phones, per the mobile design: the artwork is a 1440x436
        landscape sweep, and squeezing it into a ~390px portrait band distorts
        the line work into noise. */
