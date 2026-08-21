@@ -112,16 +112,22 @@ const SeeAll = styled.button`
 const List = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 32px;
 `;
 
 const RowLink = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px 0;
-  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  gap: 22px;
+  padding: 0 0 32px;
+  /* Rules sit between rows, so the last one carries none. */
+  border-bottom: 1px solid ${({ theme }) => theme.colors.grey[400]};
   cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   &:hover {
     background: ${({ theme }) => theme.colors.background};
@@ -131,7 +137,7 @@ const RowLink = styled.div`
 const RowMain = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 22px;
   min-width: 0;
 `;
 
@@ -142,26 +148,26 @@ const MetaLine = styled.div`
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 16px;
 `;
 
 const NameTitle = styled.span`
-  ${font('lg', 700)};
-  color: ${({ theme }) => theme.colors.text.primary};
+  ${font('2xl')};
+  color: ${({ theme }) => theme.colors.grey[700]};
 `;
 
 const NameLocation = styled.span`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[600]};
+  ${font('xl')};
+  color: ${({ theme }) => theme.colors.grey[700]};
 `;
 
 const MetaDot = styled.span`
-  color: ${({ theme }) => theme.colors.grey[500]};
+  color: ${({ theme }) => theme.colors.grey[400]};
 `;
 
 const MetaDate = styled.span`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[600]};
+  ${font('xl')};
+  color: ${({ theme }) => theme.colors.grey[700]};
   white-space: nowrap;
 `;
 

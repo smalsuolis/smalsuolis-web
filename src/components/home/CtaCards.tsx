@@ -18,15 +18,17 @@ const CtaCards = () => {
       </GreenCard>
 
       <BlackCard>
-        <BlackTitle>
-          Tapk Smalsuolio
-          <br />
-          prenumeratoriumi
-        </BlackTitle>
-        <BlackCopy>
-          Užsiregistruok. Pažymėk tave dominančias įvykių kategorijas. Gauk elektroniniu paštu
-          naujausią informaciją apie tai, kas įvyko.
-        </BlackCopy>
+        <BlackText>
+          <BlackTitle>
+            Tapk Smalsuolio
+            <br />
+            prenumeratoriumi
+          </BlackTitle>
+          <BlackCopy>
+            Užsiregistruok. Pažymėk tave dominančias įvykių kategorijas. Gauk elektroniniu paštu
+            naujausią informaciją apie tai, kas įvyko.
+          </BlackCopy>
+        </BlackText>
         <Button variant="light" size="lg" onClick={() => open('register')}>
           Tapk Smalsiu
         </Button>
@@ -62,7 +64,7 @@ const Grid = styled.div`
 const contentGutter = `max(48px, calc((100vw - ${CONTENT_WIDTH}) / 2 + 32px))`;
 
 const Card = styled.div`
-  border-radius: 32px;
+  border-radius: 20px;
   padding: 48px;
   /* Design frame height for the band. */
   min-height: 538px;
@@ -79,10 +81,10 @@ const Card = styled.div`
 const GreenCard = styled(Card)`
   position: relative;
   overflow: hidden;
-  border-radius: 0 32px 32px 0;
+  border-radius: 0 20px 20px 0;
   padding-left: ${contentGutter};
   background:
-    linear-gradient(180deg, rgba(27, 94, 52, 0.35) 0%, rgba(20, 66, 36, 0.88) 100%),
+    linear-gradient(180deg, rgba(126, 236, 155, 0.3) 0%, #20853b 100%),
     url('/home/cta_city.png') center / cover no-repeat;
 
   @media ${device.mobileL} {
@@ -92,7 +94,7 @@ const GreenCard = styled(Card)`
 `;
 
 const GreenText = styled.div`
-  ${font('3xl')};
+  ${font('5xl')};
   color: ${({ theme }) => theme.colors.white};
   position: relative;
 `;
@@ -100,22 +102,28 @@ const GreenText = styled.div`
 const BlackCard = styled(Card)`
   background: ${({ theme }) => theme.colors.black};
   justify-content: flex-start;
-  gap: 16px;
-  border-radius: 32px 0 0 32px;
+  gap: 40px;
+  border-radius: 20px 0 0 20px;
 
   @media ${device.mobileL} {
     border-radius: 20px;
   }
 `;
 
+const BlackText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
 const BlackTitle = styled.div`
-  ${font('2xl')};
+  ${font('3xl')};
   color: ${({ theme }) => theme.colors.white};
 `;
 
 const BlackCopy = styled.p`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[400]};
+  ${font('lg')};
+  color: ${({ theme }) => theme.colors.white};
   margin: 0;
   max-width: 420px;
 `;
