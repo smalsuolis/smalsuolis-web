@@ -126,4 +126,16 @@ const Link = styled.span`
 
 const SubmitButton = styled(Button)`
   flex-shrink: 0;
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
+  background-color: ${({ theme }) => theme.colors.black};
+  border-color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base')};
+
+  &:hover:not(:disabled) {
+    background-color: ${({ theme }) => theme.colors.grey[700]};
+    border-color: ${({ theme }) => theme.colors.grey[700]};
+  }
 `;

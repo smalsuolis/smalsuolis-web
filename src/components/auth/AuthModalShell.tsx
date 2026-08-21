@@ -63,15 +63,31 @@ const Overlay = styled.div`
 const Card = styled.div<{ $wide?: boolean }>`
   position: relative;
   width: 100%;
-  max-width: ${({ $wide }) => ($wide ? '480px' : '480px')};
+  max-width: ${({ $wide }) => ($wide ? '499px' : '499px')};
   max-height: 92vh;
   overflow-y: auto;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+
+  div:has(> input) {
+    height: 40px;
+    border-radius: 100px;
+    border-color: ${({ theme }) => theme.colors.grey[500]};
+  }
+
+  div:has(> input) > input {
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  div:has(+ div > input) {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
 `;
 
 const Header = styled.div<{ $hasTitle: boolean }>`
@@ -82,7 +98,7 @@ const Header = styled.div<{ $hasTitle: boolean }>`
 `;
 
 const Title = styled.h2`
-  ${font('2xl', 600)};
+  ${font('2xl')};
   margin: 0;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
