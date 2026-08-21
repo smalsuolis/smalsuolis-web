@@ -29,9 +29,11 @@ const CtaCards = () => {
             naujausią informaciją apie tai, kas įvyko.
           </BlackCopy>
         </BlackText>
-        <Button variant="light" size="lg" onClick={() => open('register')}>
-          Tapk Smalsiu
-        </Button>
+        <CtaButtonWrap>
+          <Button variant="light" onClick={() => open('register')}>
+            Tapk Smalsiu
+          </Button>
+        </CtaButtonWrap>
       </BlackCard>
     </Grid>
   );
@@ -107,6 +109,18 @@ const BlackCard = styled(Card)`
 
   @media ${device.mobileL} {
     border-radius: 20px;
+  }
+`;
+
+const CtaButtonWrap = styled.div`
+  button {
+    width: 420px;
+  }
+
+  @media ${device.mobileL} {
+    button {
+      width: 100%;
+    }
   }
 `;
 

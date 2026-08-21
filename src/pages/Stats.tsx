@@ -210,10 +210,7 @@ const Stats = () => {
       icon: IconName.map,
       title: 'Žemėtvarkos planavimas',
       total: byApp?.zemetvarkosPlanavimas?.count || 0,
-      rows: tagRows(
-        byApp?.zemetvarkosPlanavimas?.byTag,
-        prevByApp?.zemetvarkosPlanavimas?.byTag,
-      ),
+      rows: tagRows(byApp?.zemetvarkosPlanavimas?.byTag, prevByApp?.zemetvarkosPlanavimas?.byTag),
     },
     {
       icon: IconName.fish,
@@ -227,10 +224,7 @@ const Stats = () => {
       icon: IconName.scales,
       title: 'Žemės paskirties keitimai',
       total: byApp?.savivaldybesZemetvarka?.count || 0,
-      rows: tagRows(
-        byApp?.savivaldybesZemetvarka?.byTag,
-        prevByApp?.savivaldybesZemetvarka?.byTag,
-      ),
+      rows: tagRows(byApp?.savivaldybesZemetvarka?.byTag, prevByApp?.savivaldybesZemetvarka?.byTag),
     },
   ];
 
@@ -440,7 +434,7 @@ const KpiStrip = styled.div`
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 24px;
-  padding-bottom: 32px;
+  padding-bottom: 48px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
 
   /* Two per row on mobile (2/2/2 rather than the design's 3+2) — five tiles
@@ -535,7 +529,7 @@ const SourceGrid = styled.div`
 const LoaderContainer = styled.div`
   display: flex;
   width: 100%;
-  margin-top: 40px;
+  margin-top: 48px;
   justify-content: center;
 `;
 
