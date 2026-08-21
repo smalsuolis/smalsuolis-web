@@ -78,10 +78,10 @@ const Trigger = styled.button`
   width: 100%;
   height: 40px;
   padding: 12px 20px;
-  border-radius: 44px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.white};
   cursor: pointer;
-  ${font('lg')};
+  ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
@@ -103,28 +103,38 @@ const Menu = styled.div`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  right: 0;
+  /* Grows past the trigger so rows stay on one line. */
+  min-width: 100%;
+  width: max-content;
+  max-width: 320px;
   z-index: 30;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 16px;
+  border: 1px solid #ededed;
+  border-radius: 4px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
-  padding: 8px;
   max-height: 320px;
   overflow-y: auto;
 `;
 
 const Item = styled.button<{ $active: boolean }>`
-  display: block;
+  display: flex;
+  align-items: center;
   width: 100%;
+  height: 40px;
   text-align: left;
-  padding: 12px 16px;
-  border-radius: 10px;
+  padding: 8px 16px;
+  margin: 4px 0;
+  white-space: nowrap;
   cursor: pointer;
   ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
-  background: ${({ $active, theme }) => ($active ? theme.colors.background : 'transparent')};
+  background: ${({ $active }) => ($active ? '#fafafa' : 'transparent')};
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  }
 
   &:hover {
-    background: ${({ theme }) => theme.colors.background};
+    background: #fafafa;
   }
 `;

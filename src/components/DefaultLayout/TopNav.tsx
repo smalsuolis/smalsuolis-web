@@ -181,7 +181,6 @@ const Links = styled.div`
   }
 `;
 
-// Weight, not colour or opacity, signals the active route.
 const NavLink = styled.div<{ $isActive: boolean }>`
   cursor: pointer;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -242,7 +241,7 @@ const AccountMenu = styled.div`
   top: 100%;
   right: 0;
   padding-top: 10px;
-  min-width: 232px;
+  width: 281px;
   z-index: 30;
 `;
 
@@ -250,6 +249,8 @@ const AccountMenu = styled.div`
 // a flat sheet rather than a rounded popover.
 const AccountCard = styled.div`
   background: ${({ theme }) => theme.colors.white};
+  border: 1px solid #ededed;
+  border-radius: 4px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 `;
@@ -259,18 +260,23 @@ const AccountCard = styled.div`
 // to set it apart from the navigation entries above it.
 const AccountItem = styled.div<{ $muted?: boolean }>`
   ${font('base', 400)};
-  padding: 18px 24px;
+  /* 40px row inside a 48px section: 4px of section padding above and below. */
+  height: 40px;
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  margin: 4px 0;
   cursor: pointer;
   white-space: nowrap;
   color: ${({ theme }) => theme.colors.text.primary};
-  background: ${({ $muted }) => ($muted ? '#f7f7f7' : 'transparent')};
+  background: ${({ $muted }) => ($muted ? '#fafafa' : 'transparent')};
 
   & + & {
-    border-top: 1px solid #eeeeee;
+    border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
   }
 
   &:hover {
-    background: ${({ $muted }) => ($muted ? '#f0f0f0' : '#fafafa')};
+    background: #fafafa;
   }
 `;
 

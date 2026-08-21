@@ -121,7 +121,6 @@ const RowLink = styled.div`
   justify-content: space-between;
   gap: 22px;
   padding: 0 0 32px;
-  /* Rules sit between rows, so the last one carries none. */
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[400]};
   cursor: pointer;
 

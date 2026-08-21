@@ -42,8 +42,6 @@ const StatRow = () => {
 
 export default StatRow;
 
-// Blocks are sized by their content and spaced by a fixed gap, not stretched
-// into equal columns — the design's four blocks are 261/229/200/189 wide.
 const Grid = styled.div`
   display: flex;
   gap: 112px;
