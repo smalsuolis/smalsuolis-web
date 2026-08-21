@@ -46,7 +46,6 @@ const Datepicker = ({ value, onChange, selectedDates }: DatepickerProps) => {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (selectedDates) {
       setDate({
@@ -54,6 +53,9 @@ const Datepicker = ({ value, onChange, selectedDates }: DatepickerProps) => {
         end: new Date(selectedDates.$lt),
       });
     }
+    // Seeds the picker from the incoming range once, on mount only — adding
+    // selectedDates here would clobber the user's in-progress selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
