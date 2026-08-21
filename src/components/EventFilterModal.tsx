@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { device } from '../styles';
+import { device, font } from '../styles';
 import Icon from './Icons';
 import { Button, Modal, useStorage } from '@aplinkosministerija/design-system';
 import FilterPicker from './FilterPicker';
@@ -263,7 +263,7 @@ const StyledIcon = styled(Icon)`
 const Container = styled.div<{ width?: string; $backgroundImg?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 25px;
+  gap: 24px;
   background-color: white;
   position: relative;
   width: 100%;
@@ -280,13 +280,13 @@ const Container = styled.div<{ width?: string; $backgroundImg?: boolean }>`
       : ''}
 
   @media ${device.desktop} {
-    max-width: 750px;
+    max-width: 841px;
     height: auto;
     overflow: initial;
     min-height: auto;
-    padding: 40px;
+    padding: 24px;
     flex-basis: auto;
-    border-radius: 16px;
+    border-radius: 8px;
   }
 `;
 
@@ -316,12 +316,8 @@ const CloseText = styled.div`
 `;
 
 const ClearFilterText = styled.div`
-  font-family: Plus Jakarta Sans;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 20.16px;
-  text-align: left;
-  color: #1b4c28;
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: underline;
   cursor: pointer;
 `;
@@ -341,10 +337,20 @@ const Divider = styled.hr`
 `;
 
 const FilterButton = styled(Button)`
-  font-family: Plus Jakarta Sans;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 22.68px;
+  align-self: flex-end;
+  width: 205px;
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
+  background-color: ${({ theme }) => theme.colors.black};
+  border-color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base')};
+
+  &:hover:not(:disabled) {
+    background-color: ${({ theme }) => theme.colors.grey[700]};
+    border-color: ${({ theme }) => theme.colors.grey[700]};
+  }
 `;
 
 export default EventFilterModal;

@@ -206,7 +206,7 @@ const AccountWrapper = styled.div`
 const AccountTrigger = styled.button`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: none;
   border: none;
   padding: 0;
@@ -214,21 +214,20 @@ const AccountTrigger = styled.button`
 `;
 
 const Avatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 48px;
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  font-size: 2.4rem;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Chevron = styled(Icon)<{ $open: boolean }>`
   font-size: 1.6rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  color: #0f172a;
   transform: ${({ $open }) => ($open ? 'rotate(180deg)' : 'rotate(0deg)')};
   transition: transform 0.15s ease;
 `;

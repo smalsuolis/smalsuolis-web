@@ -101,9 +101,9 @@ const Page = styled.div`
   flex-direction: column;
 
   /* Pull the hero up under the transparent top nav (see Home). */
-  margin-top: -72px;
+  margin-top: -80px;
   @media ${device.mobileL} {
-    margin-top: -64px;
+    margin-top: -80px;
   }
 
   & > section {

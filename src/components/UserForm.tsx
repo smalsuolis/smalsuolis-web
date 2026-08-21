@@ -1,5 +1,12 @@
 import { TextField } from '@aplinkosministerija/design-system';
-import { buttonsTitles, inputLabels, PasswordForm, useGetCurrentRoute, User } from '../utils';
+import {
+  buttonsTitles,
+  inputLabels,
+  inputPlaceholders,
+  PasswordForm,
+  useGetCurrentRoute,
+  User,
+} from '../utils';
 import PasswordCheckListContainer from './PasswordCheckListContainer';
 import styled from 'styled-components';
 import { Button, PasswordField } from '@aplinkosministerija/design-system';
@@ -94,6 +101,7 @@ const UserForm = ({
           <PasswordField
             value={values.oldPassword}
             name="oldPassword"
+            placeholder={inputPlaceholders.enterPassword}
             onChange={(value) => handleType('oldPassword', value)}
             label={inputLabels.oldPassword}
           />
@@ -101,12 +109,14 @@ const UserForm = ({
         <PasswordField
           value={password}
           name="password"
+          placeholder={inputPlaceholders.enterPassword}
           onChange={(value) => handleType('password', value)}
           label={updatingPassword ? inputLabels.newPassword : inputLabels.password}
         />
         <PasswordField
           value={repeatPassword}
           name="repeatPassword"
+          placeholder={inputPlaceholders.enterPassword}
           onChange={(value) => handleType('repeatPassword', value)}
           label={updatingPassword ? inputLabels.repeatNewPassword : inputLabels.repeatPassword}
         />

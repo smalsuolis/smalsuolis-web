@@ -51,9 +51,9 @@ const Page = styled.div`
 
   /* Pull the hero up under the transparent top nav so the green band starts
      at the very top of the viewport, with the nav floating over it. */
-  margin-top: -72px;
+  margin-top: -80px;
   @media ${device.mobileL} {
-    margin-top: -64px;
+    margin-top: -80px;
   }
 
   /* Vertical rhythm between top-level sections. First section (intro) needs

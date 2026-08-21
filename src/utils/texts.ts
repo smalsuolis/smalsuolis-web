@@ -41,6 +41,12 @@ export const inputLabels = {
   searchEvents: 'Ieškoti įvykių...',
 };
 
+export const inputPlaceholders = {
+  email: 'El. paštas',
+  password: 'Slaptažodis',
+  enterPassword: 'Įvesti slaptažodį',
+};
+
 export const titles = {
   home: 'Pagrindinis',
   map: 'Žemėlapis',

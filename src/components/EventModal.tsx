@@ -146,20 +146,20 @@ const Overlay = styled.div`
 const Modal = styled.div`
   position: relative;
   width: 100%;
-  max-width: 440px;
+  max-width: 673px;
   max-height: 92vh;
   overflow-y: auto;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 
   @media ${device.mobileL} {
     max-width: 100%;
     max-height: 88vh;
-    border-radius: 16px 16px 0 0;
+    border-radius: 8px 8px 0 0;
   }
 `;
 

@@ -2,7 +2,7 @@ import { Button, PasswordField, TextField } from '@aplinkosministerija/design-sy
 import { useFormik } from 'formik';
 import styled from 'styled-components';
 import { useLogin } from '../../utils/hooks';
-import { buttonsTitles, inputLabels, subtitle, titles } from '../../utils/texts';
+import { buttonsTitles, inputLabels, inputPlaceholders, subtitle, titles } from '../../utils/texts';
 import { loginSchema } from '../../utils/validations';
 import { getErrorMessage } from '../../utils';
 import { font } from '../../styles';
@@ -40,6 +40,7 @@ const LoginModal = () => {
           value={values.email}
           type="email"
           name="email"
+          placeholder={inputPlaceholders.email}
           error={errors.email as string}
           onChange={(v: string) => handleType('email', v)}
           label={inputLabels.email}
@@ -47,6 +48,7 @@ const LoginModal = () => {
         <PasswordField
           value={values.password}
           name="password"
+          placeholder={inputPlaceholders.password}
           onChange={(v: string) => handleType('password', v)}
           label={inputLabels.password}
           error={errors.password as string}

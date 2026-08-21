@@ -1,4 +1,4 @@
-import { CheckBox, Switch } from '@aplinkosministerija/design-system';
+import { Switch } from '@aplinkosministerija/design-system';
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { checkmarkNudge, device } from '../styles';
@@ -64,15 +64,11 @@ const SubscriptionRow = ({
   subscription,
   onClick,
   onToggleActive,
-  selected,
-  onSelect,
   apps = [],
 }: {
   subscription: Subscription<App>;
   onClick: () => void;
   onToggleActive?: (active: boolean) => void;
-  selected?: boolean;
-  onSelect?: (checked: boolean) => void;
   apps?: App[];
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -97,14 +93,9 @@ const SubscriptionRow = ({
     '';
 
   return (
-    <Row $inactive={!isActive} $selected={!!selected}>
+    <Row $inactive={!isActive}>
       <TopRow>
         <LeftSide>
-          {onSelect && (
-            <CheckboxWrapper onClick={(e) => e.stopPropagation()}>
-              <CheckBox value={!!selected} onChange={(value) => onSelect(value)} />
-            </CheckboxWrapper>
-          )}
           {onToggleActive && (
             <SwitchWrapper
               onClick={(e) => e.stopPropagation()}
@@ -162,13 +153,12 @@ const SubscriptionRow = ({
 
 export default SubscriptionRow;
 
-const Row = styled.div<{ $inactive?: boolean; $selected?: boolean }>`
+const Row = styled.div<{ $inactive?: boolean }>`
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 24px 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.border || '#e5e5e5'};
-  background: ${({ $selected }) => ($selected ? '#f2f8f4' : 'transparent')};
   transition: background 0.2s;
 
   @media ${device.mobileL} {
@@ -201,12 +191,6 @@ const RightSide = styled.div`
   @media ${device.mobileL} {
     gap: 8px;
   }
-`;
-
-const CheckboxWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  ${checkmarkNudge};
 `;
 
 const SwitchWrapper = styled.div`
