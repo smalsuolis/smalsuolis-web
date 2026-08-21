@@ -31,6 +31,12 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
     setIsIframeLoaded(true);
   };
 
+  // Keyed on the serialized values: both props are rebuilt object literals on
+  // every render, so depending on the references themselves would post a
+  // message to the iframe on each one.
+  const geomKey = JSON.stringify(geom);
+  const filtersKey = JSON.stringify(filters);
+
   useEffect(() => {
     if (!iframeRef?.current || !isIframeLoaded) return;
 
@@ -43,7 +49,9 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
     if (Object.keys(message).length > 0) {
       iframe.contentWindow?.postMessage(message, '*');
     }
-  }, [JSON.stringify(geom), JSON.stringify(filters), iframeRef, isIframeLoaded]);
+    // geom/filters are read here but intentionally tracked via their keys.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geomKey, filtersKey, iframeRef, isIframeLoaded]);
 
   return (
     <Container $showModal={showModal} $error={!!error}>

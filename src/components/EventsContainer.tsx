@@ -135,6 +135,9 @@ const EventsContainer = ({
     }
 
     filters.setValue(newFilters);
+    // Reads the URL into filters. `filters` is written here, so listing it as
+    // a dependency would re-enter this effect on its own write.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allApps, allCategories, allSubscriptions, searchParams]);
 
   // Sync filters to URL params whenever they change
@@ -171,6 +174,10 @@ const EventsContainer = ({
       },
       { replace: true },
     );
+    // Mirrors filters into the URL. setSearchParams is re-created whenever the
+    // location changes — which this effect causes — so depending on it would
+    // loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.value]);
 
   useEffect(() => {
@@ -193,6 +200,9 @@ const EventsContainer = ({
       );
     }, 300);
     return () => clearTimeout(timer);
+    // Debounced search → URL. Same reason as above: setSearchParams changes
+    // identity on the navigation this effect performs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
   const currentRoute = useGetCurrentRoute();

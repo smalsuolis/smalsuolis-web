@@ -84,6 +84,10 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
         });
       }
     }
+    // Seeds the draft selection from the applied filters only as the modal
+    // opens. Depending on filters.* would re-seed mid-edit and wipe whatever
+    // the user has ticked since.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const onModalClose = () => {

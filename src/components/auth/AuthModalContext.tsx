@@ -58,4 +58,8 @@ export const AuthModalProvider = ({ children }: { children: ReactNode }) => {
   return <AuthModalContext.Provider value={value}>{children}</AuthModalContext.Provider>;
 };
 
+// Kept beside the provider deliberately: splitting it into its own module to
+// satisfy fast refresh would rewrite the import in ten call sites for a
+// dev-only HMR nicety.
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuthModal = () => useContext(AuthModalContext);
