@@ -23,7 +23,7 @@ interface Props {
 }
 
 const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
-  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev.maps.biip.lt';
+  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev-maps.biip.lt';
   const queryClient = useQueryClient();
   const [showDelete, setShowDelete] = useState(false);
 

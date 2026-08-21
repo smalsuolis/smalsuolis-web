@@ -29,7 +29,7 @@ import {
 import api from '../utils/api';
 
 const Subscriptions = () => {
-  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev.maps.biip.lt';
+  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev-maps.biip.lt';
   const currentRoute = useGetCurrentRoute();
   const queryClient = useQueryClient();
   const navigate = useNavigate();

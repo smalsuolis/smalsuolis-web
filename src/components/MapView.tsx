@@ -4,7 +4,12 @@ import { device } from '../styles';
 import { IconName } from '../utils';
 import Icon from './Icons';
 
-const mapsHost = import.meta.env.VITE_MAPS_HOST;
+const mapsHost = import.meta.env.VITE_MAPS_HOST || 'https://dev-maps.biip.lt';
+
+// postMessage must name the frame's own origin. '*' delivers the payload to
+// whatever document happens to be loaded there, so a redirected or swapped
+// iframe would receive the user's filters and drawn geometry.
+const mapsOrigin = new URL(mapsHost).origin;
 
 interface MapProps {
   onSave?: (data: any) => void;
@@ -47,7 +52,7 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
     if (filters) message.filters = filters;
 
     if (Object.keys(message).length > 0) {
-      iframe.contentWindow?.postMessage(message, '*');
+      iframe.contentWindow?.postMessage(message, mapsOrigin);
     }
     // geom/filters are read here but intentionally tracked via their keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
