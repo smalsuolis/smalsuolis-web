@@ -76,6 +76,5 @@ const InnerContainer = styled.div`
   @media ${device.desktop} {
     padding: 40px 16px;
     height: fit-content;
-    background-color: #f7f7f7;
   }
 `;

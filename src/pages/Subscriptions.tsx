@@ -8,7 +8,7 @@ import LoaderComponent from '../components/LoaderComponent';
 import Popup from '../components/Popup';
 import SubscriptionModal from '../components/SubscriptionModal';
 import SubscriptionRow from '../components/SubscriptionRow';
-import { ButtonVariants, CONTENT_WIDTH, checkmarkNudge, device } from '../styles';
+import { ButtonVariants, CONTENT_WIDTH, checkmarkNudge, device, font } from '../styles';
 import { App, slugs, Subscription, useInfinityLoad } from '../utils';
 import api from '../utils/api';
 
@@ -351,26 +351,23 @@ const PageHeader = styled.div`
 
 const PageTitle = styled.h1`
   margin: 0;
-  font-size: 3.2rem;
-  font-weight: 500;
-
-  @media ${device.mobileL} {
-    font-size: 2.8rem;
-  }
+  ${font('3xl')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const AddButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  height: 48px;
-  padding: 0 24px;
+  gap: 4px;
+  width: 165px;
+  height: 40px;
+  padding: 8px 24px;
   border: none;
-  border-radius: 24px;
-  background: #1a1a1a;
-  color: white;
-  font-size: 1.5rem;
+  border-radius: 54px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base')};
   cursor: pointer;
   flex-shrink: 0;
 
