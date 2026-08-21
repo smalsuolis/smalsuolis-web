@@ -87,14 +87,12 @@ const Header = styled.div`
   margin-bottom: 16px;
 `;
 
-// DS "Naujausi įvykiai" heading: Medium 30px, tight tracking. Node 116:1910.
 const Title = styled.h2`
   ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
 `;
 
-// DS "Rodyti visus įvykius" link: Regular 20px black. Node 116:1912.
 const SeeAll = styled.button`
   display: inline-flex;
   align-items: center;
@@ -176,8 +174,6 @@ const Tags = styled.div`
   gap: 8px;
 `;
 
-// DS event tag ("Category" chip): white bg, 1px grey-300 border, radius 128px,
-// padding 12px 20px, Medium 16px text in grey-700 (#333). Figma node 116:1926.
 const Tag = styled.span`
   ${font('base', 500)};
   padding: 12px 20px;
@@ -188,8 +184,6 @@ const Tag = styled.span`
 `;
 
 const ArrowCircle = styled.div`
-  /* Design (Project Info): a plain 24px arrow at the row's right edge, not a
-     bordered circle. */
   display: flex;
   align-items: center;
   justify-content: center;

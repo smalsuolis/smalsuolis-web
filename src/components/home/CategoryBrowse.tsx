@@ -6,10 +6,6 @@ import api from '../../utils/api';
 import { slugs } from '../../utils';
 import { timeRangeQuery, TimeRanges } from '../../utils/types';
 
-// "Naršyk pagal paskirtį" — a horizontal strip of category pills, each with a
-// colored icon, name, and an approximate count. Presentational browse entry
-// point; clicking routes into the events feed (filter wiring lands with the
-// events-page redesign).
 // Shares the canonical ALL_TIME window (same object → same server cache key)
 // with StatRow and the Stats page.
 const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
@@ -99,7 +95,6 @@ const Wrap = styled.div`
   gap: 24px;
 `;
 
-// DS section heading: Medium 30px, tight tracking. Node 116:1907.
 const Title = styled.h2`
   ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
@@ -157,8 +152,6 @@ const ChipIcon = styled.img`
   display: block;
 `;
 
-// DS category chip: label Regular 18px black, count Regular 18px grey-600
-// (#707070). Figma nodes 116:2779 / 116:2780.
 const ChipLabel = styled.span`
   ${font('lg')};
   color: ${({ theme }) => theme.colors.text.primary};

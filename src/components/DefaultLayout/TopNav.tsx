@@ -174,7 +174,7 @@ const LogoContainer = styled.div`
 const Links = styled.div`
   display: flex;
   align-items: center;
-  gap: 36px; /* DS Navbar item gap */
+  gap: 36px;
 
   @media ${device.mobileL} {
     display: none;
