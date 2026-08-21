@@ -100,6 +100,10 @@ const Title = styled.h2`
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   text-align: center;
+
+  @media ${device.mobileL} {
+    ${font('2xl')};
+  }
 `;
 
 const Chips = styled.div`
@@ -107,6 +111,11 @@ const Chips = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   gap: 16px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 const Chip = styled.button`

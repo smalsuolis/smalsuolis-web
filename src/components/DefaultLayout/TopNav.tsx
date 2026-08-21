@@ -159,8 +159,7 @@ const Inner = styled.nav`
   gap: 24px;
 
   @media ${device.mobileL} {
-    padding: 0 20px;
-    height: 64px;
+    padding: 0 16px;
   }
 `;
 

@@ -82,6 +82,10 @@ const Intro = styled.p`
   color: ${({ theme }) => theme.colors.grey[550]};
   max-width: 876px;
   margin: 0 auto;
+
+  @media ${device.mobileL} {
+    ${font('2xl', 400)};
+  }
 `;
 
 // The design emphasises these runs with colour alone — the weight stays 400.

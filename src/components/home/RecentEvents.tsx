@@ -91,6 +91,10 @@ const Title = styled.h2`
   ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
+
+  @media ${device.mobileL} {
+    ${font('2xl', 400)};
+  }
 `;
 
 const SeeAll = styled.button`

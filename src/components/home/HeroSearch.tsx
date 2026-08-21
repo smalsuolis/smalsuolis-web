@@ -130,7 +130,7 @@ const HeroInner = styled.div`
   padding: 0 32px;
 
   @media ${device.mobileL} {
-    padding: 0 20px;
+    padding: 0 16px;
   }
 `;
 
@@ -181,7 +181,7 @@ const SearchBarWrap = styled.div`
   padding: 0 32px;
 
   @media ${device.mobileL} {
-    padding: 0 20px;
+    padding: 0 16px;
     /* The bar stacks vertically on mobile (much taller), so it overhangs by a
        smaller amount; the first content section reserves clearance below. */
     bottom: -24px;
