@@ -77,15 +77,14 @@ const Page = styled.div`
 `;
 
 const Intro = styled.p`
-  ${font('2xl')};
-  font-weight: 400;
+  ${font('3xl', 400)};
   text-align: center;
-  color: ${({ theme }) => theme.colors.grey[500]};
-  max-width: 760px;
+  color: ${({ theme }) => theme.colors.grey[550]};
+  max-width: 876px;
   margin: 0 auto;
 `;
 
+// The design emphasises these runs with colour alone — the weight stays 400.
 const IntroStrong = styled.span`
   color: ${({ theme }) => theme.colors.text.primary};
-  font-weight: 500;
 `;

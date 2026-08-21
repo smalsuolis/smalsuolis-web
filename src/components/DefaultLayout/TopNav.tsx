@@ -181,20 +181,11 @@ const Links = styled.div`
   }
 `;
 
-// Matches the design-system Navbar: 16px black links, letter-spacing -0.02em,
-// the active item in Bold (700) and the rest in Regular (400) — weight, not
-// color, signals the active route. Inactive links carry a slight opacity so the
-// active one still reads first (mirrors the DS's de-emphasized nav treatment).
+// Weight, not colour or opacity, signals the active route.
 const NavLink = styled.div<{ $isActive: boolean }>`
   cursor: pointer;
   color: ${({ theme }) => theme.colors.text.primary};
   ${({ $isActive }) => font('base', $isActive ? 700 : 400)};
-  opacity: ${({ $isActive }) => ($isActive ? 1 : 0.64)};
-  transition: opacity 0.15s ease;
-
-  &:hover {
-    opacity: 1;
-  }
 `;
 
 const Right = styled.div`
