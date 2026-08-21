@@ -57,7 +57,8 @@ export const theme: Theme = {
       },
     },
     text: {
-      primary: '#101010',
+      // Figma MVP sets every heading, nav link and label to pure black.
+      primary: '#000000',
       secondary: '#525252',
       tertiary: '#4B5565',
       label: '#697586',
@@ -78,6 +79,7 @@ export const theme: Theme = {
       300: '#DDDDDD',
       400: '#D6D6D6',
       500: '#BCBCBC',
+      550: '#818181',
       600: '#707070',
       700: '#333333',
     },
@@ -147,7 +149,9 @@ export const GlobalStyle = createGlobalStyle`
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background-color: ${theme.colors.background};
+    /* Figma frames are white; colors.background (#f7f7f7) stays the light
+       surface used for hover/active fills, so it can't double as the page. */
+    background-color: ${theme.colors.white};
     font-size: 1.6rem;
     overflow: hidden;
     justify-content: center;
