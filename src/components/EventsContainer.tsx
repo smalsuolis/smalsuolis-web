@@ -146,29 +146,30 @@ const EventsContainer = ({
 
     setSearchParams(
       (prev) => {
-        prev.delete('apps');
-        prev.delete('range');
-        prev.delete('from');
-        prev.delete('to');
-        prev.delete('categories');
-        // A changed filter invalidates the current page number.
-        prev.delete('page');
-
         const { apps, timeRange, categories } = filters.value;
+        const isCustom = timeRange?.key === TimeRanges.CUSTOM;
 
-        if (apps?.length) {
-          prev.set('apps', apps.map((a) => a.id).join(','));
-        }
-        if (categories?.length) {
-          prev.set('categories', categories.map((c) => c.id).join(','));
-        }
-        if (timeRange) {
-          prev.set('range', timeRange.key);
-          if (timeRange.key === TimeRanges.CUSTOM) {
-            prev.set('from', timeRange.query.$gte);
-            prev.set('to', timeRange.query.$lt);
-          }
-        }
+        const next: Record<string, string | null> = {
+          apps: apps?.length ? apps.map((a) => a.id).join(',') : null,
+          categories: categories?.length ? categories.map((c) => c.id).join(',') : null,
+          range: timeRange ? timeRange.key : null,
+          from: isCustom ? timeRange.query.$gte : null,
+          to: isCustom ? timeRange.query.$lt : null,
+        };
+
+        // Compare BEFORE writing: this effect also runs on mount, and a shared
+        // ?apps=1&page=3 link must keep its page.
+        const changed = Object.entries(next).some(
+          ([key, value]) => (prev.get(key) ?? null) !== value,
+        );
+
+        Object.entries(next).forEach(([key, value]) => {
+          if (value === null) prev.delete(key);
+          else prev.set(key, value);
+        });
+
+        // A changed filter invalidates the current page number.
+        if (changed) prev.delete('page');
 
         return prev;
       },
