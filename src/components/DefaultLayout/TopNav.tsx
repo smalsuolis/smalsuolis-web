@@ -46,8 +46,11 @@ const TopNav = (props: DefaultLayoutProps) => {
     };
   }, [accountOpen]);
 
+  // These two pull the hero up underneath the bar, so it has to stay see-through.
+  const overHero = currentRoute?.slug === slugs.home || currentRoute?.slug === slugs.about;
+
   return (
-    <Bar>
+    <Bar $overHero={overHero}>
       <Inner>
         <LogoContainer onClick={onGoHome}>{logo}</LogoContainer>
 
@@ -134,10 +137,11 @@ const TopNav = (props: DefaultLayoutProps) => {
 
 export default TopNav;
 
-const Bar = styled.header`
+const Bar = styled.header<{ $overHero: boolean }>`
   position: relative;
   width: 100%;
-  background: transparent;
+  background: ${({ $overHero, theme }) => ($overHero ? 'transparent' : theme.colors.white)};
+  ${({ $overHero, theme }) => !$overHero && `border-bottom: 1px solid ${theme.colors.grey[300]};`}
   /* Must sit above the homepage hero, which is pulled up underneath it with a
      negative margin. The hero establishes its own stacking context, so the nav
      needs an explicit z-index on a positioned box to paint over it. */
@@ -147,7 +151,7 @@ const Bar = styled.header`
 const Inner = styled.nav`
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  height: 72px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;

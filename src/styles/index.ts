@@ -57,7 +57,6 @@ export const theme: Theme = {
       },
     },
     text: {
-      // Figma MVP sets every heading, nav link and label to pure black.
       primary: '#000000',
       secondary: '#525252',
       tertiary: '#4B5565',
