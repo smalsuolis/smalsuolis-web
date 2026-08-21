@@ -73,13 +73,15 @@ const CategoryBrowse = () => {
       <Chips>
         {chips.map((chip) => (
           <Chip key={chip.key} onClick={() => navigate(slugs.events)}>
-            <IconCircle $bg={chip.bg}>
-              {/* Height-constrained, auto width: the icons aren't all square
-                  (the žuvinimas one is 10×13), so forcing 16×16 would stretch
-                  them. */}
-              <ChipIcon src={chip.icon} alt="" />
-            </IconCircle>
-            <ChipLabel>{chip.label}</ChipLabel>
+            <ChipMain>
+              <IconCircle $bg={chip.bg}>
+                {/* Height-constrained, auto width: the icons aren't all square
+                    (the žuvinimas one is 10×13), so forcing 16×16 would stretch
+                    them. */}
+                <ChipIcon src={chip.icon} alt="" />
+              </IconCircle>
+              <ChipLabel>{chip.label}</ChipLabel>
+            </ChipMain>
             {chip.count !== undefined && <Count>{compact(chip.count)}</Count>}
           </Chip>
         ))}
@@ -109,28 +111,37 @@ const Chips = styled.div`
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const Chip = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px 8px 8px;
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  border-radius: 100px;
+  gap: 14px;
+  padding: 8px 12px;
+  /* Inset ring, not a border: the design's 43px pill is padding + content, and
+     a border would add its width on top. */
+  box-shadow: inset 0 0 0 1px ${({ theme }) => theme.colors.grey[300]};
+  border: none;
+  border-radius: 39px;
   background: ${({ theme }) => theme.colors.white};
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: box-shadow 0.15s ease;
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.grey[500]};
+    box-shadow: inset 0 0 0 1px ${({ theme }) => theme.colors.grey[500]};
   }
 `;
 
+const ChipMain = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+`;
+
 const IconCircle = styled.span<{ $bg: string }>`
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: ${({ $bg }) => $bg};
   display: flex;

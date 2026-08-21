@@ -49,21 +49,21 @@ const StatRow = () => {
 
 export default StatRow;
 
+// Blocks are sized by their content and spaced by a fixed gap, not stretched
+// into equal columns — the design's four blocks are 261/229/200/189 wide.
 const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  display: flex;
+  gap: 112px;
 
   @media ${device.mobileL} {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 32px 16px;
+    flex-direction: column;
+    gap: 24px;
   }
 `;
 
 const Item = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
 `;
 
 const Number = styled.div`
@@ -88,6 +88,6 @@ const FadeNumber = styled.span`
 `;
 
 const Label = styled.div`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[600]};
+  ${font('xl')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
