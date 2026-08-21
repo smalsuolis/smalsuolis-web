@@ -11,32 +11,10 @@ import PasswordCheckListContainer from './PasswordCheckListContainer';
 import styled from 'styled-components';
 import { Button, PasswordField } from '@aplinkosministerija/design-system';
 import { useFormik } from 'formik';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ButtonVariants, device, font } from '../styles';
-
-const SuccessIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <circle cx="10" cy="10" r="10" fill="currentColor" />
-    <path
-      d="M6 10.2l2.6 2.6L14.2 7.2"
-      stroke="#fff"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const ErrorIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path
-      d="M9.14 2.5a1 1 0 0 1 1.72 0l8 13.5a1 1 0 0 1-.86 1.5H2a1 1 0 0 1-.86-1.5l8-13.5z"
-      fill="currentColor"
-    />
-    <rect x="9" y="7" width="2" height="5" rx="1" fill="#fff" />
-    <rect x="9" y="13.5" width="2" height="2" rx="1" fill="#fff" />
-  </svg>
-);
+import { handleToastSuccess } from '../utils/functions';
+import { toast } from 'react-toastify';
 
 const UserForm = ({
   user,
@@ -79,18 +57,28 @@ const UserForm = ({
 
   const heading = title ?? currentRoute?.title;
 
+  // Surfaced as a toast rather than inline: the message used to appear beside
+  // the heading, where a form filled from the bottom pushed it out of view.
+  useEffect(() => {
+    if (success) handleToastSuccess(success);
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error, {
+        position: 'top-center',
+        autoClose: 5000,
+        hideProgressBar: true,
+        closeOnClick: true,
+        pauseOnHover: true,
+      });
+    }
+  }, [error]);
+
   return (
     <Page>
       <PasswordContainer noValidate onSubmit={handleSubmit}>
-        <Header>
-          {heading && <Title>{heading}</Title>}
-          {(!!success || !!error) && (
-            <Alert $variant={error ? 'error' : 'success'}>
-              {error ? <ErrorIcon /> : <SuccessIcon />}
-              <span>{error || success}</span>
-            </Alert>
-          )}
-        </Header>
+        <Header>{heading && <Title>{heading}</Title>}</Header>
         <TextField
           label={inputLabels.email}
           value={user?.email || ''}
@@ -196,28 +184,6 @@ const Title = styled.h1`
   margin: 0;
   ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Alert = styled.div<{ $variant: 'success' | 'error' }>`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  font-size: 1.4rem;
-  font-weight: 500;
-  border-radius: 4px;
-  /* Accent bar sits on the trailing edge, per the design. */
-  border-right: 4px solid
-    ${({ theme, $variant }) => ($variant === 'error' ? theme.colors.danger : theme.colors.success)};
-  color: ${({ theme, $variant }) =>
-    $variant === 'error' ? theme.colors.danger : theme.colors.success};
-  background-color: ${({ $variant }) => ($variant === 'error' ? '#fdecef' : '#eafbf6')};
-
-  svg {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-  }
 `;
 
 // Black pill, per the design — the DS primary variant renders green.
