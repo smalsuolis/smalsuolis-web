@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { device, font } from '../../styles';
 import api from '../../utils/api';
 import { timeRangeQuery, TimeRanges } from '../../utils/types';
@@ -8,8 +8,7 @@ import { timeRangeQuery, TimeRanges } from '../../utils/types';
 // We query the canonical ALL_TIME window (identical object, so it shares the
 // server's stats cache key with the Stats page — whichever page loads first
 // warms it for both). The query is also prefetched at app startup (UserProvider)
-// so it's usually cached before this renders; on a cold direct-load the number
-// fades in softly rather than popping from a placeholder.
+// so it's usually cached before this renders.
 const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
 
 const StatRow = () => {
@@ -31,15 +30,9 @@ const StatRow = () => {
     <Grid>
       {items.map((item) => (
         <Item key={item.label}>
-          {/* Reserve the number's height (nbsp) until it arrives, then fade it in
-              once — no em-dash placeholder, no layout shift. */}
-          <Number>
-            {item.count === undefined ? (
-              ' '
-            ) : (
-              <FadeNumber>{item.count.toLocaleString('lt-LT')}</FadeNumber>
-            )}
-          </Number>
+          {/* Reserve the number's height (nbsp) until it arrives — no em-dash
+              placeholder, no layout shift. */}
+          <Number>{item.count === undefined ? ' ' : item.count.toLocaleString('lt-LT')}</Number>
           <Label>{item.label}</Label>
         </Item>
       ))}
@@ -75,16 +68,6 @@ const Number = styled.div`
     ${font('3xl')};
     font-weight: 400;
   }
-`;
-
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-const FadeNumber = styled.span`
-  display: inline-block;
-  animation: ${fadeIn} 0.25s ease-out;
 `;
 
 const Label = styled.div`
