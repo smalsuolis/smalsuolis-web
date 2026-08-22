@@ -16,7 +16,14 @@ import { forgotPasswordSchema } from '../../utils/validations';
 import AuthModalShell from './AuthModalShell';
 import { useAuthModal } from './AuthModalContext';
 import AuthSuccess from './AuthSuccess';
-import { FootNote, Form, Link, SubmitButton, SubmitRow } from './authModalStyles';
+import {
+  Error as FieldError,
+  FootNote,
+  Form,
+  Link,
+  SubmitButton,
+  SubmitRow,
+} from './authModalStyles';
 import styled from 'styled-components';
 
 const AGREE_TEXT =
@@ -89,9 +96,9 @@ const RegisterModal = () => {
           <CheckBox
             label={AGREE_TEXT}
             value={values.agree}
-            error={!!errors?.agree}
             onChange={(v: boolean) => handleType('agree', v)}
           />
+          {!!errors?.agree && <FieldError>{errors.agree as string}</FieldError>}
         </FieldGroup>
         <SubmitRow>
           <FootNote>

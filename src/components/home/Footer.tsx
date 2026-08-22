@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserContext, UserContextType } from '../UserProvider';
 import { useAuthModal } from '../auth/AuthModalContext';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
@@ -10,6 +12,7 @@ import Icon from '../Icons';
 const Footer = () => {
   const navigate = useNavigate();
   const { open: openAuthModal } = useAuthModal();
+  const { loggedIn } = useContext<UserContextType>(UserContext);
 
   return (
     <Wrap>
@@ -75,7 +78,7 @@ const Footer = () => {
               <ColLink onClick={() => navigate(slugs.map)}>Žemėlapis</ColLink>
               <ColLink onClick={() => navigate(slugs.stats)}>Statistika</ColLink>
               <ColLink onClick={() => navigate(slugs.about)}>Apie mus</ColLink>
-              <ColLink onClick={() => openAuthModal('login')}>Prisijungti</ColLink>
+              {!loggedIn && <ColLink onClick={() => openAuthModal('login')}>Prisijungti</ColLink>}
             </ColLinks>
           </Column>
         </Columns>

@@ -1,6 +1,7 @@
 import { Frequency, ServerErrors } from './constants';
 
 export const validationTexts = {
+  agreeRequired: 'Turite sutikti su sąlygomis',
   requireText: 'Privalote įvesti',
   tooFrequentRequest: 'Nepavyko, per dažna užklausa prašome pabandyti veliau ',
   error: 'Įvyko nenumatyta klaida, prašome pabandyti vėliau',

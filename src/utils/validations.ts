@@ -8,7 +8,7 @@ export const loginSchema = Yup.object().shape({
 });
 export const forgotPasswordSchema = Yup.object().shape({
   email: Yup.string().required(validationTexts.requireText).email(validationTexts.badEmailFormat),
-  agree: Yup.bool().oneOf([true]),
+  agree: Yup.bool().oneOf([true], validationTexts.agreeRequired),
 });
 export const validateSubscriptionForm = Yup.object().shape({
   name: Yup.string().required(validationTexts.requireText).min(1),

@@ -64,6 +64,10 @@ const EventsContainer = ({
   const hasUrlFilterParams =
     searchParams.has('apps') || searchParams.has('range') || searchParams.has('categories');
   const initFromUrlDone = useRef(!hasUrlFilterParams);
+  // The sync effect below runs in the same commit as the hydration above, while
+  // `filters.value` is still the pre-hydration one — writing it back would erase
+  // the very params we just read. Skip that one run.
+  const skipSyncAfterInit = useRef(false);
 
   // Fetch all apps so we can reconstruct filter objects from URL param IDs
   const { data: appsResponse } = useQuery({
@@ -134,6 +138,7 @@ const EventsContainer = ({
       }
     }
 
+    skipSyncAfterInit.current = true;
     filters.setValue(newFilters);
     // Reads the URL into filters. `filters` is written here, so listing it as
     // a dependency would re-enter this effect on its own write.
@@ -143,6 +148,10 @@ const EventsContainer = ({
   // Sync filters to URL params whenever they change
   useEffect(() => {
     if (!initFromUrlDone.current) return;
+    if (skipSyncAfterInit.current) {
+      skipSyncAfterInit.current = false;
+      return;
+    }
 
     setSearchParams(
       (prev) => {
@@ -253,23 +262,26 @@ const EventsContainer = ({
 
   // The dialog speaks in ids; the stored filter speaks in objects. Bridge the
   // two so both the dialog and the events query see the same selection.
-  const sritysValue: SritysValue = useMemo(() => {
-    const categoryIds = (filters.value.categories ?? []).map((c) => c.id);
-    const categoriesByApp: Record<number, number[]> = {};
-    // The events query unions the categories anyway, so every selected
-    // infostatyba app carries the same list.
-    (filters.value.apps ?? []).forEach((a) => {
-      if (categoryIds.length) categoriesByApp[a.id] = categoryIds;
-    });
-    return { appIds: (filters.value.apps ?? []).map((a) => a.id), categoriesByApp };
-  }, [filters.value.apps, filters.value.categories]);
+  // The dialog's value is per-app; the stored filter is two flat lists that
+  // cannot express it, so the dialog's own selection lives here and the stored
+  // filter is derived from it. Rebuilding it from the flat lists dropped any
+  // category ticked without its app and copied one row's leaves onto the others.
+  const [sritysValue, setSritysValue] = useState<SritysValue>(() => ({
+    appIds: (filters.value.apps ?? []).map((a) => a.id),
+    categoriesByApp: {},
+  }));
 
-  const setSritysValue = (next: SritysValue) => {
-    const ids = new Set(Object.values(next.categoriesByApp).flat());
+  const applySritys = (next: SritysValue) => {
+    setSritysValue(next);
+    const withCategories = Object.entries(next.categoriesByApp)
+      .filter(([, ids]) => ids.length)
+      .map(([id]) => Number(id));
+    const appIds = Array.from(new Set([...next.appIds, ...withCategories]));
+    const categoryIds = new Set(Object.values(next.categoriesByApp).flat());
     filters.setValue({
       ...filters.value,
-      apps: next.appIds.map((id) => allApps.find((a: App) => a.id === id)).filter(Boolean) as App[],
-      categories: allCategories.filter((c: Category) => ids.has(c.id)),
+      apps: appIds.map((id) => allApps.find((a: App) => a.id === id)).filter(Boolean) as App[],
+      categories: allCategories.filter((c: Category) => categoryIds.has(c.id)),
     });
   };
 
@@ -349,7 +361,9 @@ const EventsContainer = ({
 
     if (apps?.length) params.set('app', apps.map((a) => a.id).join(','));
     if (categories?.length) params.set('categories', categories.map((c) => c.id).join(','));
-    if (timeRange) params.set('range', timeRange.key);
+    // The period is deliberately not carried: the two pages offer different
+    // ranges (this one "Šios savaitės", the map "Paskutinės 28 dienos"), so a
+    // key from here would land on nothing there and blank the map's default.
 
     const query = params.toString();
     navigate(query ? `${slugs.map}?${query}` : slugs.map);
@@ -442,7 +456,7 @@ const EventsContainer = ({
       <SritysFilterModal
         visible={sritysOpen}
         value={sritysValue}
-        onChange={setSritysValue}
+        onChange={applySritys}
         onApply={() => setSritysOpen(false)}
         onClose={() => setSritysOpen(false)}
       />

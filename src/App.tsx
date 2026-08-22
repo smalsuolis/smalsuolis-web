@@ -1,5 +1,5 @@
 import { filterMenuRoutes, filterRoutes } from '@aplinkosministerija/design-system';
-import { useContext } from 'react';
+import { useContext, useRef } from 'react';
 import { Navigate, Route, Routes, useNavigate, useLocation } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import LoaderComponent from './components/LoaderComponent';
@@ -13,12 +13,17 @@ import AuthModalRoot from './components/auth/AuthModalRoot';
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
+  const bootedRef = useRef(false);
   const { isLoading, loggedIn, subscriptionsCount } = useContext<UserContextType>(UserContext);
   const currentRoute = useGetCurrentRoute();
   const { mutateAsync: logout } = useLogout();
   const { open: openAuthModal } = useAuthModal();
 
-  if (isLoading) return <LoaderComponent />;
+  // Only the very first load blanks the app. A later refetch — the one a failed
+  // request triggers — used to unmount everything, taking any open dialog and
+  // its half-filled form with it.
+  if (isLoading && !bootedRef.current) return <LoaderComponent />;
+  bootedRef.current = true;
 
   const authRoutes = filterRoutes(routes, loggedIn);
   // Every page frame draws the same bar — Pagrindinis / Žemėlapis /

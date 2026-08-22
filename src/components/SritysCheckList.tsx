@@ -50,16 +50,15 @@ const SritysCheckList = ({
 
   const hasCategories = (app: App) => isInfostatyba(app) && categories.length > 0;
 
-  // A row is on or off from the app selection alone; an expandable row reads
-  // "partial" only when a subset of its categories is left. Deriving the row
-  // from the categories instead left an app checked with none of them, and — in
-  // the subscription form, where one category list is shared — made all four
-  // infostatyba rows follow whichever one was clicked.
+  // An expandable row reads from its own categories when it has any — so a leaf
+  // ticked inside it shows as "partial" on the parent — and from the app
+  // selection otherwise.
   const appState = (app: App): NodeState => {
-    if (!appIds.includes(app.id)) return 'none';
-    if (!hasCategories(app)) return 'all';
-    const selected = catsFor(app.id).length;
-    return selected > 0 && selected < categoryLeafIds.length ? 'partial' : 'all';
+    if (hasCategories(app)) {
+      const selected = catsFor(app.id).length;
+      if (selected > 0) return selected >= categoryLeafIds.length ? 'all' : 'partial';
+    }
+    return appIds.includes(app.id) ? 'all' : 'none';
   };
 
   const toggleAppNode = (app: App) => {

@@ -123,9 +123,12 @@ const MapPage = () => {
   // The phone frame replaces the register pill with a dismissible card over the
   // map; dismissing it leaves the map unobstructed.
   const [registerCardOpen, setRegisterCardOpen] = useState(true);
-  const [periodKey, setPeriodKey] = useState<string>(
-    searchParams.get('range') ?? TimeRanges.LAST_28_DAYS,
-  );
+  // A range from the events page belongs to a different vocabulary, so anything
+  // this page cannot render falls back to its own default rather than blanking.
+  const [periodKey, setPeriodKey] = useState<string>(() => {
+    const fromUrl = searchParams.get('range');
+    return PERIOD_OPTIONS.some((p) => p.key === fromUrl) ? fromUrl! : TimeRanges.LAST_28_DAYS;
+  });
 
   const appIds = srities.appIds;
   const selectedCategoryIds = useMemo(
@@ -177,7 +180,7 @@ const MapPage = () => {
     const params = new URLSearchParams({ view: 'list' });
     if (appIds.length) params.set('apps', appIds.join(','));
     if (selectedCategoryIds.length) params.set('categories', selectedCategoryIds.join(','));
-    if (periodKey) params.set('range', periodKey);
+    // The period stays behind — see the note in EventsContainer.goToMap.
     navigate(`${slugs.events}?${params.toString()}`);
   };
 
