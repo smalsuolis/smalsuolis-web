@@ -45,10 +45,12 @@ const Banner = styled.div`
     url('/tapk_smalsiu.png') center / 100% 100% no-repeat,
     #7eec9b;
 
+  /* The phone frame runs the band edge to edge with square corners, so it
+     escapes the page gutter. */
   @media (max-width: 868px) {
-    padding: 40px 28px;
-    margin-top: 42px;
-    margin-bottom: 0;
+    margin: 42px -16px 0;
+    padding: 36px;
+    border-radius: 0;
   }
 `;
 

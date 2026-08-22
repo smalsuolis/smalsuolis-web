@@ -1,6 +1,6 @@
 import styled from 'styled-components';
-import { font } from '../../styles';
-import { formatRelativeTime, getUpdateStatusColor } from '../../utils/functions';
+import { device, font } from '../../styles';
+import { formatRelativeTime } from '../../utils/functions';
 import { Card, CardHeading, CircleIcon, IconCircle } from './cardStyles';
 
 // One "Duomenų šaltiniai" card: an icon + source name, the last-update time
@@ -29,10 +29,10 @@ const SourceCard = ({
       </Header>
       <Meta>
         <span>Paskutinis atnaujinimas:</span>
-        <MetaValue $color={getUpdateStatusColor(lastUpdate)}>
+        <span>
           {formatRelativeTime(lastUpdate)}
           {lastUpdate ? ` ${new Date(lastUpdate).toLocaleString('lt-LT')}` : ''}
-        </MetaValue>
+        </span>
       </Meta>
     </Left>
     {lastUpdateCount > 0 && (
@@ -47,6 +47,13 @@ const Wrap = styled(Card)`
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+
+  /* The phone frame stacks the pill under the source instead of squeezing it in
+     beside the name, which ellipsised the longer titles. */
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const Left = styled.div`
@@ -61,18 +68,26 @@ const Header = styled.div`
   align-items: center;
   gap: 8px;
   min-width: 0;
+
+  @media ${device.mobileL} {
+    /* Room for the full name once the pill is out of the row. */
+    white-space: normal;
+
+    > div {
+      white-space: normal;
+      overflow: visible;
+    }
+  }
 `;
 
+// The design sets both lines in the same 14/19.6 #404040 — the staleness colour
+// coding is not part of it.
 const Meta = styled.div`
   display: flex;
   flex-direction: column;
   ${font('sm')};
-  line-height: 2rem;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const MetaValue = styled.span<{ $color?: string }>`
-  color: ${({ $color, theme }) => $color || theme.colors.text.primary};
+  line-height: 1.96rem;
+  color: #404040;
 `;
 
 const Pill = styled.div`

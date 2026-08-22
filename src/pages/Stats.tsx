@@ -11,7 +11,7 @@ import api from '../utils/api';
 import Loader from '../components/Loader';
 import Datepicker from '../components/Datepicker';
 import { calculatePreviousPeriod } from '../utils/functions';
-import Delta from '../components/stats/Delta';
+import Delta, { DeltaPercent } from '../components/stats/Delta';
 import BreakdownCard, { BreakdownRow } from '../components/stats/BreakdownCard';
 import CityCard, { CityRow } from '../components/stats/CityCard';
 import SourceCard from '../components/stats/SourceCard';
@@ -32,13 +32,14 @@ const APP_BADGE: Record<string, { icon: string; bg: string }> = {
   savivaldybesZemetvarka: { icon: appIcon.savivaldybesZemetvarka, bg: '#DDDDDD' },
 };
 
-// Per-appType colors for the city breakdown dots. appType → color.
+// The city breakdown dots reuse the same circle palette the source badges do,
+// not a saturated set of their own.
 const APP_COLORS: Record<string, string> = {
-  infostatyba: '#E5484D',
-  miskoKirtimai: '#1F9D57',
-  zemetvarkosPlanavimas: '#8A33FE',
-  izuvinimas: '#1121DA',
-  savivaldybesZemetvarka: '#FFB400',
+  infostatyba: '#F9BEBF',
+  miskoKirtimai: '#CEFFAF',
+  zemetvarkosPlanavimas: '#DACDFF',
+  izuvinimas: '#9CDEFF',
+  savivaldybesZemetvarka: '#D9D9D9',
 };
 
 const APP_SHORT_LABELS: Record<string, string> = {
@@ -216,7 +217,7 @@ const Stats = () => {
     return orderBy(
       Object.entries(byAppMap).map(([appType, count]) => ({
         label: APP_SHORT_LABELS[appType] || appType,
-        color: APP_COLORS[appType] || '#707070',
+        color: APP_COLORS[appType] || '#D9D9D9',
         count,
         previousCount: prevCity[appType],
         total: cityTotal,
@@ -278,7 +279,11 @@ const Stats = () => {
                   <KpiValue>{(k.count ?? 0).toLocaleString('lt-LT')}</KpiValue>
                 </KpiValueRow>
                 {isComparisonEnabled && (
-                  <Delta current={k.count} previous={k.previous} isFetching={isPreviousFetching} />
+                  <DeltaPercent
+                    current={k.count}
+                    previous={k.previous}
+                    isFetching={isPreviousFetching}
+                  />
                 )}
               </Kpi>
             ))}

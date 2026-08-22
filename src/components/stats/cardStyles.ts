@@ -94,5 +94,6 @@ export const MoreButton = styled.button`
   background: transparent;
   ${font('sm')};
   color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: underline;
   cursor: pointer;
 `;

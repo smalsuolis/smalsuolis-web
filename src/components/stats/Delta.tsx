@@ -33,6 +33,43 @@ const Delta = ({
 
 export default Delta;
 
+// The KPI strip shows the change as a percentage of the previous period, not as
+// an absolute difference — and it always shows something, "~ 0 %" included.
+export const DeltaPercent = ({
+  current,
+  previous,
+  isFetching,
+}: {
+  current?: number;
+  previous?: number;
+  isFetching?: boolean;
+}) => {
+  if (isFetching) return <Spinner />;
+  if (current === undefined || previous === undefined) return null;
+
+  const rounded = previous ? Math.round(((current - previous) / previous) * 100) : 0;
+  if (rounded === 0) return <Percent $tone="flat">~ 0 %</Percent>;
+
+  return (
+    <Percent $tone={rounded > 0 ? 'up' : 'down'}>
+      {rounded > 0 ? '+' : ''}
+      {rounded} %
+    </Percent>
+  );
+};
+
+const TONES = { up: '#1D7F36', down: '#7F1D1D', flat: '#5C5959' } as const;
+
+const Percent = styled.span<{ $tone: keyof typeof TONES }>`
+  font-size: 1.8rem;
+  line-height: 2.52rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  opacity: 0.7;
+  color: ${({ $tone }) => TONES[$tone]};
+`;
+
 const Value = styled.span<{ $positive: boolean }>`
   font-size: 1.3rem;
   font-weight: 600;
