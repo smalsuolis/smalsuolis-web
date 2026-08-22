@@ -5,7 +5,7 @@ import { FiArrowLeft, FiClock, FiDownload, FiMail, FiMenu, FiArrowUpRight } from
 import { HiOutlineUsers } from 'react-icons/hi';
 import { IoMdCalendar, IoMdHeartEmpty } from 'react-icons/io';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
-import { IoLocationOutline, IoPersonOutline, IoSearch, IoFilter } from 'react-icons/io5';
+import { IoLocationOutline, IoPerson, IoSearch, IoFilter } from 'react-icons/io5';
 import { LiaBalanceScaleSolid } from 'react-icons/lia';
 import { PiBuildingsLight, PiMapTrifoldLight } from 'react-icons/pi';
 import {
@@ -389,7 +389,7 @@ const Icon = ({ name, className, ...rest }: IconProps) => {
     case IconName.close:
       return <CgClose className={className} {...rest} />;
     case IconName.person:
-      return <IoPersonOutline className={className} />;
+      return <IoPerson className={className} />;
     case IconName.anchor:
       return <FaAnchor className={className} />;
     case IconName.right:
