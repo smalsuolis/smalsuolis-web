@@ -55,28 +55,19 @@ const Grid = styled.div`
 
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
-    padding: 0 20px;
     margin-top: 48px;
   }
 `;
 
-// Inner content aligns to the page's centered content column (max-width 1216 +
-// 32px gutter), even though the card background bleeds to the screen edge. On
-// screens narrower than the column, falls back to the card's own 48px padding.
-const contentGutter = `max(48px, calc((100vw - ${CONTENT_WIDTH}) / 2 + 32px))`;
-
 const Card = styled.div`
   border-radius: 20px;
-  padding: 48px;
   /* Design frame height for the band. */
   min-height: 538px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
 
   @media ${device.mobileL} {
-    padding: 32px;
-    min-height: 260px;
+    min-height: 0;
   }
 `;
 
@@ -84,14 +75,16 @@ const GreenCard = styled(Card)`
   position: relative;
   overflow: hidden;
   border-radius: 0 20px 20px 0;
-  padding-left: ${contentGutter};
+  /* Heading sits 141 from the card's left edge and 179 from its top. */
+  padding: 179px 48px 215px 141px;
+  justify-content: flex-start;
   background:
     linear-gradient(180deg, rgba(126, 236, 155, 0.3) 0%, #20853b 100%),
     url('/home/cta_city.png') center / cover no-repeat;
 
+  /* No counterpart on the 393 frame. */
   @media ${device.mobileL} {
-    border-radius: 20px;
-    padding-left: 32px;
+    display: none;
   }
 `;
 
@@ -103,12 +96,15 @@ const GreenText = styled.div`
 
 const BlackCard = styled(Card)`
   background: ${({ theme }) => theme.colors.black};
-  justify-content: flex-start;
+  justify-content: center;
   gap: 40px;
+  padding: 0 80px;
   border-radius: 20px 0 0 20px;
 
   @media ${device.mobileL} {
-    border-radius: 20px;
+    /* The phone frame carries only this card, full-bleed and square. */
+    border-radius: 0;
+    padding: 77px 43px 77px 37px;
   }
 `;
 
@@ -119,7 +115,7 @@ const CtaButtonWrap = styled.div`
 
   @media ${device.mobileL} {
     button {
-      width: 100%;
+      width: 313px;
     }
   }
 `;
@@ -133,6 +129,10 @@ const BlackText = styled.div`
 const BlackTitle = styled.div`
   ${font('3xl')};
   color: ${({ theme }) => theme.colors.white};
+
+  @media ${device.mobileL} {
+    ${font('2xl')};
+  }
 `;
 
 const BlackCopy = styled.p`
