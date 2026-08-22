@@ -35,6 +35,8 @@ const TokenSuccessCard = ({
 export default TokenSuccessCard;
 
 const Backdrop = styled.div`
+  /* The layout centres its children, which makes them shrink to fit. */
+  width: 100%;
   min-height: calc(100vh - 72px);
   display: flex;
   align-items: center;

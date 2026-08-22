@@ -74,6 +74,9 @@ const TokenPasswordCard = ({
 export default TokenPasswordCard;
 
 const Backdrop = styled.div`
+  /* The layout centres its children, which makes them shrink to fit — without
+     this the card never reaches its 499px. */
+  width: 100%;
   min-height: calc(100vh - 72px);
   display: flex;
   align-items: center;

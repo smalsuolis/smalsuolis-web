@@ -136,10 +136,17 @@ const BlackCard = styled(Card)`
   }
 
   @media ${device.mobileL} {
-    /* The phone frame carries only this card, full-bleed and square. */
+    /* The phone frame carries only this card, full-bleed and square, with its
+       313px content block centred in it. */
     border-radius: 0;
-    padding: 77px 43px 77px 37px;
+    padding: 77px 40px;
     gap: 40px;
+    align-items: center;
+
+    > * {
+      width: 100%;
+      max-width: 313px;
+    }
   }
 `;
 
@@ -157,7 +164,8 @@ const CtaButtonWrap = styled.div`
 
   @media ${device.mobileL} {
     button {
-      width: 313px;
+      width: 100%;
+      max-width: 313px;
     }
   }
 `;
