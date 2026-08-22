@@ -45,27 +45,32 @@ const AuthModalShell = ({
 
 export default AuthModalShell;
 
+// The design anchors the card 305px from the top of the page rather than
+// centring it; short windows fall back to a plain top inset so it stays whole.
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 1000;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 24px;
+  overflow-y: auto;
+  padding: 305px 24px 24px;
 
   @media ${device.mobileL} {
-    padding: 16px;
+    padding: 302px 16px 24px;
+  }
+
+  @media (max-height: 800px) {
+    padding-top: 24px;
   }
 `;
 
 const Card = styled.div<{ $wide?: boolean }>`
   position: relative;
   width: 100%;
-  max-width: ${({ $wide }) => ($wide ? '499px' : '499px')};
-  max-height: 92vh;
-  overflow-y: auto;
+  max-width: 499px;
   background: ${({ theme }) => theme.colors.white};
   border-radius: 8px;
   padding: 24px;
@@ -73,9 +78,15 @@ const Card = styled.div<{ $wide?: boolean }>`
   flex-direction: column;
   gap: 24px;
 
+  @media ${device.mobileL} {
+    padding: 24px 16px;
+  }
+
   label {
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
+    /* Design: 8px between a field's label and its box (the DS ships 4). */
+    margin-bottom: 4px;
   }
 
   div:has(> input:not([type='checkbox'])) {
@@ -92,6 +103,19 @@ const Card = styled.div<{ $wide?: boolean }>`
   div:has(+ div > input:not([type='checkbox'])) {
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  /* The consent line beside the register checkbox: 14/21 grey in the design. */
+  div:has(> div > input[type='checkbox']) > div:last-child {
+    ${font('sm')};
+    color: ${({ theme }) => theme.colors.grey[600]};
+  }
+
+  /* The design's box is 16px with a 4px radius; the DS ships 18px at 2px. */
+  div:has(> input[type='checkbox']) {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
   }
 `;
 
@@ -113,12 +137,14 @@ const CloseButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
   color: ${({ theme }) => theme.colors.text.primary};
 
   svg {
-    font-size: 2rem;
+    font-size: 2.4rem;
   }
 `;

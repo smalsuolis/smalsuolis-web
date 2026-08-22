@@ -1,13 +1,13 @@
-import { Button, PasswordField, TextField } from '@aplinkosministerija/design-system';
+import { PasswordField, TextField } from '@aplinkosministerija/design-system';
 import { useFormik } from 'formik';
 import styled from 'styled-components';
 import { useLogin } from '../../utils/hooks';
 import { buttonsTitles, inputLabels, inputPlaceholders, subtitle, titles } from '../../utils/texts';
 import { loginSchema } from '../../utils/validations';
 import { getErrorMessage } from '../../utils';
-import { font } from '../../styles';
 import AuthModalShell from './AuthModalShell';
 import { useAuthModal } from './AuthModalContext';
+import { Error, FootNote, Form, Link, SubmitButton, SubmitRow, TextLink } from './authModalStyles';
 
 // Login modal (Figma "Prisijungimas"). Overlays the current page. Cross-links
 // switch to the register/forgot modals; success closes the modal (the user
@@ -45,15 +45,19 @@ const LoginModal = () => {
           onChange={(v: string) => handleType('email', v)}
           label={inputLabels.email}
         />
-        <PasswordField
-          value={values.password}
-          name="password"
-          placeholder={inputPlaceholders.password}
-          onChange={(v: string) => handleType('password', v)}
-          label={inputLabels.password}
-          error={errors.password as string}
-        />
-        <ForgotLink onClick={() => open('forgot')}>{titles.forgotPassword}</ForgotLink>
+        <PasswordGroup>
+          <PasswordField
+            value={values.password}
+            name="password"
+            placeholder={inputPlaceholders.password}
+            onChange={(v: string) => handleType('password', v)}
+            label={inputLabels.password}
+            error={errors.password as string}
+          />
+          <TextLink type="button" onClick={() => open('forgot')}>
+            {titles.forgotPassword}
+          </TextLink>
+        </PasswordGroup>
 
         {!!errorMessage && <Error>{errorMessage}</Error>}
 
@@ -73,56 +77,10 @@ const LoginModal = () => {
 
 export default LoginModal;
 
-const Form = styled.form`
+// The design groups the password field with its "forgot" link at 8px, against
+// the 24 that separates the modal's blocks.
+const PasswordGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-`;
-
-const ForgotLink = styled.button`
-  align-self: flex-start;
-  ${font('base', 500)};
-  text-decoration: underline;
-  color: ${({ theme }) => theme.colors.text.primary};
-  cursor: pointer;
-`;
-
-const SubmitRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
-`;
-
-const FootNote = styled.div`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Link = styled.span`
-  text-decoration: underline;
-  cursor: pointer;
-`;
-
-const SubmitButton = styled(Button)`
-  flex-shrink: 0;
-  height: 40px;
-  padding: 8px 24px;
-  border-radius: 54px;
-  background-color: ${({ theme }) => theme.colors.black};
-  border-color: ${({ theme }) => theme.colors.black};
-  color: ${({ theme }) => theme.colors.white};
-  ${font('base')};
-
-  &:hover:not(:disabled) {
-    background-color: ${({ theme }) => theme.colors.grey[700]};
-    border-color: ${({ theme }) => theme.colors.grey[700]};
-  }
-`;
-
-const Error = styled.div`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.text.error};
+  gap: 8px;
 `;
