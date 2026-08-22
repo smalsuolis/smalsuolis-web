@@ -189,7 +189,7 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                       />
                       <FutureAppsCard>
                         <FutureAppsHeader>
-                          <Label>Automatinis naujų dominančių sričių pridėjimas</Label>
+                          <CardLabel>Automatinis naujų dominančių sričių pridėjimas</CardLabel>
                           <Switch
                             value={values.futureApps}
                             onChange={(e) => {
@@ -306,15 +306,15 @@ const Shell = styled.div`
   flex-direction: column;
   background: white;
   width: 100%;
-  height: 100%;
+  max-width: 361px;
+  max-height: 88vh;
+  border-radius: 8px;
   overflow: hidden;
 
   @media ${device.desktop} {
     width: 660px;
     max-width: 90vw;
     max-height: 86vh;
-    height: auto;
-    border-radius: 8px;
   }
 
   label {
@@ -411,6 +411,13 @@ const Label = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
+// The frame sets the automatic-adding heading a size up.
+const CardLabel = styled.div`
+  ${font('lg', 500)};
+  line-height: 2.34rem;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
 const Description = styled.div`
   ${font('sm')};
   color: ${({ theme }) => theme.colors.grey[700]};
@@ -439,13 +446,14 @@ const SelectAllButton = styled.button`
   font-size: 1.4rem;
 `;
 
+// Design: an 8px-radius #FAFAFA card with 16/24 padding and a 10px gap.
 const FutureAppsCard = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: #f7f7f7;
-  border-radius: 12px;
-  padding: 16px;
+  gap: 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px 24px;
 `;
 
 const FutureAppsHeader = styled.div`

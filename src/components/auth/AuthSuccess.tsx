@@ -21,11 +21,11 @@ const AuthSuccess = ({
   <AuthModalShell onClose={onClose}>
     <Content>
       <CheckCircle aria-hidden="true">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <svg width="26" height="19" viewBox="0 0 26 19" fill="none">
           <path
-            d="M5 12.5l4 4 10-10"
+            d="M2 9.5l7.5 7.5L24 2"
             stroke="#fff"
-            strokeWidth="2.4"
+            strokeWidth="3"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
@@ -57,8 +57,8 @@ const Content = styled.div`
 `;
 
 const CheckCircle = styled.div`
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: #1fc84c;
   display: flex;

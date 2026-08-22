@@ -128,7 +128,7 @@ const Row = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 4px;
+  padding: 16px 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
 `;
 
@@ -166,7 +166,7 @@ const Check = styled.span`
 `;
 
 const Name = styled.span`
-  ${font('base', 500)};
+  ${font('sm', 500)};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
   flex: 1;

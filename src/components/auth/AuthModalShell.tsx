@@ -100,6 +100,11 @@ const Card = styled.div<{ $wide?: boolean }>`
     padding: 0 12px;
   }
 
+  input::placeholder {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.grey[500]};
+  }
+
   div:has(+ div > input:not([type='checkbox'])) {
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
@@ -140,7 +145,7 @@ const Header = styled.div<{ $hasTitle: boolean }>`
   display: flex;
   align-items: center;
   justify-content: ${({ $hasTitle }) => ($hasTitle ? 'space-between' : 'flex-end')};
-  gap: 12px;
+  gap: 16px;
 `;
 
 const Title = styled.h2`

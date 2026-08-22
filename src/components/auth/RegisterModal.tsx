@@ -3,7 +3,14 @@ import { useMutation } from '@tanstack/react-query';
 import { useFormik } from 'formik';
 import api from '../../utils/api';
 import { getErrorMessage } from '../../utils/functions';
-import { buttonsTitles, inputLabels, subtitle, titles, validationTexts } from '../../utils/texts';
+import {
+  buttonsTitles,
+  inputLabels,
+  inputPlaceholders,
+  subtitle,
+  titles,
+  validationTexts,
+} from '../../utils/texts';
 import { ReactQueryError } from '../../utils/types';
 import { forgotPasswordSchema } from '../../utils/validations';
 import AuthModalShell from './AuthModalShell';
@@ -74,6 +81,7 @@ const RegisterModal = () => {
             value={values.email}
             type="email"
             name="email"
+            placeholder={inputPlaceholders.email}
             error={errors.email as string}
             onChange={(v: string) => handleType('email', v)}
             label={inputLabels.email}

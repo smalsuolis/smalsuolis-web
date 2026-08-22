@@ -259,6 +259,7 @@ const Subscriptions = () => {
       <Popup
         visible={showDelete}
         onClose={() => setShowDelete(false)}
+        image="/warning_triangle.png"
         title="Ar tikrai norite ištrinti šią prenumeratą?"
         subTitle="Šio veiksmo nebus galima atšaukti ar redaguoti"
         allow

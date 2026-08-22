@@ -43,7 +43,7 @@ const EventModal = ({ event, onClose }: { event: Event; onClose: () => void }) =
         </Header>
 
         <MapWrap>
-          <PreviewMap value={event.geom} height={'220px'} showError={false} />
+          <PreviewMap value={event.geom} height={'239px'} showError={false} />
         </MapWrap>
 
         {event.body && (
@@ -126,9 +126,10 @@ const Title = styled.h2`
   overflow: hidden;
 `;
 
+// Flattened #404040 at the 64% the design applies to both meta lines.
 const Subtitle = styled.div`
   ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[650]};
+  color: #858585;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -136,6 +137,7 @@ const Subtitle = styled.div`
 `;
 
 const CloseButton = styled.button`
+  padding: 0;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -150,14 +152,20 @@ const CloseButton = styled.button`
   }
 `;
 
+// The frame draws the map flush — no radius — at 239 tall (120 on a phone).
 const MapWrap = styled.div`
   width: 100%;
-  border-radius: 12px;
   overflow: hidden;
 
   iframe {
-    border-radius: 12px;
     display: block;
+  }
+
+  @media ${device.mobileL} {
+    iframe,
+    > div {
+      height: 120px !important;
+    }
   }
 `;
 
@@ -171,12 +179,12 @@ const Body = styled.div`
     ${font('base')};
     margin: 0;
     padding: 8px 0;
-    color: ${({ theme }) => theme.colors.grey[700]};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 
   strong {
     color: ${({ theme }) => theme.colors.text.primary};
-    font-weight: 600;
+    font-weight: 700;
   }
 `;
 

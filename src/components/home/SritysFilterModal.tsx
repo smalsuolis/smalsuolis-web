@@ -182,17 +182,17 @@ export default SritysFilterModal;
 const Panel = styled.div`
   background: ${({ theme }) => theme.colors.white};
   width: 100%;
-  height: 100%;
+  max-width: 361px;
+  max-height: 84vh;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 24px 16px;
+  border-radius: 8px;
   overflow-y: auto;
 
   @media ${device.desktop} {
     max-width: 841px;
-    height: auto;
     max-height: 80vh;
-    border-radius: 8px;
     padding: 24px;
   }
 `;
@@ -210,6 +210,7 @@ const Title = styled.div`
 `;
 
 const CloseButton = styled.button`
+  padding: 0;
   display: flex;
   font-size: 2.4rem;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -217,7 +218,7 @@ const CloseButton = styled.button`
 `;
 
 const SectionLabel = styled.div`
-  ${font('base', 500)};
+  ${font('base', 600)};
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: 16px;
 `;
@@ -239,16 +240,20 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
 
 // Full-bleed bar across the panel's foot, per the design: it escapes the
 // panel's padding so its rule reaches both edges.
+// The phone frame stacks and centres the pair; the wide one keeps them apart.
 const Footer = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 24px -16px -16px;
-  padding: 16px;
+  gap: 24px;
+  margin: 24px -16px -24px;
+  padding: 24px 16px;
   border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
 
   @media ${device.desktop} {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
     margin: 24px -24px -24px;
     padding: 24px;
   }
