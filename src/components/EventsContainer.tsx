@@ -1,11 +1,12 @@
 import { useStorage } from '@aplinkosministerija/design-system';
 import { useQuery } from '@tanstack/react-query';
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../styles';
 import {
   App,
+  Category,
   buttonsTitles,
   Event,
   Filters,
@@ -23,6 +24,7 @@ import api from '../utils/api';
 import EmptyState from './EmptyState';
 import EventRow, { EventRowList } from './EventRow';
 import EventModal from './EventModal';
+import SritysFilterModal, { SritysValue } from './home/SritysFilterModal';
 import Pagination from './Pagination';
 import PeriodDropdown from './PeriodDropdown';
 import Icon from './Icons';
@@ -247,12 +249,35 @@ const EventsContainer = ({
 
   // The inline mobile app filter is single-select (the frame shows one value in
   // the pill); multi-select stays in the modal. Reuses PeriodDropdown's shape.
-  const appOptions = allApps.map((app: App) => ({
-    key: String(app.id),
-    name: app.name,
-    query: {} as any,
-  }));
-  const selectedAppKey = filters.value.apps?.length === 1 ? String(filters.value.apps[0].id) : '';
+  const [sritysOpen, setSritysOpen] = useState(false);
+
+  // The dialog speaks in ids; the stored filter speaks in objects. Bridge the
+  // two so both the dialog and the events query see the same selection.
+  const sritysValue: SritysValue = useMemo(() => {
+    const categoryIds = (filters.value.categories ?? []).map((c) => c.id);
+    const categoriesByApp: Record<number, number[]> = {};
+    // The events query unions the categories anyway, so every selected
+    // infostatyba app carries the same list.
+    (filters.value.apps ?? []).forEach((a) => {
+      if (categoryIds.length) categoriesByApp[a.id] = categoryIds;
+    });
+    return { appIds: (filters.value.apps ?? []).map((a) => a.id), categoriesByApp };
+  }, [filters.value.apps, filters.value.categories]);
+
+  const setSritysValue = (next: SritysValue) => {
+    const ids = new Set(Object.values(next.categoriesByApp).flat());
+    filters.setValue({
+      ...filters.value,
+      apps: next.appIds.map((id) => allApps.find((a: App) => a.id === id)).filter(Boolean) as App[],
+      categories: allCategories.filter((c: Category) => ids.has(c.id)),
+    });
+  };
+
+  const sritysLabel = (() => {
+    const picked = filters.value.apps ?? [];
+    if (!picked.length) return 'Sritys';
+    return picked.length === 1 ? picked[0].name : `${picked[0].name} +${picked.length - 1}`;
+  })();
 
   // Paged (not infinite) so any page is linkable: ?page=N rides alongside the
   // existing q / apps / range / categories params.
@@ -391,22 +416,13 @@ const EventsContainer = ({
             </ClearButton>
           )}
         </SearchField>
-        {/* Mobile shows the two most-used filters inline (per the Figma frame)
-            so the active selection is visible without opening the modal; the
-            pill stays for everything else. Desktop keeps the pill alone. */}
         <InlineFilters>
-          <PeriodDropdown
-            placeholder="Sritys"
-            options={appOptions}
-            value={selectedAppKey}
-            onChange={(option) => {
-              const app = allApps.find((a) => String(a.id) === option.key);
-              filters.setValue({
-                ...filters.value,
-                apps: app ? [app] : undefined,
-              });
-            }}
-          />
+          {/* The frame opens the same "Filtravimas pagal sritis" dialog the map
+              uses from this control, rather than a flat single-select list. */}
+          <SritysTrigger type="button" onClick={() => setSritysOpen(true)}>
+            <SritysLabel>{sritysLabel}</SritysLabel>
+            <Icon name={IconName.dropdownArrow} size={20} />
+          </SritysTrigger>
           <PeriodDropdown
             placeholder="Data"
             options={timeRangeItems}
@@ -423,6 +439,13 @@ const EventsContainer = ({
 
       {renderListOrMap()}
 
+      <SritysFilterModal
+        visible={sritysOpen}
+        value={sritysValue}
+        onChange={setSritysValue}
+        onApply={() => setSritysOpen(false)}
+        onClose={() => setSritysOpen(false)}
+      />
       {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </Page>
   );
@@ -529,6 +552,33 @@ const ViewToggle = styled.button`
   }
 `;
 
+// Same 300x40 outlined pill the period control uses, but it opens a dialog.
+const SritysTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[500]};
+  border-radius: 54px;
+  background: ${({ theme }) => theme.colors.white};
+  cursor: pointer;
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
+
+  svg {
+    flex-shrink: 0;
+  }
+`;
+
+const SritysLabel = styled.span`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
 const FilterBar = styled.div`
   display: flex;
   align-items: center;
@@ -599,10 +649,8 @@ const ClearButton = styled.div`
   }
 `;
 
-// Inline dropdowns are a mobile-only affordance; on desktop the filter modal
-// carries everything and the bar stays a search field + pill.
-// Design: search on the left, category + period dropdowns on the right — at
-// every breakpoint, not just mobile. They stack under the search on phones.
+// Design: search on the left, the Sritys dialog trigger and the period dropdown
+// on the right — at every breakpoint. They stack under the search on phones.
 const InlineFilters = styled.div`
   display: flex;
   align-items: center;

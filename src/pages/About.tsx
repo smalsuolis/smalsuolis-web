@@ -52,7 +52,7 @@ const About = () => {
       </Section>
 
       <GreyBand>
-        <Section>
+        <BandInner>
           <DominaRow>
             <DominaText>
               <DominaTitle>Domina, kas vyksta aplinkui tave?</DominaTitle>
@@ -70,7 +70,7 @@ const About = () => {
             </DominaText>
             <DominaMap src="/home/about_map.png" alt="" />
           </DominaRow>
-        </Section>
+        </BandInner>
       </GreyBand>
 
       <Section>
@@ -145,11 +145,13 @@ const GreyBand = styled.div`
     padding: 24px 0 36px;
     margin-top: 42px;
   }
+`;
 
-  /* The Section inside doesn't need the page-level top margin. */
-  & > section {
-    margin-top: 0;
-  }
+// The frame insets this band's content 174px, not the page's 56.
+const BandInner = styled.div`
+  max-width: 1092px;
+  margin: 0 auto;
+  padding: 0 16px;
 `;
 
 const DominaRow = styled.div`
@@ -171,8 +173,8 @@ const DominaRow = styled.div`
 const DominaText = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 460px;
+  gap: 24px;
+  max-width: 416px;
 
   @media ${device.tablet} {
     max-width: none;
@@ -183,6 +185,10 @@ const DominaTitle = styled.h2`
   ${font('2xl', 700)};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
+
+  @media ${device.mobileL} {
+    ${font('xl', 700)};
+  }
 `;
 
 const DominaBody = styled.p`
@@ -202,11 +208,18 @@ const DominaMap = styled.img`
   }
 `;
 
+// The frame insets the step cards 197px and caps their row at 1045.
 const Steps = styled.div`
+  max-width: 1045px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 42px;
+
+  @media ${device.mobileL} {
+    gap: 24px;
+  }
 `;
 
 const StepsTitle = styled.h2`
@@ -214,6 +227,10 @@ const StepsTitle = styled.h2`
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   text-align: center;
+
+  @media ${device.mobileL} {
+    ${font('xl', 700)};
+  }
 `;
 
 const StepsRow = styled.div`

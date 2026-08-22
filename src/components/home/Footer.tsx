@@ -29,7 +29,11 @@ const Footer = () => {
 
           <Column>
             <ColTitle>Pastabos</ColTitle>
-            <ColText>Jei turi komentarų ar pastabų Visuomet jų laukiame</ColText>
+            <ColText>
+              Jei turi komentarų ar pastabų
+              <br />
+              Visuomet jų laukiame
+            </ColText>
             <ColLink as="a" href="mailto:esu@smalsuolis.lt">
               esu@smalsuolis.lt
             </ColLink>
@@ -100,6 +104,7 @@ const Inner = styled.div`
 
   @media ${device.tablet} {
     grid-template-columns: 1fr;
+    gap: 42px;
   }
 
   @media ${device.mobileL} {
@@ -135,7 +140,7 @@ const Columns = styled.div`
      link labels. */
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 24px;
   }
 `;
 
@@ -178,11 +183,11 @@ const ColText = styled.div`
 const Copyright = styled.div`
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  padding: 48px 32px 32px;
+  padding: 62px 32px 32px;
   ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
 
   @media ${device.mobileL} {
-    padding: 32px 16px 24px;
+    padding: 42px 16px 24px;
   }
 `;

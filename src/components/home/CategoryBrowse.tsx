@@ -115,7 +115,8 @@ const Title = styled.h2`
 const Chips = styled.div`
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
+  align-self: stretch;
   gap: 16px;
 
   @media ${device.mobileL} {

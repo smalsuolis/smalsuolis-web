@@ -81,7 +81,7 @@ const HeroSearch = ({
                 <>
                   Statybų leidimai, miškų kirtimai, aplinkos vertinimai.
                   <br />
-                  Sužinok pirmas, kas planuojama šalia tavęs.
+                  Sužinok pirmasis, kas planuojama šalia tavęs.
                 </>
               )}
             </SupportCopy>
@@ -172,12 +172,14 @@ const Hero = styled.div<{ $noSearch?: boolean }>`
   }
 `;
 
+// The frame insets the headline 80px, where the search card below it sits at 64
+// and the rest of the site at 56.
 const HeroInner = styled.div`
   position: relative;
   z-index: 1;
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 56px;
 
   @media ${device.mobileL} {
     padding: 0 16px;
@@ -207,15 +209,16 @@ const Heading = styled.h1<{ $centered?: boolean }>`
   @media ${device.mobileL} {
     ${font('3xl', 800)};
     /* The phone frame sets the headline in a 276px measure, not the full
-       column — that is what gives it its line count. */
+       column — that is what gives it its line count — and always left. */
     max-width: 276px;
+    text-align: left;
   }
 `;
 
 const SupportCopy = styled.p`
   ${font('xl')};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   max-width: 478px;
 
   @media ${device.mobileL} {

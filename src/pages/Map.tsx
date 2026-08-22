@@ -111,7 +111,13 @@ const MapPage = () => {
       (searchParams.get('app')
         ? searchParams.get('app')!.split(',').map(Number).filter(Boolean)
         : []);
-    return { appIds, categoriesByApp: {} };
+    const categoryIds = (searchParams.get('categories') ?? '')
+      .split(',')
+      .map(Number)
+      .filter(Boolean);
+    const categoriesByApp: Record<number, number[]> = {};
+    if (categoryIds.length) appIds.forEach((id: number) => (categoriesByApp[id] = categoryIds));
+    return { appIds, categoriesByApp };
   });
   const [filterOpen, setFilterOpen] = useState(false);
   // The phone frame replaces the register pill with a dismissible card over the
@@ -158,10 +164,11 @@ const MapPage = () => {
     const next: Record<string, string> = {};
     if (address) next.address = address;
     if (appIds.length) next.app = appIds.join(',');
+    if (selectedCategoryIds.length) next.categories = selectedCategoryIds.join(',');
     if (periodKey) next.range = periodKey;
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, appIds, periodKey]);
+  }, [address, appIds, selectedCategoryIds, periodKey]);
 
   // Switch to the list view, carrying the current filters. The events page uses
   // different param names than the map (?apps= vs ?app=), and reads them via
