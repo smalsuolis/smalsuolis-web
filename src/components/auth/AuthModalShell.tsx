@@ -73,18 +73,23 @@ const Card = styled.div<{ $wide?: boolean }>`
   flex-direction: column;
   gap: 24px;
 
-  div:has(> input) {
+  label {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  div:has(> input:not([type='checkbox'])) {
     height: 40px;
     border-radius: 100px;
     border-color: ${({ theme }) => theme.colors.grey[500]};
   }
 
-  div:has(> input) > input {
+  div:has(> input:not([type='checkbox'])) > input {
     height: 38px;
     padding: 0 12px;
   }
 
-  div:has(+ div > input) {
+  div:has(+ div > input:not([type='checkbox'])) {
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
   }

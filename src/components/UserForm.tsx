@@ -150,18 +150,23 @@ const PasswordContainer = styled.form`
 
   /* The design-system field draws a 4px #D4D5DE box under a 14px label; the
      design uses a 40px pill with a #BCBCBC hairline and a 16px black label. */
-  div:has(> input) {
+  label {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  div:has(> input:not([type='checkbox'])) {
     height: 40px;
     border-radius: 100px;
     border-color: ${({ theme }) => theme.colors.grey[500]};
   }
 
-  div:has(> input) > input {
+  div:has(> input:not([type='checkbox'])) > input {
     height: 38px;
     padding: 0 12px;
   }
 
-  div:has(+ div > input) {
+  div:has(+ div > input:not([type='checkbox'])) {
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
   }
