@@ -221,7 +221,7 @@ const Avatar = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
+  font-size: 2.4rem;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
