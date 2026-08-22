@@ -9,7 +9,7 @@ import { Modal } from '@aplinkosministerija/design-system';
 const Popup = ({ title, subTitle, onClose, visible = false, image, children }: any) => {
   return (
     <Modal visible={visible} onClose={onClose}>
-      <Container>
+      <Container data-modal-card>
         {image ? (
           <Illustration src={image} alt="" aria-hidden="true" />
         ) : (

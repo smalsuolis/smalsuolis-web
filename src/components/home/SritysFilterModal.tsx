@@ -121,7 +121,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
 
   return (
     <Modal visible={visible} onClose={onClose}>
-      <Panel>
+      <Panel data-modal-card>
         <Header>
           <Title>{filterModalTitle}</Title>
           <CloseButton onClick={onClose} aria-label={buttonsTitles.close}>
@@ -168,15 +168,15 @@ const Panel = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 16px;
   overflow-y: auto;
 
   @media ${device.desktop} {
-    max-width: 640px;
+    max-width: 841px;
     height: auto;
     max-height: 80vh;
-    border-radius: 20px;
-    padding: 32px;
+    border-radius: 8px;
+    padding: 24px;
   }
 `;
 
@@ -184,11 +184,11 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 `;
 
 const Title = styled.div`
-  ${font('2xl', 700)};
+  ${font('2xl')};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
@@ -200,9 +200,9 @@ const CloseButton = styled.button`
 `;
 
 const SectionLabel = styled.div`
-  ${font('base', 700)};
+  ${font('base', 500)};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 `;
 
 const AppList = styled.div`
@@ -220,28 +220,37 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
   transition: transform 0.15s ease;
 `;
 
+// Full-bleed bar across the panel's foot, per the design: it escapes the
+// panel's padding so its rule reaches both edges.
 const Footer = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-top: 24px;
-  padding-top: 20px;
+  gap: 10px;
+  margin: 24px -16px -16px;
+  padding: 16px;
   border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+
+  @media ${device.desktop} {
+    margin: 24px -24px -24px;
+    padding: 24px;
+  }
 `;
 
 const ClearLink = styled.button`
-  ${font('base', 500)};
-  color: ${({ theme }) => theme.colors.tertiary};
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: underline;
   cursor: pointer;
   background: transparent;
 `;
 
 const ApplyButton = styled.button`
-  ${font('base', 500)};
-  padding: 14px 28px;
-  border-radius: 100px;
+  ${font('base')};
+  min-width: 205px;
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
   cursor: pointer;

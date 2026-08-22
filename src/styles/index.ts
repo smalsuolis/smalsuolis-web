@@ -180,7 +180,12 @@ export const GlobalStyle = createGlobalStyle`
   textarea {
     font-size: 1.6rem;
   }
-  
+
+  /* The design-system modal paints a navy backdrop; the design uses a neutral
+     40% black. Marked cards opt in via data-modal-card. */
+  div:has(> [data-modal-card]) {
+    background: rgba(11, 11, 11, 0.4);
+  }
 `;
 
 /**

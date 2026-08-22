@@ -184,15 +184,13 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
 
   return (
     <Modal visible={visible} onClose={onModalClose}>
-      <Container>
+      <Container data-modal-card>
         <HeaderWrapper>
-          <ClearFilterText onClick={clearFilter}>{buttonsTitles.clearFilter}</ClearFilterText>
-          <IconContainer onClick={onModalClose}>
+          <Title>{buttonsTitles.filter}</Title>
+          <IconContainer onClick={onModalClose} aria-label={buttonsTitles.close}>
             <StyledIcon name={IconName.close} />
-            <CloseText>{buttonsTitles.close}</CloseText>
           </IconContainer>
         </HeaderWrapper>
-        <Title>{buttonsTitles.filter}</Title>
 
         {renderSubs()}
         {renderApps()}
@@ -237,7 +235,10 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
             />
           )}
         </FilterGroup>
-        <FilterButton onClick={onFilterClick}>{buttonsTitles.filter}</FilterButton>
+        <Footer>
+          <ClearFilterText onClick={clearFilter}>{buttonsTitles.clearFilter}</ClearFilterText>
+          <FilterButton onClick={onFilterClick}>{buttonsTitles.filter}</FilterButton>
+        </Footer>
       </Container>
     </Modal>
   );
@@ -252,7 +253,7 @@ const HeaderWrapper = styled.div`
 
 const FilterGroup = styled.div`
   display: flex;
-  gap: 15px;
+  gap: 16px;
   flex-direction: column;
 `;
 
@@ -300,19 +301,25 @@ const IconContainer = styled.div`
 `;
 
 const Title = styled.div`
-  font-family: Plus Jakarta Sans;
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 25.2px;
-  text-align: left;
+  ${font('2xl')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const CloseText = styled.div`
-  font-family: Plus Jakarta Sans;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 20.16px;
-  text-align: left;
+// Full-bleed bar across the modal's foot, per the design: it escapes the 24px
+// padding so its rule reaches both edges.
+const Footer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 -24px -24px;
+  padding: 24px;
+  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+
+  @media ${device.mobileL} {
+    margin: 0 -16px -16px;
+    padding: 16px;
+  }
 `;
 
 const ClearFilterText = styled.div`
@@ -323,23 +330,20 @@ const ClearFilterText = styled.div`
 `;
 
 const Subtitle = styled.div`
-  font-family: Plus Jakarta Sans;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 20.16px;
-  text-align: left;
+  ${font('base', 500)};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Divider = styled.hr`
   border: none;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
   margin: 0;
 `;
 
 const FilterButton = styled(Button)`
-  align-self: flex-end;
   width: 205px;
   height: 40px;
+  min-height: 40px;
   padding: 8px 24px;
   border-radius: 54px;
   background-color: ${({ theme }) => theme.colors.black};

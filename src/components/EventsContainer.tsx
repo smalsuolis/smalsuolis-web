@@ -504,9 +504,10 @@ const RegisterCta = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 300px;
+  min-width: 300px;
   height: 40px;
   padding: 7px 11px;
+  white-space: nowrap;
   border-radius: 54px;
   border: 1px solid ${({ theme }) => theme.colors.grey[600]};
   background: ${({ theme }) => theme.colors.white};
@@ -528,9 +529,10 @@ const ViewToggle = styled.button`
   align-items: center;
   justify-content: center;
   gap: 4px;
-  width: 186px;
+  min-width: 186px;
   height: 40px;
   padding: 8px 24px;
+  white-space: nowrap;
   border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
