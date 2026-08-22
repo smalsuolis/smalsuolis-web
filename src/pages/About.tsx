@@ -39,6 +39,7 @@ const About = () => {
           </>
         }
         supportCopy={null}
+        showSearch={false}
       />
 
       <Section>

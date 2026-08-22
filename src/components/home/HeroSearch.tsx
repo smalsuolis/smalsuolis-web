@@ -10,8 +10,17 @@ import SritysFilterModal, { SritysValue } from './SritysFilterModal';
 
 // Hero band: full-bleed green gradient, headline + supporting copy, and the white
 // search bar (address autocomplete + Sritys) overlapping the bottom edge.
-// Apie mus reuses the band with its own centred heading and no support copy.
-const HeroSearch = ({ heading, supportCopy }: { heading?: ReactNode; supportCopy?: ReactNode }) => {
+// Apie mus reuses the band with its own centred heading, no support copy and
+// no search card — that layer is switched off on its Figma frame.
+const HeroSearch = ({
+  heading,
+  supportCopy,
+  showSearch = true,
+}: {
+  heading?: ReactNode;
+  supportCopy?: ReactNode;
+  showSearch?: boolean;
+}) => {
   const navigate = useNavigate();
   const [address, setAddress] = useState('');
   const [selected, setSelected] = useState<AddressSuggestion | null>(null);
@@ -62,25 +71,31 @@ const HeroSearch = ({ heading, supportCopy }: { heading?: ReactNode; supportCopy
         </HeroContent>
       </HeroInner>
 
-      <SearchBarWrap>
-        <SearchBar>
-          <SearchInputWrap>
-            <AddressAutocomplete
-              value={address}
-              onChange={setAddress}
-              onSelect={setSelected}
-              onSubmit={goToMap}
-            />
-          </SearchInputWrap>
-          <SritysButton type="button" onClick={() => setFilterOpen(true)} $active={sritysCount > 0}>
-            <span>{sritysLabel}</span>
-            <ChevronIcon name={IconName.dropdownArrow} />
-          </SritysButton>
-          <SearchButtonWrap>
-            <Button onClick={goToMap}>Ieškoti</Button>
-          </SearchButtonWrap>
-        </SearchBar>
-      </SearchBarWrap>
+      {showSearch && (
+        <SearchBarWrap>
+          <SearchBar>
+            <SearchInputWrap>
+              <AddressAutocomplete
+                value={address}
+                onChange={setAddress}
+                onSelect={setSelected}
+                onSubmit={goToMap}
+              />
+            </SearchInputWrap>
+            <SritysButton
+              type="button"
+              onClick={() => setFilterOpen(true)}
+              $active={sritysCount > 0}
+            >
+              <span>{sritysLabel}</span>
+              <ChevronIcon name={IconName.dropdownArrow} />
+            </SritysButton>
+            <SearchButtonWrap>
+              <Button onClick={goToMap}>Ieškoti</Button>
+            </SearchButtonWrap>
+          </SearchBar>
+        </SearchBarWrap>
+      )}
 
       <SritysFilterModal
         visible={filterOpen}
