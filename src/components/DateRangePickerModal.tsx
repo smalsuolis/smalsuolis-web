@@ -98,7 +98,7 @@ const DateContainer = styled.div`
     overflow: auto;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(11, 11, 11, 0.4);
   }
 `;
 

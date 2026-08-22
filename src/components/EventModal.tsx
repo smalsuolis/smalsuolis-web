@@ -131,15 +131,14 @@ const Overlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(11, 11, 11, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
 
   @media ${device.mobileL} {
-    padding: 0;
-    align-items: flex-end;
+    padding: 16px;
   }
 `;
 
@@ -159,7 +158,6 @@ const Modal = styled.div`
   @media ${device.mobileL} {
     max-width: 100%;
     max-height: 88vh;
-    border-radius: 8px 8px 0 0;
   }
 `;
 
@@ -173,7 +171,7 @@ const Header = styled.div`
 const HeaderText = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
   min-width: 0;
 `;
 
@@ -181,7 +179,7 @@ const HeaderText = styled.div`
 // The modal is a quick look, so clamp the title to two lines with an ellipsis;
 // the full title is shown on the standalone event page (opened via Nuoroda).
 const Title = styled.h2`
-  ${font('xl', 600)};
+  ${font('2xl')};
   margin: 0;
   color: ${({ theme }) => theme.colors.text.primary};
   display: -webkit-box;
@@ -192,7 +190,7 @@ const Title = styled.h2`
 
 const Subtitle = styled.div`
   ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[600]};
+  color: ${({ theme }) => theme.colors.grey[650]};
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;

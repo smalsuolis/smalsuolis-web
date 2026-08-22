@@ -111,19 +111,29 @@ const Page = styled.div`
     margin-top: -80px;
   }
 
+  /* Same 124px rhythm as the homepage; without the search card overhanging it,
+     the first section clears the hero by the plain rhythm value. */
   & > section {
-    margin-top: 80px;
+    margin-top: 124px;
   }
-  & > section:first-of-type {
-    margin-top: 96px;
+
+  /* The design leaves 169px above the CTA band here, against the 54 the
+     homepage uses. The band is this page's last block. */
+  & > div:last-of-type {
+    margin-top: 169px;
   }
 
   @media ${device.mobileL} {
     & > section {
-      margin-top: 48px;
+      margin-top: 42px;
     }
-    & > section:first-of-type {
-      margin-top: 48px;
+    /* The mobile frame groups the intro copy and the stat column into one
+       block, as on the homepage. */
+    & > section:nth-of-type(2) {
+      margin-top: 24px;
+    }
+    & > div:last-of-type {
+      margin-top: 42px;
     }
   }
 `;
@@ -148,12 +158,12 @@ const IntroStrong = styled.span`
 const GreyBand = styled.div`
   width: 100%;
   background: #fafafa;
-  padding: 72px 0;
-  margin-top: 80px;
+  padding: 52px 0 67px;
+  margin-top: 124px;
 
   @media ${device.mobileL} {
-    padding: 48px 0;
-    margin-top: 48px;
+    padding: 24px 0 36px;
+    margin-top: 42px;
   }
 
   /* The Section inside doesn't need the page-level top margin. */
@@ -168,10 +178,12 @@ const DominaRow = styled.div`
   justify-content: space-between;
   gap: 48px;
 
+  /* The phone frame stacks the illustration ABOVE the copy, so the column runs
+     in reverse of the reading order used on desktop. */
   @media ${device.tablet} {
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: flex-start;
-    gap: 32px;
+    gap: 16px;
   }
 `;
 

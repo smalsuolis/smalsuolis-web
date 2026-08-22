@@ -51,7 +51,7 @@ const Overlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(11, 11, 11, 0.4);
   display: flex;
   align-items: flex-start;
   justify-content: center;

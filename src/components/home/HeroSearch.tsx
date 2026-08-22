@@ -45,7 +45,7 @@ const HeroSearch = ({
   };
 
   return (
-    <Hero>
+    <Hero $noSearch={!showSearch}>
       <HeroInner>
         <HeroContent $centered={supportCopy === null}>
           <Heading $centered={supportCopy === null}>
@@ -120,7 +120,7 @@ export default HeroSearch;
 //
 // Padding follows the design frame: the 1440x436 band puts the heading at
 // y=160, measured from the top of the hero (the 80px navbar overlays it).
-const Hero = styled.div`
+const Hero = styled.div<{ $noSearch?: boolean }>`
   position: relative;
   width: 100%;
   background:
@@ -140,9 +140,10 @@ const Hero = styled.div`
        noise. The colour underneath stays the one the design specifies. */
     background: #7eec9b;
     /* The 393x417 mobile band puts the heading at y=104 — below the 80px
-       transparent nav it is pulled under — and ends 151px past the copy. */
-    padding-top: 104px;
-    padding-bottom: 151px;
+       transparent nav it is pulled under — and ends 151px past the copy. Apie
+       mus has no search card hanging off it, so its band is the shorter 316. */
+    padding-top: ${({ $noSearch }) => ($noSearch ? '133px' : '104px')};
+    padding-bottom: ${({ $noSearch }) => ($noSearch ? '66px' : '151px')};
   }
 `;
 
