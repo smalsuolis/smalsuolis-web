@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik } from 'formik';
 import { useState } from 'react';
 import styled from 'styled-components';
-import { device } from '../styles';
+import { device, font } from '../styles';
 import { App, Frequency, SubscriptionForm, validateSubscriptionForm } from '../utils';
 import api from '../utils/api';
 import FrequencyPills from './FrequencyPills';
@@ -114,7 +114,7 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
   return (
     <>
       <Modal visible={visible} onClose={onClose}>
-        <Shell>
+        <Shell data-modal-card>
           <Header>
             <div>
               <Title>{isExisting ? 'Prenumeratos valdymas' : 'Pridėti prenumeratą'}</Title>
@@ -313,7 +313,7 @@ const Shell = styled.div`
     max-width: 90vw;
     max-height: 86vh;
     height: auto;
-    border-radius: 16px;
+    border-radius: 8px;
   }
 `;
 
@@ -322,11 +322,11 @@ const Header = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 32px 32px 16px 32px;
+  padding: 24px 24px 0;
   flex-shrink: 0;
 
   @media ${device.mobileL} {
-    padding: 20px 20px 12px 20px;
+    padding: 24px 16px 0;
   }
 `;
 
@@ -337,9 +337,8 @@ const Title = styled.h2`
 `;
 
 const Subtitle = styled.div`
-  font-size: 1.4rem;
-  line-height: 20px;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const CloseButton = styled.button`
@@ -363,14 +362,14 @@ const StyledForm = styled(Form)`
 const Body = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 8px 32px 24px 32px;
+  gap: 36px;
+  padding: 24px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
 
   @media ${device.mobileL} {
-    padding: 8px 20px 20px 20px;
+    padding: 24px 16px;
   }
 `;
 
@@ -381,14 +380,13 @@ const Section = styled.div`
 `;
 
 const Label = styled.label`
-  font-weight: 500;
-  font-size: 1.5rem;
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Description = styled.div`
-  font-size: 1.3rem;
-  line-height: 18px;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  ${font('sm')};
+  color: ${({ theme }) => theme.colors.grey[700]};
 `;
 
 const HeadingRow = styled.div`
@@ -440,14 +438,14 @@ const Footer = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 32px;
-  border-top: 1px solid #e5e5e5;
+  padding: 24px;
+  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
   background: white;
   flex-shrink: 0;
 
   @media ${device.mobileL} {
     flex-direction: column-reverse;
-    padding: 16px 20px;
+    padding: 16px;
   }
 `;
 
@@ -458,7 +456,7 @@ const DeleteLink = styled.button`
   color: #e11d48;
   text-decoration: underline;
   cursor: pointer;
-  font-size: 1.4rem;
+  ${font('base')};
 `;
 
 const ClearLink = styled.button`
@@ -468,14 +466,17 @@ const ClearLink = styled.button`
   color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: underline;
   cursor: pointer;
-  font-size: 1.4rem;
+  ${font('base')};
 `;
 
 // Black pill, per the design — the DS Button defaults to the green primary,
 // which is used for map/list actions rather than modal confirmation.
 const SubmitButton = styled(Button)`
-  min-width: 140px;
-  height: 44px;
+  min-width: 130px;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
   background-color: ${({ theme }) => theme.colors.black};
   border-color: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};

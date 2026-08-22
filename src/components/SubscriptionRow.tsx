@@ -212,15 +212,6 @@ const SwitchWrapper = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
-
-  /* The design-system switch paints itself in the app's primary green; the
-     design uses its own on/off pair. Only the track colour is overridden. */
-  && label > span {
-    background-color: #d9d9d9;
-  }
-  && input:checked + span {
-    background-color: #1fc84c;
-  }
 `;
 
 const Name = styled.div<{ $inactive?: boolean }>`

@@ -58,9 +58,9 @@ const Container = styled.div<{ width?: string; $backgroundImg?: boolean }>`
     height: auto;
     overflow: initial;
     min-height: auto;
-    padding: 40px;
+    padding: 24px;
     flex-basis: auto;
-    border-radius: 16px;
+    border-radius: 8px;
   }
 `;
 

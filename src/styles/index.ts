@@ -186,6 +186,16 @@ export const GlobalStyle = createGlobalStyle`
   div:has(> [data-modal-card]) {
     background: rgba(11, 11, 11, 0.4);
   }
+
+  /* The design's toggle track is #1FC84C on and #D9D9D9 off; the design system
+     paints it in the app's primary green. Matches the Switch's own markup
+     (label > input + span), not the checkbox's. */
+  label > input[type='checkbox'] + span {
+    background-color: #d9d9d9;
+  }
+  label > input[type='checkbox']:checked + span {
+    background-color: #1fc84c;
+  }
 `;
 
 /**
