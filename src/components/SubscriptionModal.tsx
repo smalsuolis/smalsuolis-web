@@ -88,7 +88,9 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
   const initialValues: SubscriptionForm = {
     id: subscription?.id ?? 0,
     name: subscription?.name ?? '',
-    apps: noSubscription || futureApps ? allApps : subscription?.apps || [],
+    // The design opens a new subscription with nothing ticked and the automatic
+    // toggle on — that pair already means "every source, including future ones".
+    apps: noSubscription || futureApps ? [] : subscription?.apps || [],
     categories: subscription?.categories ?? [],
     geom: subscription?.geom,
     // WEEK is the first selectable pill; DAY is legacy-only (see FrequencyPills).
@@ -192,7 +194,8 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                             value={values.futureApps}
                             onChange={(e) => {
                               setFieldValue('futureApps', e.target.checked);
-                              setFieldValue('apps', allApps);
+                              // Turning it on supersedes a manual selection.
+                              if (e.target.checked) setFieldValue('apps', []);
                             }}
                           />
                         </FutureAppsHeader>
@@ -356,8 +359,8 @@ const Header = styled.div`
 
 const Title = styled.h2`
   margin: 0 0 8px 0;
-  font-size: 2.4rem;
-  font-weight: 500;
+  ${font('2xl')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Subtitle = styled.div`
@@ -523,7 +526,7 @@ const LoaderWrapper = styled.div`
 // 361 one — an outlined Atšaukti above a black Ištrinti, not a red pill.
 const PopupActions = styled.div`
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 16px;
 
   @media ${device.mobileL} {

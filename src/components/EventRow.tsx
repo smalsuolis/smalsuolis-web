@@ -81,9 +81,10 @@ const NameTitle = styled.span`
   color: ${({ theme }) => theme.colors.grey[700]};
 `;
 
+// Flattened #333333 at the 64% the design applies to both meta runs.
 const NameLocation = styled.span`
   ${font('xl')};
-  color: ${({ theme }) => theme.colors.grey[700]};
+  color: #7c7c7c;
 `;
 
 const MetaDot = styled.span`
@@ -92,7 +93,7 @@ const MetaDot = styled.span`
 
 const MetaDate = styled.span`
   ${font('xl')};
-  color: ${({ theme }) => theme.colors.grey[700]};
+  color: #7c7c7c;
   white-space: nowrap;
 `;
 

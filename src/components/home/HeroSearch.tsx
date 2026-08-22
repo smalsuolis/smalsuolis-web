@@ -206,6 +206,9 @@ const Heading = styled.h1<{ $centered?: boolean }>`
 
   @media ${device.mobileL} {
     ${font('3xl', 800)};
+    /* The phone frame sets the headline in a 276px measure, not the full
+       column — that is what gives it its line count. */
+    max-width: 276px;
   }
 `;
 
@@ -218,6 +221,9 @@ const SupportCopy = styled.p`
   @media ${device.mobileL} {
     ${font('base')};
     max-width: none;
+    /* The 8px above is a desktop baseline nudge the 436px band absorbs; on the
+       phone it would push the whole page 8px down. */
+    margin-bottom: 0;
   }
 `;
 
@@ -296,11 +302,12 @@ const SritysWrap = styled.div`
 
 const SritysMenu = styled(Menu)`
   position: absolute;
-  top: calc(100% + 8px);
+  /* The frame hangs the menu 4px under the input and draws all eight rows. */
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   z-index: 40;
-  max-height: 320px;
+  max-height: 392px;
 `;
 
 const SritysLabel = styled.span`

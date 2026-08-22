@@ -29,10 +29,10 @@ const SourceCard = ({
       </Header>
       <Meta>
         <span>Paskutinis atnaujinimas:</span>
-        <span>
+        <MetaValue>
           {formatRelativeTime(lastUpdate)}
           {lastUpdate ? ` ${new Date(lastUpdate).toLocaleString('lt-LT')}` : ''}
-        </span>
+        </MetaValue>
       </Meta>
     </Left>
     {lastUpdateCount > 0 && (
@@ -81,13 +81,17 @@ const Header = styled.div`
 `;
 
 // The design sets both lines in the same 14/19.6 #404040 — the staleness colour
-// coding is not part of it.
+// coding is not part of it — and puts the timestamp itself in semibold.
 const Meta = styled.div`
   display: flex;
   flex-direction: column;
   ${font('sm')};
   line-height: 1.96rem;
   color: #404040;
+`;
+
+const MetaValue = styled.span`
+  font-weight: 600;
 `;
 
 const Pill = styled.div`

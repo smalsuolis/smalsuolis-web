@@ -104,28 +104,30 @@ const Subscriptions = () => {
     }
 
     return (
-      <SubscriptionsContainer>
-        {subscriptions?.pages.map((page: { data: Subscription<App>[] }, pageIndex: number) => {
-          return (
-            <React.Fragment key={pageIndex}>
-              {page?.data.map((subscription) => {
-                return (
-                  <React.Fragment key={`subscription-${subscription?.id}`}>
-                    <SubscriptionRow
-                      subscription={subscription}
-                      onClick={() => openModal(subscription?.id?.toString())}
-                      onToggleActive={(active) => toggleActive({ id: subscription.id, active })}
-                      apps={appsResponse?.rows}
-                    />
-                  </React.Fragment>
-                );
-              })}
-            </React.Fragment>
-          );
-        })}
+      <>
+        <SubscriptionsContainer>
+          {subscriptions?.pages.map((page: { data: Subscription<App>[] }, pageIndex: number) => {
+            return (
+              <React.Fragment key={pageIndex}>
+                {page?.data.map((subscription) => {
+                  return (
+                    <React.Fragment key={`subscription-${subscription?.id}`}>
+                      <SubscriptionRow
+                        subscription={subscription}
+                        onClick={() => openModal(subscription?.id?.toString())}
+                        onToggleActive={(active) => toggleActive({ id: subscription.id, active })}
+                        apps={appsResponse?.rows}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </React.Fragment>
+            );
+          })}
+        </SubscriptionsContainer>
         {observerRef && <Invisible ref={observerRef} />}
         {!anyEventsCountNull && isFetching && <LoaderComponent />}
-      </SubscriptionsContainer>
+      </>
     );
   };
 

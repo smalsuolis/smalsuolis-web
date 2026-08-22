@@ -397,6 +397,18 @@ const EventsContainer = ({
             so the active selection is visible without opening the modal; the
             pill stays for everything else. Desktop keeps the pill alone. */}
         <InlineFilters>
+          {/* The design shows only the two dropdowns, but the modal still
+              carries the per-app categories they don't cover — kept as a
+              compact icon-only trigger BEFORE them, so the period control keeps
+              the right edge the frame gives it. */}
+          <FilterPill
+            onClick={() => setShowFilterModal(true)}
+            $active={!isEmpty(filters.value)}
+            title={buttonsTitles.filter}
+            aria-label={buttonsTitles.filter}
+          >
+            <Icon name={IconName.filter} size={20} color={'#1B4C28'} />
+          </FilterPill>
           <PeriodDropdown
             placeholder="Sritys"
             options={appOptions}
@@ -420,18 +432,6 @@ const EventsContainer = ({
               })
             }
           />
-          {/* The design shows only the two dropdowns, but the modal still
-              carries subscriptions, categories and custom date ranges that
-              they don't cover — kept as a compact icon-only trigger beside
-              them rather than dropped. */}
-          <FilterPill
-            onClick={() => setShowFilterModal(true)}
-            $active={!isEmpty(filters.value)}
-            title={buttonsTitles.filter}
-            aria-label={buttonsTitles.filter}
-          >
-            <Icon name={IconName.filter} size={20} color={'#1B4C28'} />
-          </FilterPill>
         </InlineFilters>
       </FilterBar>
 
@@ -627,11 +627,12 @@ const InlineFilters = styled.div`
   gap: 16px;
   margin-left: auto;
 
-  /* Design widths for the two dropdowns; they are fixed, not shrink-to-fit. */
-  > *:nth-child(1) {
+  /* Design widths for the two dropdowns; they are fixed, not shrink-to-fit.
+     The first child is the extra filter pill. */
+  > *:nth-child(2) {
     width: 300px;
   }
-  > *:nth-child(2) {
+  > *:nth-child(3) {
     width: 184px;
   }
 
@@ -641,8 +642,8 @@ const InlineFilters = styled.div`
     flex-direction: column;
     align-items: stretch;
 
-    > *:nth-child(1),
-    > *:nth-child(2) {
+    > *:nth-child(2),
+    > *:nth-child(3) {
       width: 100%;
     }
   }

@@ -547,7 +547,7 @@ const PillLabel = styled.span`
 const PeriodWrap = styled.div`
   /* Pushed to the far right of the controls row (address + category stay left). */
   margin-left: auto;
-  min-width: 206px;
+  width: 206px;
   box-shadow: ${pillShadow};
   border-radius: 54px;
 

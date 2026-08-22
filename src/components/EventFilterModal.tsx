@@ -193,9 +193,6 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
         </HeaderWrapper>
 
         {renderSubs()}
-        {renderApps()}
-
-        <Divider />
 
         <FilterGroup>
           <Subtitle>{subtitle.date}</Subtitle>
@@ -235,6 +232,11 @@ const EventFilterModal = ({ isMyEvents = false, onClose, visible = false }: any)
             />
           )}
         </FilterGroup>
+
+        <Divider />
+
+        {renderApps()}
+
         <Footer>
           <ClearFilterText onClick={clearFilter}>{buttonsTitles.clearFilter}</ClearFilterText>
           <FilterButton onClick={onFilterClick}>{buttonsTitles.filter}</FilterButton>

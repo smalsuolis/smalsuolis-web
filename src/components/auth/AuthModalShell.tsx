@@ -111,11 +111,19 @@ const Card = styled.div<{ $wide?: boolean }>`
     color: ${({ theme }) => theme.colors.grey[600]};
   }
 
-  /* The design's box is 16px with a 4px radius; the DS ships 18px at 2px. */
+  /* The design's box is a white 16px square with a 4px radius and a #D9D9D9
+     ring; the DS ships an 18px grey-filled one at 2px. */
   div:has(> input[type='checkbox']) {
     width: 16px;
     height: 16px;
     border-radius: 4px;
+  }
+  div:has(> input[type='checkbox']:not(:checked)) {
+    background-color: #ffffff;
+    box-shadow: inset 0 0 0 1px #d9d9d9;
+  }
+  div:has(> div > input[type='checkbox']) {
+    gap: 8px;
   }
 
   /* The design paints a field's message and its hairline red when it fails. */

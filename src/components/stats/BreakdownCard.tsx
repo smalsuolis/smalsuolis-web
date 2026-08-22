@@ -111,11 +111,12 @@ const EmptyRow = styled.div`
 `;
 
 const Percent = styled.span`
-  color: ${({ theme }) => theme.colors.grey[600]};
+  color: ${({ theme }) => theme.colors.grey[500]};
   text-align: right;
 `;
 
 const Count = styled.span`
+  font-weight: 700;
   text-align: right;
   min-width: 48px;
 `;

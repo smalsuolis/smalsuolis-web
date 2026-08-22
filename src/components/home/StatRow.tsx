@@ -64,6 +64,10 @@ const Grid = styled.div`
 const Item = styled.div`
   display: flex;
   flex-direction: column;
+
+  @media ${device.mobileL} {
+    gap: 12px;
+  }
 `;
 
 const Number = styled.div`
@@ -72,12 +76,20 @@ const Number = styled.div`
   min-height: 1.2em;
 
   @media ${device.mobileL} {
-    ${font('3xl')};
+    font-size: 3.6rem;
+    line-height: 4.7rem;
     font-weight: 400;
+    letter-spacing: -0.05em;
   }
 `;
 
+// Flattened #000 at the 70% the design applies to the caption.
 const Label = styled.div`
   ${font('xl')};
-  color: ${({ theme }) => theme.colors.text.primary};
+  color: #4e4e4e;
+
+  @media ${device.mobileL} {
+    ${font('lg')};
+    line-height: 2.7rem;
+  }
 `;

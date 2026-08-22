@@ -190,10 +190,12 @@ export const GlobalStyle = createGlobalStyle`
   /* The design's toggle track is #1FC84C on and #D9D9D9 off; the design system
      paints it in the app's primary green. Matches the Switch's own markup
      (label > input + span), not the checkbox's. */
-  label > input[type='checkbox'] + span {
+  /* The repeated attribute selector is deliberate: the design system's own
+     rule is three classes deep, and a single one loses the cascade. */
+  label > input[type='checkbox'][type='checkbox'] + span {
     background-color: #d9d9d9;
   }
-  label > input[type='checkbox']:checked + span {
+  label > input[type='checkbox'][type='checkbox']:checked + span {
     background-color: #1fc84c;
   }
 

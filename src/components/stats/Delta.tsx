@@ -71,10 +71,12 @@ const Percent = styled.span<{ $tone: keyof typeof TONES }>`
 `;
 
 const Value = styled.span<{ $positive: boolean }>`
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.4rem;
+  line-height: 2.1rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
   white-space: nowrap;
-  color: ${({ $positive }) => ($positive ? '#1F9D57' : '#E5484D')};
+  color: ${({ $positive }) => ($positive ? '#1FC84C' : '#EF4444')};
 `;
 
 const Spinner = styled.span`

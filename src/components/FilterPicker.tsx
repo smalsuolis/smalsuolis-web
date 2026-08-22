@@ -37,33 +37,33 @@ const FilterPicker = <T extends FilterItem = FilterItem>(props: PodcastPickerPro
 
 const FilterPickerWrapper = styled.div`
   display: flex;
-  justify-content: row;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
 `;
 
+// Design: a white 45px pill outlined in black — 2px once chosen — not a grey
+// fill that turns green.
 const FilterPickerItem = styled.div<{ $isActive: boolean }>`
-  background-color: ${({ $isActive }) => ($isActive ? '#DFF9E5' : '#F7F7F7')};
-  border: 1px solid ${({ $isActive }) => ($isActive ? '#73DC8C' : 'transparent')};
-  border-radius: 200px;
-  padding: 11px 12px;
+  background-color: #ffffff;
+  border: ${({ $isActive }) =>
+    $isActive ? '2px solid #000000' : '1px solid rgba(83, 83, 83, 0.12)'};
+  border-radius: 128px;
+  padding: ${({ $isActive }) => ($isActive ? '11px 19px' : '12px 20px')};
   display: flex;
   width: fit-content;
   justify-content: center;
   align-items: center;
-  opacity: 1;
-  gap: 6px;
+  gap: 10px;
   cursor: pointer;
   user-select: none;
-  &:hover,
-  &:focus {
-    cursor: pointer;
-  }
-  color: ${({ $isActive }) => ($isActive ? '#1B4C28' : '#4B5768')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const FilterPickerItemText = styled.div`
   font-size: 1.4rem;
+  line-height: 2.1rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
   white-space: pre;
 `;
 

@@ -160,9 +160,7 @@ const FilterButton = styled.div`
   background-color: white;
   border: 1px solid #bcbcbc;
   border-radius: 54px;
-  /* The design's 184px holds its sample label; real range names are longer, so
-     grow rather than truncate the current selection. */
-  min-width: 184px;
+  width: 184px;
   height: 40px;
   align-items: center;
   justify-content: space-between;
@@ -186,7 +184,11 @@ const SelectedDateLabel = styled.div`
   font-weight: 400;
   line-height: 24px;
   letter-spacing: -0.02em;
+  /* The design truncates the label rather than widening the control — its own
+     mobile frame draws "Praeito mėn…". */
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   &:hover,
   &:focus {
     cursor: pointer;
