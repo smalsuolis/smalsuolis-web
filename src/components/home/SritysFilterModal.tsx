@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Modal } from '@aplinkosministerija/design-system';
 import styled, { keyframes } from 'styled-components';
@@ -107,17 +107,34 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
     if (freshCount !== undefined) setSettledCount(freshCount);
   }, [freshCount]);
 
+  // Toggling an expandable row reports its app id AND its categories in the same
+  // tick. Both handlers derive from `value`, which is still the pre-click one for
+  // the second of them — so they compose through this ref instead, or the second
+  // update would undo the first and the row would never tick.
+  const latest = useRef(value);
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+
+  const apply = (patch: Partial<SritysValue>) => {
+    latest.current = { ...latest.current, ...patch };
+    onChange(latest.current);
+  };
+
   // This app's own selected category ids (independent per app).
   const catsFor = (appId: number): number[] => value.categoriesByApp[appId] ?? [];
 
   const setCatsFor = (appId: number, ids: number[]) => {
-    const next = { ...value.categoriesByApp };
+    const next = { ...latest.current.categoriesByApp };
     if (ids.length) next[appId] = ids;
     else delete next[appId];
-    onChange({ ...value, categoriesByApp: next });
+    apply({ categoriesByApp: next });
   };
 
-  const clearAll = () => onChange({ appIds: [], categoriesByApp: {} });
+  const clearAll = () => {
+    latest.current = { appIds: [], categoriesByApp: {} };
+    onChange(latest.current);
+  };
 
   return (
     <Modal visible={visible} onClose={onClose}>
@@ -136,7 +153,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
             apps={apps}
             categories={categories}
             appIds={value.appIds}
-            onAppIdsChange={(ids) => onChange({ ...value, appIds: ids })}
+            onAppIdsChange={(ids) => apply({ appIds: ids })}
             catsFor={catsFor}
             onCatsChange={setCatsFor}
           />

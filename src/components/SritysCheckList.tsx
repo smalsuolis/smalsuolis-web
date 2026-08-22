@@ -127,18 +127,19 @@ const List = styled.div`
 const Row = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 12px 4px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
 `;
 
+// Design: a 16px box with a 4px radius — white with a #D9D9D9 ring when empty,
+// filled #1FC84C once chosen. The glyph inside is white, not black.
 const Checkbox = styled.span<{ $state: NodeState }>`
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: 1px solid
-    ${({ $state, theme }) => ($state === 'none' ? theme.colors.grey[500] : theme.colors.primary)};
-  background: ${({ $state, theme }) => ($state === 'none' ? 'transparent' : theme.colors.primary)};
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid ${({ $state }) => ($state === 'none' ? '#d9d9d9' : '#1fc84c')};
+  background: ${({ $state, theme }) => ($state === 'none' ? theme.colors.white : '#1fc84c')};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -147,19 +148,19 @@ const Checkbox = styled.span<{ $state: NodeState }>`
 `;
 
 const Dash = styled.span`
-  width: 10px;
+  width: 8px;
   height: 2px;
   border-radius: 2px;
-  background: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 // CSS-drawn checkmark with a 2px stroke to match the Dash weight (the icon-font
 // check rendered too heavy next to the thin dash).
 const Check = styled.span`
-  width: 6px;
-  height: 11px;
+  width: 4px;
+  height: 8px;
   margin-top: -2px;
-  border: solid ${({ theme }) => theme.colors.text.primary};
+  border: solid ${({ theme }) => theme.colors.white};
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 `;
