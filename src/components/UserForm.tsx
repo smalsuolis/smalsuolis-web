@@ -77,8 +77,8 @@ const UserForm = ({
 
   return (
     <Page>
+      <Header>{heading && <Title>{heading}</Title>}</Header>
       <PasswordContainer noValidate onSubmit={handleSubmit}>
-        <Header>{heading && <Title>{heading}</Title>}</Header>
         <TextField
           label={inputLabels.email}
           value={user?.email || ''}
@@ -108,11 +108,13 @@ const UserForm = ({
           onChange={(value) => handleType('repeatPassword', value)}
           label={updatingPassword ? inputLabels.repeatNewPassword : inputLabels.repeatPassword}
         />
-        <PasswordCheckListContainer
-          setAllValid={setAllValid}
-          password={password}
-          repeatPassword={repeatPassword}
-        />
+        <CheckList>
+          <PasswordCheckListContainer
+            setAllValid={setAllValid}
+            password={password}
+            repeatPassword={repeatPassword}
+          />
+        </CheckList>
         <StyledButton
           variant={ButtonVariants.PRIMARY}
           loading={isLoading}
@@ -134,10 +136,9 @@ const Page = styled.div`
   width: 100%;
   max-width: 599px;
   margin: 0 auto;
-  padding: 37px 0 80px;
 
   @media ${device.mobileL} {
-    padding: 24px 20px 48px;
+    padding: 0 16px;
   }
 `;
 
@@ -153,6 +154,8 @@ const PasswordContainer = styled.form`
   label {
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
+    /* Design: 8px between a field's label and its box (the DS ships 4). */
+    margin-bottom: 4px;
   }
 
   div:has(> input:not([type='checkbox'])) {
@@ -170,6 +173,12 @@ const PasswordContainer = styled.form`
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
   }
+`;
+
+// The design leaves 29px above the check list and the button, against the 24
+// between the fields themselves.
+const CheckList = styled.div`
+  margin-top: 5px;
 `;
 
 const Header = styled.div`
