@@ -53,7 +53,7 @@ export const titles = {
   about: 'Apie mus',
   stats: 'Statistika',
   myEvents: 'Mano įvykiai',
-  allEvents: 'Visi įvykiai',
+  allEvents: 'Naujausi įvykiai',
   login: 'Prisijungimas',
   profile: 'Profilis',
   subscriptions: 'Prenumeratos',

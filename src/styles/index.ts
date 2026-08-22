@@ -198,6 +198,15 @@ export const GlobalStyle = createGlobalStyle`
   label > input[type='checkbox'][type='checkbox']:checked + span {
     background-color: #1fc84c;
   }
+  label > input[type='checkbox'][type='checkbox'] + span::after {
+    width: 20px;
+    height: 20px;
+    top: 2px;
+    left: 2px;
+  }
+  label > input[type='checkbox'][type='checkbox']:checked + span::after {
+    left: 22px;
+  }
 
   /* Toasts: the design's 52px pill — tinted background, the matching glyph, and
      an accent bar down the right edge. react-toastify's own icon and close

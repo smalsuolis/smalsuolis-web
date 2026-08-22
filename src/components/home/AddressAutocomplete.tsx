@@ -167,9 +167,12 @@ const InputRow = styled.div`
   gap: 8px;
 `;
 
+// Design: a 16px black glyph, not a 24px grey one.
 const SearchIcon = styled(Icon)`
-  font-size: 2.4rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  width: 16px;
+  height: 16px;
+  font-size: 1.6rem;
+  color: ${({ theme }) => theme.colors.text.primary};
   flex-shrink: 0;
 `;
 

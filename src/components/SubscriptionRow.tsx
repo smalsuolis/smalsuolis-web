@@ -17,7 +17,7 @@ const COLLAPSED_CHIP_COUNT = 5;
 
 const AutoIcon = () => (
   <AutoBadge aria-hidden="true">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <svg width="21" height="21" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="8" fill="currentColor" />
       <path
         d="M5.2 11.2 8 4.8l2.8 6.4M6.2 9.4h3.6"
@@ -44,8 +44,8 @@ const ChevronRight = () => (
 
 const ChevronDown = ({ $up }: { $up?: boolean }) => (
   <svg
-    width="16"
-    height="16"
+    width="24"
+    height="24"
     viewBox="0 0 24 24"
     fill="none"
     aria-hidden="true"
@@ -124,10 +124,7 @@ const SubscriptionRow = ({
             {eventsCount === null ? (
               <Loader size="24px" />
             ) : (
-              <>
-                <CountAllTime>{eventsCount?.allTime?.toLocaleString('lt-LT')}</CountAllTime>
-                {!!eventsCount?.new && <CountNew>{`+ ${eventsCount.new}`}</CountNew>}
-              </>
+              <CountAllTime>{eventsCount?.allTime?.toLocaleString('lt-LT')}</CountAllTime>
             )}
           </Count>
           <ChevronButton type="button" aria-label={`Atidaryti ${name}`}>
@@ -214,6 +211,8 @@ const SwitchWrapper = styled.div`
   flex-shrink: 0;
 `;
 
+// The design draws an inactive subscription at full strength — only its toggle
+// goes grey.
 const Name = styled.div<{ $inactive?: boolean }>`
   ${font('2xl')};
   color: ${({ theme }) => theme.colors.grey[700]};
@@ -221,8 +220,6 @@ const Name = styled.div<{ $inactive?: boolean }>`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
-  transition: opacity 0.2s;
 `;
 
 const AutoBadge = styled.span`
@@ -235,6 +232,7 @@ const AutoLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 2px;
+  margin-right: -8px;
   color: ${({ theme }) => theme.colors.grey[600]};
 `;
 
@@ -245,10 +243,7 @@ const AutoText = styled.span`
 const Count = styled.div<{ $inactive?: boolean }>`
   display: flex;
   align-items: baseline;
-  gap: 6px;
   margin-left: auto;
-  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
-  transition: opacity 0.2s;
 `;
 
 const CountAllTime = styled.div`
@@ -256,12 +251,6 @@ const CountAllTime = styled.div`
   line-height: 2.3rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  white-space: nowrap;
-`;
-
-const CountNew = styled.div`
-  ${font('sm')};
-  color: #1b4c28;
   white-space: nowrap;
 `;
 
@@ -284,8 +273,6 @@ const ChipRow = styled.div<{ $inactive?: boolean }>`
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
-  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
-  transition: opacity 0.2s;
 
   @media ${device.mobileL} {
     flex-direction: column;

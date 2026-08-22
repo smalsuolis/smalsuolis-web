@@ -21,12 +21,12 @@ const EventRow = ({ event, onSelect }: { event: Event; onSelect: (e: Event) => v
   return (
     <Row onClick={() => onSelect(event)}>
       <Main>
-        <NameTitle>{title}</NameTitle>
-        <MetaLine>
+        <NameLine>
+          <NameTitle>{title}</NameTitle>
           {location && <NameLocation>{location}</NameLocation>}
-          {location && <MetaDot>·</MetaDot>}
+          {location && <MetaDot aria-hidden="true" />}
           <MetaDate>{getTimeLabel(event)}</MetaDate>
-        </MetaLine>
+        </NameLine>
         <Tags>
           {event.app?.name && <Tag>{event.app.name}</Tag>}
           {future && <Tag>{subtitle.future}</Tag>}
@@ -48,6 +48,10 @@ const Row = styled.div`
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[400]};
   cursor: pointer;
 
+  @media ${device.mobileL} {
+    border-bottom-color: ${({ theme }) => theme.colors.grey[300]};
+  }
+
   &:last-child {
     border-bottom: none;
   }
@@ -66,35 +70,65 @@ const Main = styled.div`
   }
 `;
 
-// Design (Project Info): the title owns the first line at full width; location
-// and date sit on a second line separated by a dot. Keeping all three on one
-// line made long land-planning titles wrap unpredictably.
-const MetaLine = styled.div`
+// Design (Project Info): title, location, dot and date share one line. Real
+// land-planning titles are far longer than the frame's sample, so the line
+// wraps rather than overflowing — at the 8px the frame uses between its rows.
+const NameLine = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 8px 16px;
+
+  /* The phone frame stacks the three, drops the dot and drops a size. */
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 `;
 
 const NameTitle = styled.span`
   ${font('2xl')};
   color: ${({ theme }) => theme.colors.grey[700]};
+
+  @media ${device.mobileL} {
+    font-size: 1.8rem;
+    line-height: 2.3rem;
+    font-weight: 600;
+  }
 `;
 
 // Flattened #333333 at the 64% the design applies to both meta runs.
 const NameLocation = styled.span`
   ${font('xl')};
   color: #7c7c7c;
+
+  @media ${device.mobileL} {
+    ${font('base')};
+  }
 `;
 
+// A 5px dot, not a punctuation glyph — the frame draws an ellipse.
 const MetaDot = styled.span`
-  color: ${({ theme }) => theme.colors.grey[400]};
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.colors.grey[400]};
+  flex-shrink: 0;
+
+  @media ${device.mobileL} {
+    display: none;
+  }
 `;
 
 const MetaDate = styled.span`
   ${font('xl')};
   color: #7c7c7c;
   white-space: nowrap;
+
+  @media ${device.mobileL} {
+    ${font('base')};
+  }
 `;
 
 const Tags = styled.div`

@@ -21,12 +21,11 @@ function App() {
   if (isLoading) return <LoaderComponent />;
 
   const authRoutes = filterRoutes(routes, loggedIn);
-  // The design orders the bar differently per state: signed out it reads
-  // Pagrindinis / Žemėlapis / Apie mus / Statistika, signed in the two tail
-  // items swap and Prenumeratos joins in the middle.
-  const navOrder = loggedIn
-    ? [slugs.home, slugs.map, slugs.subscriptions, slugs.stats, slugs.about]
-    : [slugs.home, slugs.map, slugs.about, slugs.stats];
+  // Every page frame draws the same bar — Pagrindinis / Žemėlapis /
+  // Prenumeratos / Statistika / Apie mus — with Prenumeratos simply absent
+  // while signed out. (The "Login register" frames show an older order; the
+  // page frames outnumber them five to one.)
+  const navOrder = [slugs.home, slugs.map, slugs.subscriptions, slugs.stats, slugs.about];
   const menuRoutes = [...filterMenuRoutes(routes, loggedIn)].sort(
     (a, b) => navOrder.indexOf(a.slug) - navOrder.indexOf(b.slug),
   );

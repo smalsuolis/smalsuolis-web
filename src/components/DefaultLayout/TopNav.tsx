@@ -51,7 +51,7 @@ const TopNav = (props: DefaultLayoutProps) => {
   const overHero = currentRoute?.slug === slugs.home || currentRoute?.slug === slugs.about;
 
   return (
-    <Bar $overHero={overHero}>
+    <Bar $overHero={overHero} $overMap={currentRoute?.slug === slugs.map}>
       <Inner>
         <LogoContainer $overHero={overHero} onClick={onGoHome}>
           {logo}
@@ -140,13 +140,23 @@ const TopNav = (props: DefaultLayoutProps) => {
 
 export default TopNav;
 
-const Bar = styled.header<{ $overHero: boolean }>`
+const Bar = styled.header<{ $overHero: boolean; $overMap: boolean }>`
   position: relative;
   width: 100%;
   background: ${({ $overHero, theme }) => ($overHero ? 'transparent' : theme.colors.white)};
   /* Inset rule, not a border: the design's navbar is 80px tall including its
-     hairline, and a border would make the bar 81 and shift every page down. */
-  ${({ $overHero, theme }) => !$overHero && `box-shadow: inset 0 -1px 0 ${theme.colors.grey[300]};`}
+     hairline, and a border would make the bar 81 and shift every page down.
+     The map frames draw no rule — the bar sits straight on the map. */
+  ${({ $overHero, $overMap, theme }) =>
+    !$overHero && !$overMap && `box-shadow: inset 0 -1px 0 ${theme.colors.grey[300]};`}
+
+  /* The phone frames tint the bar instead of painting it solid white. */
+  @media ${device.mobileL} {
+    ${({ $overHero }) =>
+      !$overHero &&
+      `background: rgba(250, 250, 250, 0.9);
+       box-shadow: inset 0 -1px 0 #E8E8E8;`}
+  }
   /* Must sit above the homepage hero, which is pulled up underneath it with a
      negative margin. The hero establishes its own stacking context, so the nav
      needs an explicit z-index on a positioned box to paint over it. */
@@ -176,6 +186,18 @@ const LogoContainer = styled.div<{ $overHero: boolean }>`
   align-items: center;
   flex-shrink: 0;
   color: ${({ $overHero }) => ($overHero ? '#000000' : '#53ba6d')};
+
+  /* Design: a 136x18 mark on desktop, 160x21 on the phone. */
+  svg {
+    width: 136px;
+    height: auto;
+  }
+
+  @media ${device.mobileL} {
+    svg {
+      width: 160px;
+    }
+  }
 `;
 
 const Links = styled.div`
@@ -263,10 +285,13 @@ const AccountItem = styled(MenuItem)<{ $muted?: boolean }>`
 `;
 
 const LoginButton = styled.div<{ $isActive: boolean }>`
+  display: flex;
+  align-items: center;
+  height: 40px;
   cursor: pointer;
-  ${font('base', 500)};
-  padding: 10px 20px;
-  border-radius: 100px;
+  ${font('base')};
+  padding: 8px 24px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
   transition: background 0.15s ease;
@@ -281,6 +306,7 @@ const LoginButton = styled.div<{ $isActive: boolean }>`
 `;
 
 const Burger = styled.button`
+  padding: 0;
   display: none;
   font-size: 2.4rem;
   color: ${({ theme }) => theme.colors.text.primary};

@@ -326,7 +326,7 @@ const BottomBar = styled.div`
     /* Stacked on mobile the bar spans the full width, so it clears the side
        controls by sitting below them instead. */
     padding: 0 20px;
-    bottom: 12px;
+    bottom: 23px;
     flex-direction: column;
     align-items: stretch;
   }

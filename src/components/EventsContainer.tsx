@@ -22,7 +22,6 @@ import { TimeRanges } from '../utils/types';
 import api from '../utils/api';
 import EmptyState from './EmptyState';
 import EventRow, { EventRowList } from './EventRow';
-import EventFilterModal from './EventFilterModal';
 import EventModal from './EventModal';
 import Pagination from './Pagination';
 import PeriodDropdown from './PeriodDropdown';
@@ -48,7 +47,6 @@ const EventsContainer = ({
   emptyStateTitle: string;
 }) => {
   const filters = useStorage<Filters>('filters', {}, true);
-  const [showFilterModal, setShowFilterModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -397,18 +395,6 @@ const EventsContainer = ({
             so the active selection is visible without opening the modal; the
             pill stays for everything else. Desktop keeps the pill alone. */}
         <InlineFilters>
-          {/* The design shows only the two dropdowns, but the modal still
-              carries the per-app categories they don't cover — kept as a
-              compact icon-only trigger BEFORE them, so the period control keeps
-              the right edge the frame gives it. */}
-          <FilterPill
-            onClick={() => setShowFilterModal(true)}
-            $active={!isEmpty(filters.value)}
-            title={buttonsTitles.filter}
-            aria-label={buttonsTitles.filter}
-          >
-            <Icon name={IconName.filter} size={20} color={'#1B4C28'} />
-          </FilterPill>
           <PeriodDropdown
             placeholder="Sritys"
             options={appOptions}
@@ -437,11 +423,6 @@ const EventsContainer = ({
 
       {renderListOrMap()}
 
-      <EventFilterModal
-        isMyEvents={isMyEvents}
-        visible={showFilterModal}
-        onClose={() => setShowFilterModal(false)}
-      />
       {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </Page>
   );
@@ -582,7 +563,8 @@ const SearchField = styled.div`
      dropdowns keep theirs; the address field gives up its 422 and takes what is
      left, so nothing runs past the right edge. */
   @media ${device.tablet} {
-    flex: 1;
+    /* Shrink only — growing past 422 would widen it below the breakpoint. */
+    flex: 0 1 422px;
     width: auto;
     min-width: 0;
   }
@@ -627,12 +609,11 @@ const InlineFilters = styled.div`
   gap: 16px;
   margin-left: auto;
 
-  /* Design widths for the two dropdowns; they are fixed, not shrink-to-fit.
-     The first child is the extra filter pill. */
-  > *:nth-child(2) {
+  /* Design widths for the two dropdowns; they are fixed, not shrink-to-fit. */
+  > *:nth-child(1) {
     width: 300px;
   }
-  > *:nth-child(3) {
+  > *:nth-child(2) {
     width: 184px;
   }
 
@@ -642,31 +623,10 @@ const InlineFilters = styled.div`
     flex-direction: column;
     align-items: stretch;
 
-    > *:nth-child(2),
-    > *:nth-child(3) {
+    > *:nth-child(1),
+    > *:nth-child(2) {
       width: 100%;
     }
-  }
-`;
-
-const FilterPill = styled.button<{ $active: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 40px;
-  width: 40px;
-  flex-shrink: 0;
-  border-radius: 100px;
-  border: 1px solid
-    ${({ $active, theme }) => ($active ? theme.colors.primary : theme.colors.grey[300])};
-  background: ${({ theme }) => theme.colors.white};
-  ${font('base', 600)};
-  color: ${({ theme }) => theme.colors.tertiary};
-  cursor: pointer;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.background};
   }
 `;
 
