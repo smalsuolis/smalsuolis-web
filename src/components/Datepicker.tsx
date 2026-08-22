@@ -153,17 +153,21 @@ const Container = styled.div`
   }
 `;
 
+// Design: the same 184x40 outlined pill the events filters use.
 const FilterButton = styled.div`
   display: flex;
   flex-direction: row;
   background-color: white;
-  border-radius: 16px;
-  min-width: 170px;
-  max-width: fit-content;
+  border: 1px solid #bcbcbc;
+  border-radius: 54px;
+  /* The design's 184px holds its sample label; real range names are longer, so
+     grow rather than truncate the current selection. */
+  min-width: 184px;
+  height: 40px;
   align-items: center;
-  justify-content: center;
-  padding: 16px;
-  gap: 16px;
+  justify-content: space-between;
+  padding: 8px 12px;
+  gap: 12px;
   &:hover,
   &:focus {
     cursor: pointer;
@@ -177,11 +181,12 @@ const Divider = styled.div`
 `;
 
 const SelectedDateLabel = styled.div`
-  color: ${({ theme }) => theme.colors.text?.secondary};
+  color: ${({ theme }) => theme.colors.text?.primary};
   font-size: 1.6rem;
   font-weight: 400;
-  line-height: 22px;
-  white-space: pre;
+  line-height: 24px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
   &:hover,
   &:focus {
     cursor: pointer;

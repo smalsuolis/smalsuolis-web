@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import { useQuery } from '@tanstack/react-query';
 import { orderBy } from 'lodash';
 import { CONTENT_WIDTH, device, font } from '../styles';
-import { IconName, timeRangeQuery } from '../utils';
+import { timeRangeQuery } from '../utils';
+import { appIcon } from '../utils/appIcons';
 import { TimeRanges, yearQuery } from '../utils/types';
 import api from '../utils/api';
 import Loader from '../components/Loader';
@@ -20,6 +21,15 @@ const resolveQueryFromKey = (key: string): { $gte: string; $lt: string } => {
   if (/^\d{4}$/.test(key)) return yearQuery(Number(key));
   const q = timeRangeQuery[key as TimeRanges] ?? timeRangeQuery[TimeRanges.LAST_7_DAYS];
   return q as { $gte: string; $lt: string };
+};
+
+// Icon glyph and circle colour per source, straight from the design.
+const APP_BADGE: Record<string, { icon: string; bg: string }> = {
+  miskoKirtimai: { icon: appIcon.miskoKirtimai, bg: '#CEFFAF' },
+  infostatyba: { icon: appIcon.infostatyba, bg: '#F9BEBF' },
+  zemetvarkosPlanavimas: { icon: appIcon.zemetvarkosPlanavimas, bg: '#DACDFF' },
+  izuvinimas: { icon: appIcon.izuvinimas, bg: '#9CDEFF' },
+  savivaldybesZemetvarka: { icon: appIcon.savivaldybesZemetvarka, bg: '#DDDDDD' },
 };
 
 // Per-appType colors for the city breakdown dots. appType → color.
@@ -100,12 +110,6 @@ const Stats = () => {
     setQuery(resolveQueryFromKey(next));
   }, [data, isLoading, dateFilter, userPickedRange]);
 
-  const { data: infostatybaCategories } = useQuery({
-    queryKey: ['categories', 'all', 'infostatyba'],
-    queryFn: () => api.getAllCategories('infostatyba'),
-    staleTime: Infinity,
-  });
-
   const previousQuery = calculatePreviousPeriod(effectiveQuery);
   const { data: previousData, isFetching: isPreviousFetching } = useQuery({
     queryKey: ['stats', previousQuery],
@@ -143,14 +147,6 @@ const Stats = () => {
   ];
 
   // ---- "Suskirstymas pagal tipą" cards ---------------------------------
-  const categoryNameByCode = (infostatybaCategories ?? []).reduce<Record<string, string>>(
-    (acc, c) => {
-      acc[c.code] = c.name;
-      return acc;
-    },
-    {},
-  );
-
   // Build sorted rows from a byTag map, attaching previous counts for deltas.
   const tagRows = (
     tagMap?: Record<string, { count: number }>,
@@ -167,61 +163,37 @@ const Stats = () => {
     return orderBy(rows, (r) => r.count, 'desc');
   };
 
-  const categoryRows = (
-    catMap?: Record<string, { count: number }>,
-    prevMap?: Record<string, { count: number }>,
-  ): BreakdownRow[] => {
-    if (!catMap) return [];
-    const total = Object.values(catMap).reduce((s, v) => s + (v.count || 0), 0);
-    const rows = Object.entries(catMap).map(([code, v]) => ({
-      label: categoryNameByCode[code] || code,
-      count: v.count || 0,
-      previousCount: prevMap?.[code]?.count,
-      total,
-    }));
-    return orderBy(rows, (r) => r.count, 'desc');
-  };
-
-  // One card per app type, matching the design. Only miskoKirtimai and
-  // infostatyba currently carry tag/category breakdowns in the data; the rest
-  // still get a card showing their real total with an empty-rows note, rather
-  // than disappearing, so the page shape stays stable and a zero reads as a
-  // zero. They gain rows automatically if those feeds start emitting tags.
+  // One card per source, in the design's order. Only miskoKirtimai and
+  // infostatyba currently carry tag breakdowns in the data; the rest still get a
+  // card showing their real total with an empty-rows note, rather than
+  // disappearing, so the page shape stays stable and a zero reads as a zero.
   const breakdownCards = [
     {
-      icon: IconName.forest,
+      app: 'miskoKirtimai',
       title: 'Kirtimų leidimai',
       total: byApp?.miskoKirtimai?.count || 0,
       rows: tagRows(byApp?.miskoKirtimai?.byTag, prevByApp?.miskoKirtimai?.byTag),
     },
     {
-      icon: IconName.house,
+      app: 'infostatyba',
       title: 'Statybų leidimai',
       total: byApp?.infostatyba?.count || 0,
       rows: tagRows(byApp?.infostatyba?.byTag, prevByApp?.infostatyba?.byTag),
     },
     {
-      icon: IconName.buildings,
-      title: 'Statybų leidimai pagal kategoriją',
-      total: byApp?.infostatyba?.count || 0,
-      rows: categoryRows(byApp?.infostatyba?.byCategory, prevByApp?.infostatyba?.byCategory),
-    },
-    {
-      icon: IconName.map,
+      app: 'zemetvarkosPlanavimas',
       title: 'Žemėtvarkos planavimas',
       total: byApp?.zemetvarkosPlanavimas?.count || 0,
       rows: tagRows(byApp?.zemetvarkosPlanavimas?.byTag, prevByApp?.zemetvarkosPlanavimas?.byTag),
     },
     {
-      icon: IconName.fish,
+      app: 'izuvinimas',
       title: 'Žuvinimas',
       total: byApp?.izuvinimas?.count || 0,
       rows: tagRows(byApp?.izuvinimas?.byTag, prevByApp?.izuvinimas?.byTag),
     },
     {
-      // Not mapLocation: that name exists in the enum but has no case in the
-      // Icons switch, so it renders as an empty chip.
-      icon: IconName.scales,
+      app: 'savivaldybesZemetvarka',
       title: 'Žemės paskirties keitimai',
       total: byApp?.savivaldybesZemetvarka?.count || 0,
       rows: tagRows(byApp?.savivaldybesZemetvarka?.byTag, prevByApp?.savivaldybesZemetvarka?.byTag),
@@ -258,20 +230,12 @@ const Stats = () => {
   const getUpd = (appType: string) => lastUpdateData?.byAppType?.find((i) => i.appType === appType);
 
   const sourceItems = [
-    { label: 'Miško kirtimai', icon: IconName.forest, upd: getUpd('miskoKirtimai') },
-    { label: 'Žuvų įveisimas', icon: IconName.fishThin, upd: getUpd('izuvinimas') },
-    { label: 'Statybos leidimai', icon: IconName.house, upd: getUpd('infostatyba') },
-    {
-      label: 'Žemėtvarkos planavimas',
-      icon: IconName.map,
-      upd: getUpd('zemetvarkosPlanavimas'),
-    },
-    {
-      label: 'Žemės paskirties keitimas (Vilnius)',
-      icon: IconName.buildings,
-      upd: getUpd('savivaldybesZemetvarka'),
-    },
-  ];
+    { label: 'Miško kirtimai', app: 'miskoKirtimai' },
+    { label: 'Žuvų įveisimas', app: 'izuvinimas' },
+    { label: 'Statybos leidimai', app: 'infostatyba' },
+    { label: 'Žemėtvarkos planavimas', app: 'zemetvarkosPlanavimas' },
+    { label: 'Žemės paskirties keitimas (Vilnius)', app: 'savivaldybesZemetvarka' },
+  ].map((s) => ({ ...s, upd: getUpd(s.app) }));
 
   return (
     <Page>
@@ -320,12 +284,15 @@ const Stats = () => {
             ))}
           </KpiStrip>
 
+          <Rule />
+
           <SectionTitle>Suskirstymas pagal tipą</SectionTitle>
           <CardGrid>
             {breakdownCards.map((c) => (
               <BreakdownCard
                 key={c.title}
-                icon={c.icon}
+                icon={APP_BADGE[c.app].icon}
+                iconBg={APP_BADGE[c.app].bg}
                 title={c.title}
                 total={c.total}
                 rows={c.rows}
@@ -334,6 +301,8 @@ const Stats = () => {
               />
             ))}
           </CardGrid>
+
+          <Rule />
 
           {/* Section always renders so the page keeps a stable shape across
               periods; short windows just have fewer (or no) municipalities. */}
@@ -356,12 +325,15 @@ const Stats = () => {
 
           {!isLoadingLastUpdate && lastUpdateData && (
             <>
+              <Rule />
+
               <SectionTitle>Duomenų šaltiniai</SectionTitle>
               <SourceGrid>
                 {sourceItems.map((s) => (
                   <SourceCard
                     key={s.label}
-                    icon={s.icon}
+                    icon={APP_BADGE[s.app].icon}
+                    iconBg={APP_BADGE[s.app].bg}
                     title={s.label}
                     lastUpdate={s.upd?.lastUpdate || null}
                     lastUpdateCount={s.upd?.lastUpdateCount || 0}
@@ -399,13 +371,25 @@ const Header = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 48px;
 
   @media ${device.mobileL} {
     flex-direction: column;
     align-items: stretch;
     gap: 20px;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
+  }
+`;
+
+// The design separates every block on this page with a hairline, 48px clear on
+// both sides.
+const Rule = styled.div`
+  height: 1px;
+  background: ${({ theme }) => theme.colors.grey[300]};
+  margin: 48px 0;
+
+  @media ${device.mobileL} {
+    margin: 32px 0;
   }
 `;
 
@@ -419,7 +403,7 @@ const PageTitle = styled.h1`
 const Controls = styled.div`
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 36px;
   flex-wrap: wrap;
 
   @media ${device.mobileL} {
@@ -430,12 +414,12 @@ const Controls = styled.div`
   }
 `;
 
+// Design: five 230px tiles spread across the content width, not five equal
+// fractions of it.
 const KpiStrip = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 24px;
-  padding-bottom: 48px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  grid-template-columns: repeat(5, 230px);
+  justify-content: space-between;
 
   /* Two per row on mobile (2/2/2 rather than the design's 3+2) — five tiles
      leave the last one alone on its row, which is intended. */
@@ -448,12 +432,12 @@ const KpiStrip = styled.div`
 const Kpi = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 `;
 
 const KpiLabel = styled.div`
-  font-size: 1.4rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  ${font('lg')};
+  color: ${({ theme }) => theme.colors.grey[650]};
 `;
 
 const KpiValueRow = styled.div`
@@ -463,16 +447,16 @@ const KpiValueRow = styled.div`
 `;
 
 const KpiValue = styled.div`
-  font-size: 3.2rem;
-  font-weight: 700;
+  font-size: 3.6rem;
+  line-height: 4.7rem;
+  font-weight: 400;
+  letter-spacing: -0.05em;
   color: ${({ theme }) => theme.colors.text?.primary};
-  line-height: 1.1;
 `;
 
 const SectionTitle = styled.h2`
-  ${font('xl')};
-  font-weight: 600;
-  margin: 48px 0 20px;
+  ${font('xl', 500)};
+  margin: 0 0 24px;
 `;
 
 const CardGrid = styled.div`
@@ -536,22 +520,21 @@ const LoaderContainer = styled.div`
 const ToggleContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
 `;
 
 const ToggleLabel = styled.span`
-  font-size: 1.4rem;
-  font-weight: 500;
+  ${font('base')};
   color: ${({ theme }) => theme.colors.text?.primary};
 `;
 
 const ToggleSwitch = styled.div<{ $isActive: boolean }>`
   width: 44px;
   height: 24px;
-  border-radius: 12px;
-  background-color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primary : theme.colors.grey[400]};
+  border-radius: 100px;
+  flex-shrink: 0;
+  background-color: ${({ $isActive, theme }) => ($isActive ? '#1FC84C' : theme.colors.grey[400])};
   position: relative;
   transition: background-color 0.3s ease;
 `;

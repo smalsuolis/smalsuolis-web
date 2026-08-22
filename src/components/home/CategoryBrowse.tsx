@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { device, font } from '../../styles';
 import api from '../../utils/api';
 import { slugs } from '../../utils';
+import { appIcon } from '../../utils/appIcons';
 import { timeRangeQuery, TimeRanges } from '../../utils/types';
 
 // Shares the canonical ALL_TIME window (same object → same server cache key)
@@ -29,35 +30,35 @@ const CategoryBrowse = () => {
     {
       key: 'fish',
       label: 'Žuvinimas',
-      icon: '/home/cat_fish.svg',
+      icon: appIcon.izuvinimas,
       count: data?.byApp?.izuvinimas?.count,
       bg: '#9CDEFF',
     },
     {
       key: 'map',
       label: 'Žemėtvarkos planavimas',
-      icon: '/home/cat_map.svg',
+      icon: appIcon.zemetvarkosPlanavimas,
       count: data?.byApp?.zemetvarkosPlanavimas?.count,
       bg: '#DACDFF',
     },
     {
       key: 'building',
       label: 'Statiniai',
-      icon: '/home/cat_building.svg',
+      icon: appIcon.infostatyba,
       count: data?.byApp?.infostatyba?.count,
       bg: '#F9BEBF',
     },
     {
       key: 'autorenew',
       label: 'Žemės paskirties keitimas',
-      icon: '/home/cat_autorenew.svg',
+      icon: appIcon.savivaldybesZemetvarka,
       count: data?.byApp?.savivaldybesZemetvarka?.count,
       bg: '#E3E3E3',
     },
     {
       key: 'forest',
       label: 'Miško kirtimai',
-      icon: '/home/cat_forest.svg',
+      icon: appIcon.miskoKirtimai,
       count: data?.byApp?.miskoKirtimai?.count,
       bg: '#CEFFAF',
     },

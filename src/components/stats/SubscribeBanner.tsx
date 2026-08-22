@@ -35,16 +35,20 @@ export default SubscribeBanner;
 const Banner = styled.div`
   position: relative;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: 20px;
   padding: 56px;
-  margin-top: 64px;
+  /* Design: 124px clear above, and 124 below — the footer already contributes
+     its own 42px lead-in, so the rest lives here. */
+  margin-top: 124px;
+  margin-bottom: 82px;
   background:
     url('/tapk_smalsiu.png') center / 100% 100% no-repeat,
     #7eec9b;
 
   @media (max-width: 868px) {
     padding: 40px 28px;
-    margin-top: 48px;
+    margin-top: 42px;
+    margin-bottom: 0;
   }
 `;
 
