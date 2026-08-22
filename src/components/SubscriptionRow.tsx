@@ -1,7 +1,8 @@
 import { Switch } from '@aplinkosministerija/design-system';
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { checkmarkNudge, device } from '../styles';
+import { css } from 'styled-components';
+import { device, font, rowHoverTint } from '../styles';
 import { App, Frequency, Subscription } from '../utils';
 import Loader from './Loader';
 
@@ -30,7 +31,7 @@ const AutoIcon = () => (
 );
 
 const ChevronRight = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
       d="m9 6 6 6-6 6"
       stroke="currentColor"
@@ -156,14 +157,26 @@ export default SubscriptionRow;
 const Row = styled.div<{ $inactive?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border || '#e5e5e5'};
-  transition: background 0.2s;
+  gap: 24px;
+  padding: 0 0 24px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.grey[400]};
 
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  ${rowHoverTint('8px')};
+
+  /* The phone frame turns the row into a full-bleed card: it escapes the page
+     gutter, carries the outline on every side, and stacks its chips. */
   @media ${device.mobileL} {
-    gap: 12px;
-    padding: 20px 0;
+    margin: 0 -16px;
+    padding: 16px;
+    border: 1px solid ${({ theme }) => theme.colors.grey[400]};
+
+    &::before {
+      content: none;
+    }
   }
 `;
 
@@ -171,13 +184,19 @@ const TopRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 22px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+  }
 `;
 
 const LeftSide = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
 `;
 
@@ -187,78 +206,70 @@ const RightSide = styled.div`
   gap: 16px;
   cursor: pointer;
   flex-shrink: 0;
-
-  @media ${device.mobileL} {
-    gap: 8px;
-  }
 `;
 
 const SwitchWrapper = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
+
+  /* The design-system switch paints itself in the app's primary green; the
+     design uses its own on/off pair. Only the track colour is overridden. */
+  && label > span {
+    background-color: #d9d9d9;
+  }
+  && input:checked + span {
+    background-color: #1fc84c;
+  }
 `;
 
 const Name = styled.div<{ $inactive?: boolean }>`
-  font-size: 2.4rem;
-  font-weight: 500;
+  ${font('2xl')};
+  color: ${({ theme }) => theme.colors.grey[700]};
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
   transition: opacity 0.2s;
-
-  @media ${device.mobileL} {
-    font-size: 2rem;
-  }
 `;
 
 const AutoBadge = styled.span`
   display: inline-flex;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.grey[600]};
   flex-shrink: 0;
 `;
 
 const AutoLabel = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: ${({ theme }) => theme.colors.text.secondary};
-
-  @media ${device.mobileL} {
-    gap: 4px;
-  }
+  gap: 2px;
+  color: ${({ theme }) => theme.colors.grey[600]};
 `;
 
 const AutoText = styled.span`
-  font-size: 1.3rem;
-
-  @media ${device.mobileL} {
-    font-size: 1.1rem;
-  }
+  ${font('sm')};
 `;
 
 const Count = styled.div<{ $inactive?: boolean }>`
   display: flex;
   align-items: baseline;
   gap: 6px;
+  margin-left: auto;
   opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
   transition: opacity 0.2s;
 `;
 
 const CountAllTime = styled.div`
   font-size: 1.8rem;
+  line-height: 2.3rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
   white-space: nowrap;
-
-  @media ${device.mobileL} {
-    font-size: 1.6rem;
-  }
 `;
 
 const CountNew = styled.div`
-  font-size: 1.3rem;
+  ${font('sm')};
   color: #1b4c28;
   white-space: nowrap;
 `;
@@ -281,40 +292,36 @@ const ChevronButton = styled.button`
 const ChipRow = styled.div<{ $inactive?: boolean }>`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
   opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
   transition: opacity 0.2s;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+`;
+
+const chipStyle = css`
+  padding: 8px 12px;
+  border-radius: 128px;
+  /* Inset ring, not a border: the design's 37px pill is padding + line box. */
+  box-shadow: inset 0 0 0 1px ${({ theme }) => theme.colors.grey[300]};
+  background: ${({ theme }) => theme.colors.white};
+  ${font('sm')};
+  color: ${({ theme }) => theme.colors.grey[700]};
+  white-space: nowrap;
 `;
 
 const Chip = styled.div`
-  border: 1px solid #d4d5de;
-  border-radius: 17px;
-  padding: 6px 14px;
-  font-size: 1.4rem;
-  color: ${({ theme }) => theme.colors.text.primary};
-  white-space: nowrap;
-
-  @media ${device.mobileL} {
-    font-size: 1.3rem;
-    padding: 5px 12px;
-  }
+  ${chipStyle};
 `;
 
 const ExpandChip = styled.button`
   display: flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid #d4d5de;
-  border-radius: 17px;
-  padding: 6px 14px;
-  font-size: 1.4rem;
-  background: none;
+  gap: 4px;
+  ${chipStyle};
   cursor: pointer;
-  color: ${({ theme }) => theme.colors.text.primary};
-  white-space: nowrap;
-
-  @media ${device.mobileL} {
-    font-size: 1.3rem;
-    padding: 5px 12px;
-  }
 `;

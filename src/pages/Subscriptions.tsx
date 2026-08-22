@@ -167,6 +167,11 @@ const SubscriptionsContainer = styled.div`
   display: flex;
   width: 100%;
   flex-direction: column;
+  gap: 36px;
+
+  @media ${device.mobileL} {
+    gap: 24px;
+  }
 `;
 
 const PageHeader = styled.div`
@@ -174,12 +179,13 @@ const PageHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 48px;
 
   @media ${device.mobileL} {
     flex-direction: column;
     align-items: stretch;
-    gap: 16px;
+    gap: 24px;
+    margin-bottom: 42px;
   }
 `;
 

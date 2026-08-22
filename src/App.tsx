@@ -39,14 +39,12 @@ function App() {
       : slugs.newSubscription
     : slugs.home;
 
-  // Home and the map page render edge-to-edge (own hero / full-viewport map),
-  // outside the padded inner content container.
+  // Home, Apie mus and the map page render edge-to-edge (own hero /
+  // full-viewport map), outside the padded inner content container.
   const isFullBleed =
     currentRoute?.slug === slugs.home ||
     currentRoute?.slug === slugs.map ||
-    currentRoute?.slug === slugs.about ||
-    currentRoute?.slug === slugs.subscriptions ||
-    currentRoute?.slug === slugs.subscription(':id');
+    currentRoute?.slug === slugs.about;
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((registrations) => {
