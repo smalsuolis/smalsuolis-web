@@ -61,7 +61,7 @@ export const theme: Theme = {
       secondary: '#525252',
       tertiary: '#4B5565',
       label: '#697586',
-      error: '#FE5B78',
+      error: '#EF4444',
       labels: '#697586',
       input: '#231f20',
       accent: '#102EB1',
@@ -195,6 +195,58 @@ export const GlobalStyle = createGlobalStyle`
   }
   label > input[type='checkbox']:checked + span {
     background-color: #1fc84c;
+  }
+
+  /* Toasts: the design's 52px pill — tinted background, the matching glyph, and
+     an accent bar down the right edge. react-toastify's own icon and close
+     button are replaced rather than restyled. */
+  .Toastify__toast {
+    min-height: 52px;
+    padding: 0;
+    border-radius: 6px;
+    font-family: inherit;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  }
+  .Toastify__toast-body {
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    padding: 16px;
+    font-size: 1.4rem;
+    line-height: 2rem;
+    font-weight: 500;
+  }
+  .Toastify__toast-body > div:last-child {
+    flex: 1;
+  }
+  .Toastify__close-button {
+    display: none;
+  }
+  .Toastify__toast-icon {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    flex-shrink: 0;
+    background: center / 20px 20px no-repeat;
+  }
+  .Toastify__toast-icon > * {
+    display: none;
+  }
+  .Toastify__toast--success {
+    background: #f3fbf7;
+    color: #1b7b35;
+    border-right: 4px solid #1b7b35;
+  }
+  .Toastify__toast--success .Toastify__toast-icon {
+    background-image: url('/icons/toast_success.svg');
+  }
+  .Toastify__toast--error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border-right: 4px solid #b91c1c;
+  }
+  .Toastify__toast--error .Toastify__toast-icon {
+    background-image: url('/icons/toast_error.svg');
   }
 `;
 

@@ -2,7 +2,7 @@ import { MapField, Modal, Switch, TextField } from '@aplinkosministerija/design-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik } from 'formik';
 import { useState } from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 import { device, font } from '../styles';
 import { App, Frequency, SubscriptionForm, validateSubscriptionForm } from '../utils';
 import api from '../utils/api';
@@ -143,17 +143,15 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
               {({ values, setFieldValue, errors }) => (
                 <StyledForm>
                   <Body>
-                    <Section>
-                      <Label>Prenumeratos pavadinimas</Label>
-                      <TextField
-                        value={values.name}
-                        type="text"
-                        name="name"
-                        placeholder="Įveskite pavadinimą"
-                        error={errors.name}
-                        onChange={(value) => setFieldValue('name', value)}
-                      />
-                    </Section>
+                    <TextField
+                      label="Prenumeratos pavadinimas"
+                      value={values.name}
+                      type="text"
+                      name="name"
+                      placeholder="Įveskite pavadinimą"
+                      error={errors.name}
+                      onChange={(value) => setFieldValue('name', value)}
+                    />
 
                     <Section>
                       <HeadingRow>
@@ -282,16 +280,16 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
         allow
       >
         <PopupActions>
-          <PopupButton variant={ButtonVariants.SECONDARY} onClick={() => setShowDelete(false)}>
+          <CancelButton type="button" onClick={() => setShowDelete(false)}>
             Atšaukti
-          </PopupButton>
-          <PopupButton
-            variant={ButtonVariants.DANGER}
+          </CancelButton>
+          <ConfirmButton
+            type="button"
             disabled={deleting}
             onClick={() => (subscription?.id ? deleteSubscription(subscription.id) : undefined)}
           >
             Ištrinti
-          </PopupButton>
+          </ConfirmButton>
         </PopupActions>
       </Popup>
     </>
@@ -314,6 +312,32 @@ const Shell = styled.div`
     max-height: 86vh;
     height: auto;
     border-radius: 8px;
+  }
+
+  label {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+    /* Design: 8px between a field's label and its box (the DS ships 4). */
+    margin-bottom: 4px;
+  }
+
+  div:has(> input:not([type='checkbox'])) {
+    height: 40px;
+    border-radius: 100px;
+    border-color: ${({ theme }) => theme.colors.grey[500]};
+  }
+
+  div:has(> input:not([type='checkbox'])) > input {
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  /* The design paints a field's message and its hairline red when it fails. */
+  div:has(> input:not([type='checkbox'])) + label {
+    color: ${({ theme }) => theme.colors.text.error};
+  }
+  div:has(> input:not([type='checkbox'])):has(+ label) {
+    border-color: ${({ theme }) => theme.colors.text.error};
   }
 `;
 
@@ -376,7 +400,7 @@ const Body = styled.div`
 const Section = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const Label = styled.label`
@@ -495,17 +519,49 @@ const LoaderWrapper = styled.div`
   padding: 48px;
 `;
 
+// Design: the pair is centred on the 499 frame and stacked full width on the
+// 361 one — an outlined Atšaukti above a black Ištrinti, not a red pill.
 const PopupActions = styled.div`
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   gap: 16px;
 
   @media ${device.mobileL} {
-    padding: 0 16px;
+    flex-direction: column;
   }
 `;
 
-const PopupButton = styled(Button)`
+const popupButton = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 126px;
   height: 40px;
+  border-radius: 54px;
+  ${font('base')};
+  cursor: pointer;
+
+  @media ${device.mobileL} {
+    width: 100%;
+  }
+`;
+
+const CancelButton = styled.button`
+  ${popupButton};
+  padding: 7px 11px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[600]};
+  background: #fafafa;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const ConfirmButton = styled.button`
+  ${popupButton};
+  padding: 8px 24px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
 `;

@@ -159,10 +159,11 @@ const DominaRow = styled.div`
   gap: 48px;
 
   /* The phone frame stacks the illustration ABOVE the copy, so the column runs
-     in reverse of the reading order used on desktop. */
+     in reverse of the reading order used on desktop. Both fill the column, as
+     the 358px-wide illustration does on the 393 frame. */
   @media ${device.tablet} {
     flex-direction: column-reverse;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 16px;
   }
 `;
@@ -172,6 +173,10 @@ const DominaText = styled.div`
   flex-direction: column;
   gap: 16px;
   max-width: 460px;
+
+  @media ${device.tablet} {
+    max-width: none;
+  }
 `;
 
 const DominaTitle = styled.h2`
@@ -191,6 +196,10 @@ const DominaMap = styled.img`
   max-width: 100%;
   height: auto;
   flex-shrink: 0;
+
+  @media ${device.tablet} {
+    width: 100%;
+  }
 `;
 
 const Steps = styled.div`

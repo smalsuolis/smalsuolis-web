@@ -168,11 +168,11 @@ const Row = styled.div<{ $inactive?: boolean }>`
   ${rowHoverTint('8px')};
 
   /* The phone frame turns the row into a full-bleed card: it escapes the page
-     gutter, carries the outline on every side, and stacks its chips. */
+     gutter and gains 16px of padding, but it is still divided by a single rule
+     rather than boxed in on every side. */
   @media ${device.mobileL} {
     margin: 0 -16px;
     padding: 16px;
-    border: 1px solid ${({ theme }) => theme.colors.grey[400]};
 
     &::before {
       content: none;

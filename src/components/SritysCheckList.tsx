@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../styles';
 import { App, Category, IconName } from '../utils';
@@ -43,29 +43,36 @@ const SritysCheckList = ({
       return next;
     });
 
+  // The list comes back from the API in no particular order, which reshuffled
+  // the rows between openings; id order also keeps the four infostatyba rows
+  // together.
+  const ordered = useMemo(() => [...apps].sort((a, b) => a.id - b.id), [apps]);
+
+  const hasCategories = (app: App) => isInfostatyba(app) && categories.length > 0;
+
+  // A row is on or off from the app selection alone; an expandable row reads
+  // "partial" only when a subset of its categories is left. Deriving the row
+  // from the categories instead left an app checked with none of them, and — in
+  // the subscription form, where one category list is shared — made all four
+  // infostatyba rows follow whichever one was clicked.
   const appState = (app: App): NodeState => {
-    if (!isInfostatyba(app)) return appIds.includes(app.id) ? 'all' : 'none';
+    if (!appIds.includes(app.id)) return 'none';
+    if (!hasCategories(app)) return 'all';
     const selected = catsFor(app.id).length;
-    if (selected === 0) return 'none';
-    if (selected >= categoryLeafIds.length) return 'all';
-    return 'partial';
+    return selected > 0 && selected < categoryLeafIds.length ? 'partial' : 'all';
   };
 
   const toggleAppNode = (app: App) => {
-    if (!isInfostatyba(app)) {
-      onAppIdsChange(
-        appIds.includes(app.id) ? appIds.filter((v) => v !== app.id) : [...appIds, app.id],
-      );
-      return;
-    }
-    // Fully selected → clear its categories; otherwise select every leaf.
-    onCatsChange(app.id, appState(app) === 'all' ? [] : [...categoryLeafIds]);
+    const on = appIds.includes(app.id);
+    onAppIdsChange(on ? appIds.filter((v) => v !== app.id) : [...appIds, app.id]);
+    // Selecting an expandable row takes every leaf under it; clearing drops them.
+    if (hasCategories(app)) onCatsChange(app.id, on ? [] : [...categoryLeafIds]);
   };
 
   return (
     <List>
-      {apps.map((app) => {
-        const hasChildren = isInfostatyba(app) && categories.length > 0;
+      {ordered.map((app) => {
+        const hasChildren = hasCategories(app);
         const state = appState(app);
         const isOpen = expanded.has(app.id);
 

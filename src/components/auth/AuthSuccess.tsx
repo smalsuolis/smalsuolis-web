@@ -1,8 +1,8 @@
-import { Button } from '@aplinkosministerija/design-system';
 import styled from 'styled-components';
 import { buttonsTitles } from '../../utils/texts';
-import { font } from '../../styles';
+import { device, font } from '../../styles';
 import AuthModalShell from './AuthModalShell';
+import { SubmitButton } from './authModalStyles';
 
 // Shared confirmation screen for register / forgot-password (Figma
 // "Pasitikrinkite el. paštą"): a green check, a heading, the address the
@@ -31,12 +31,18 @@ const AuthSuccess = ({
           />
         </svg>
       </CheckCircle>
-      <Heading>Pasitikrinkite el. paštą</Heading>
-      <Text>
-        El. paštu <Bold>{email}</Bold> {message}
-      </Text>
-      <CloseAction onClick={onClose}>{buttonsTitles.close}</CloseAction>
+      <TextGroup>
+        <Heading>Pasitikrinkite el. paštą</Heading>
+        <Text>
+          El. paštu <Bold>{email}</Bold> {message}
+        </Text>
+      </TextGroup>
     </Content>
+
+    {/* The design leaves 48px above this row; the shell already contributes 24. */}
+    <Footer>
+      <SubmitButton onClick={onClose}>{buttonsTitles.close}</SubmitButton>
+    </Footer>
   </AuthModalShell>
 );
 
@@ -46,39 +52,52 @@ const Content = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   text-align: center;
-  padding: 0 8px 8px;
 `;
 
 const CheckCircle = styled.div`
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: ${({ theme }) => theme.colors.success};
+  background: #1fc84c;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
+const TextGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+`;
+
 const Heading = styled.h2`
-  ${font('2xl', 600)};
+  ${font('2xl')};
   margin: 0;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Text = styled.div`
   ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[700]};
-  max-width: 320px;
-`;
-
-const Bold = styled.span`
-  font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const CloseAction = styled(Button)`
-  margin-top: 8px;
-  align-self: stretch;
+const Bold = styled.span`
+  font-weight: 700;
+`;
+
+// Right-aligned on the 499 frame, full width on the 361 one.
+const Footer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+
+  @media ${device.mobileL} {
+    div:has(> button) {
+      width: 100%;
+    }
+  }
 `;

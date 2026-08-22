@@ -16,24 +16,25 @@ import { Event } from './types';
 export const getErrorMessage = (error?: string) =>
   validationTexts[error as keyof typeof validationTexts] || validationTexts.error;
 
+// One set of options for every toast; the look itself lives in GlobalStyle.
+const TOAST_OPTIONS = {
+  position: 'top-center',
+  autoClose: 5000,
+  hideProgressBar: true,
+  closeOnClick: true,
+  pauseOnHover: true,
+} as const;
+
 export const handleAlert = (responseError?: string) => {
-  toast.error(getErrorMessage(responseError), {
-    position: 'top-center',
-    autoClose: 5000,
-    hideProgressBar: true,
-    closeOnClick: true,
-    pauseOnHover: true,
-  });
+  toast.error(getErrorMessage(responseError), TOAST_OPTIONS);
+};
+
+export const handleToastError = (message: string) => {
+  toast.error(message, TOAST_OPTIONS);
 };
 
 export const handleToastSuccess = (message: string) => {
-  toast.success(message, {
-    position: 'top-center',
-    autoClose: 5000,
-    hideProgressBar: true,
-    closeOnClick: true,
-    pauseOnHover: true,
-  });
+  toast.success(message, TOAST_OPTIONS);
 };
 
 export const formatDate = (date?: Date | string) =>

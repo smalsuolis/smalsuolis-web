@@ -12,6 +12,18 @@ export const Form = styled.form`
   gap: 24px;
 `;
 
+// "Pamiršote slaptažodį?" / "Grįžti atgal" are underlined in the design, as is
+// the trailing word of each footnote.
+export const TextLink = styled.button`
+  align-self: flex-start;
+  padding: 0;
+  background: transparent;
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
+  text-decoration: underline;
+  cursor: pointer;
+`;
+
 export const SubmitRow = styled.div`
   display: flex;
   align-items: center;
@@ -28,6 +40,12 @@ export const SubmitRow = styled.div`
     div:has(> button[type='submit']) {
       width: 100%;
     }
+
+    /* The phone frame centres the back link under the button. */
+    ${TextLink} {
+      align-self: stretch;
+      text-align: center;
+    }
   }
 `;
 
@@ -38,15 +56,6 @@ export const FootNote = styled.div`
 
 export const Link = styled.span`
   text-decoration: underline;
-  cursor: pointer;
-`;
-
-export const TextLink = styled.button`
-  align-self: flex-start;
-  padding: 0;
-  background: transparent;
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
 `;
 

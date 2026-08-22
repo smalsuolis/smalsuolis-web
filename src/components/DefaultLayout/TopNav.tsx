@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
+import { Menu, MenuItem } from '../ui/Menu';
 import Icon from '../Icons';
 import { IconName, slugs } from '../../utils';
 import MobileMenu from './MobileMenu';
@@ -245,39 +246,15 @@ const AccountMenu = styled.div`
   z-index: 30;
 `;
 
-// Square-cornered white panel on a soft, wide-spread shadow — the card reads as
-// a flat sheet rather than a rounded popover.
-const AccountCard = styled.div`
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid #ededed;
-  border-radius: 4px;
+const AccountCard = styled(Menu)`
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
 `;
 
-// Full-bleed rows separated by hairlines that run the whole panel width.
-// `$muted` marks the terminal action (Atsijungti), which sits on a faint grey
-// to set it apart from the navigation entries above it.
-const AccountItem = styled.div<{ $muted?: boolean }>`
-  ${font('base', 400)};
-  /* 40px row inside a 48px section: 4px of section padding above and below. */
-  height: 40px;
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  margin: 4px 0;
-  cursor: pointer;
+// `$muted` marks the terminal action (Atsijungti), which sits on a faint grey to
+// set it apart from the navigation entries above it.
+const AccountItem = styled(MenuItem)<{ $muted?: boolean }>`
   white-space: nowrap;
-  color: ${({ theme }) => theme.colors.text.primary};
   background: ${({ $muted }) => ($muted ? '#fafafa' : 'transparent')};
-
-  & + & {
-    border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  }
-
-  &:hover {
-    background: #fafafa;
-  }
 `;
 
 const LoginButton = styled.div<{ $isActive: boolean }>`

@@ -3,9 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
-import { Event, IconName, slugs } from '../../utils';
+import { Event, slugs } from '../../utils';
 import api from '../../utils/api';
-import Icon from '../Icons';
 import EventModal from '../EventModal';
 import EventRow from '../EventRow';
 
@@ -28,7 +27,7 @@ const RecentEvents = () => {
         <Title>Naujausi įvykiai</Title>
         <SeeAll onClick={() => navigate(slugs.events)}>
           Rodyti visus įvykius
-          <Icon name={IconName.right} />
+          <SeeAllArrow src="/icons/arrow_right.svg" alt="" />
         </SeeAll>
       </Header>
 
@@ -75,19 +74,22 @@ const Title = styled.h2`
 const SeeAll = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  padding: 8px 4px;
   ${font('xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
   background: transparent;
 
-  svg {
-    font-size: 1.8rem;
-  }
-
   @media ${device.mobileL} {
     display: none;
   }
+`;
+
+const SeeAllArrow = styled.img`
+  display: block;
+  width: 24px;
+  height: 24px;
 `;
 
 const List = styled.div`

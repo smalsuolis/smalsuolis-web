@@ -1,12 +1,15 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
-import { AddressSuggestion, IconName, slugs } from '../../utils';
+import { AddressSuggestion, App, IconName, slugs } from '../../utils';
+import api from '../../utils/api';
 import Button from '../ui/Button';
 import Icon from '../Icons';
+import { Menu, MenuItem } from '../ui/Menu';
 import AddressAutocomplete from './AddressAutocomplete';
-import SritysFilterModal, { SritysValue } from './SritysFilterModal';
+import { SritysValue } from './SritysFilterModal';
 
 // Hero band: full-bleed green gradient, headline + supporting copy, and the white
 // search bar (address autocomplete + Sritys) overlapping the bottom edge.
@@ -25,10 +28,25 @@ const HeroSearch = ({
   const [address, setAddress] = useState('');
   const [selected, setSelected] = useState<AddressSuggestion | null>(null);
   const [srities, setSrities] = useState<SritysValue>({ appIds: [], categoriesByApp: {} });
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [sritysOpen, setSritysOpen] = useState(false);
+  const sritysRef = useRef<HTMLDivElement>(null);
 
-  const sritysCount = srities.appIds.length;
-  const sritysLabel = sritysCount === 0 ? 'Sritys' : `Sritys (${sritysCount})`;
+  const { data: apps } = useQuery({
+    queryKey: ['apps', 'all'],
+    queryFn: () => api.getAllApps(),
+    staleTime: Infinity,
+  });
+
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (sritysRef.current && !sritysRef.current.contains(e.target as Node)) setSritysOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  const selectedApp = (apps ?? []).find((a: App) => a.id === srities.appIds[0]);
+  const sritysLabel = selectedApp?.name ?? 'Sritys';
 
   const goToMap = () => {
     // Go to the map page with the search pre-filled. The resolved point and the
@@ -82,31 +100,38 @@ const HeroSearch = ({
                 onSubmit={goToMap}
               />
             </SearchInputWrap>
-            <SritysButton
-              type="button"
-              onClick={() => setFilterOpen(true)}
-              $active={sritysCount > 0}
-            >
-              <span>{sritysLabel}</span>
-              <ChevronIcon name={IconName.dropdownArrow} />
-            </SritysButton>
+            <SritysWrap ref={sritysRef}>
+              <SritysButton
+                type="button"
+                onClick={() => setSritysOpen((v) => !v)}
+                $active={!!selectedApp}
+              >
+                <SritysLabel>{sritysLabel}</SritysLabel>
+                <ChevronIcon name={IconName.dropdownArrow} />
+              </SritysButton>
+              {sritysOpen && (
+                <SritysMenu>
+                  {(apps ?? []).map((app: App) => (
+                    <MenuItem
+                      key={app.id}
+                      $active={app.id === srities.appIds[0]}
+                      onClick={() => {
+                        setSrities({ appIds: [app.id], categoriesByApp: {} });
+                        setSritysOpen(false);
+                      }}
+                    >
+                      {app.name}
+                    </MenuItem>
+                  ))}
+                </SritysMenu>
+              )}
+            </SritysWrap>
             <SearchButtonWrap>
               <Button onClick={goToMap}>Ieškoti</Button>
             </SearchButtonWrap>
           </SearchBar>
         </SearchBarWrap>
       )}
-
-      <SritysFilterModal
-        visible={filterOpen}
-        value={srities}
-        onChange={setSrities}
-        onApply={() => {
-          setFilterOpen(false);
-          goToMap();
-        }}
-        onClose={() => setFilterOpen(false)}
-      />
     </Hero>
   );
 };
@@ -258,14 +283,38 @@ const SearchInputWrap = styled.div`
   }
 `;
 
-// Opens the SritysFilterModal.
+// Design: the picker is a menu of the source apps, not a modal — the frame
+// shows the same dropdown the address field and the period pickers use.
+const SritysWrap = styled.div`
+  position: relative;
+  flex-shrink: 0;
+
+  @media ${device.mobileL} {
+    width: 100%;
+  }
+`;
+
+const SritysMenu = styled(Menu)`
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  max-height: 320px;
+`;
+
+const SritysLabel = styled.span`
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
 const SritysButton = styled.button<{ $active: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 32px;
   width: 300px;
-  flex-shrink: 0;
   min-height: 56px;
   padding: 12px 20px;
   border: 1px solid ${({ theme }) => theme.colors.grey[500]};

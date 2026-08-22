@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { font } from '../styles';
+import { Menu, MenuItem } from './ui/Menu';
 import { IconName } from '../utils';
 import Icon from './Icons';
 
@@ -45,9 +46,11 @@ const PeriodDropdown = ({
         <Chevron name={IconName.dropdownArrow} $open={open} />
       </Trigger>
       {open && (
-        <Menu>
+        <Popover>
           {options.map((o) => (
             <Item
+              as="button"
+              type="button"
               key={o.key}
               $active={o.key === value}
               onClick={() => {
@@ -58,7 +61,7 @@ const PeriodDropdown = ({
               {o.name}
             </Item>
           ))}
-        </Menu>
+        </Popover>
       )}
     </Wrap>
   );
@@ -100,7 +103,7 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
   transition: transform 0.15s ease;
 `;
 
-const Menu = styled.div`
+const Popover = styled(Menu)`
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
@@ -108,34 +111,12 @@ const Menu = styled.div`
   min-width: 100%;
   width: max-content;
   max-width: 320px;
-  z-index: 30;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid #ededed;
-  border-radius: 4px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
   max-height: 320px;
-  overflow-y: auto;
+  z-index: 30;
 `;
 
-const Item = styled.button<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
+const Item = styled(MenuItem)`
   width: 100%;
-  height: 40px;
   text-align: left;
-  padding: 8px 16px;
-  margin: 4px 0;
   white-space: nowrap;
-  cursor: pointer;
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.text.primary};
-  background: ${({ $active }) => ($active ? '#fafafa' : 'transparent')};
-
-  & + & {
-    border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  }
-
-  &:hover {
-    background: #fafafa;
-  }
 `;

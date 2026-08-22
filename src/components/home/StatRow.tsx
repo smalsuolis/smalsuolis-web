@@ -44,8 +44,16 @@ export default StatRow;
 
 const Grid = styled.div`
   display: flex;
+  /* The 1440 frame's 112px gap only fits at that width; narrower viewports
+     close it up and, failing that, wrap — the row used to run past both edges
+     and clip the outer numbers. */
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 112px;
+  gap: 24px 112px;
+
+  @media ${device.tablet} {
+    gap: 24px 48px;
+  }
 
   @media ${device.mobileL} {
     flex-direction: column;

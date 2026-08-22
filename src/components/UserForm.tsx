@@ -13,8 +13,7 @@ import { Button, PasswordField } from '@aplinkosministerija/design-system';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
 import { ButtonVariants, device, font } from '../styles';
-import { handleToastSuccess } from '../utils/functions';
-import { toast } from 'react-toastify';
+import { handleToastError, handleToastSuccess } from '../utils/functions';
 
 const UserForm = ({
   user,
@@ -64,15 +63,7 @@ const UserForm = ({
   }, [success]);
 
   useEffect(() => {
-    if (error) {
-      toast.error(error, {
-        position: 'top-center',
-        autoClose: 5000,
-        hideProgressBar: true,
-        closeOnClick: true,
-        pauseOnHover: true,
-      });
-    }
+    if (error) handleToastError(error);
   }, [error]);
 
   return (
@@ -172,6 +163,15 @@ const PasswordContainer = styled.form`
   div:has(+ div > input:not([type='checkbox'])) {
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  /* The design paints a field's message and its hairline red when it fails. */
+  div:has(> input:not([type='checkbox'])) + label {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.error};
+  }
+  div:has(> input:not([type='checkbox'])):has(+ label) {
+    border-color: ${({ theme }) => theme.colors.text.error};
   }
 `;
 

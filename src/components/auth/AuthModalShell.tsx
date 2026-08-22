@@ -117,6 +117,15 @@ const Card = styled.div<{ $wide?: boolean }>`
     height: 16px;
     border-radius: 4px;
   }
+
+  /* The design paints a field's message and its hairline red when it fails. */
+  div:has(> input:not([type='checkbox'])) + label {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.error};
+  }
+  div:has(> input:not([type='checkbox'])):has(+ label) {
+    border-color: ${({ theme }) => theme.colors.text.error};
+  }
 `;
 
 const Header = styled.div<{ $hasTitle: boolean }>`

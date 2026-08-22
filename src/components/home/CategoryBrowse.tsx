@@ -92,7 +92,10 @@ const Wrap = styled.div`
   align-items: center;
   gap: 36px;
 
+  /* The phone frame left-aligns the heading and lets each chip hug its label,
+     rather than centring a column of equal-width pills. */
   @media ${device.mobileL} {
+    align-items: stretch;
     gap: 24px;
   }
 `;
@@ -105,6 +108,7 @@ const Title = styled.h2`
 
   @media ${device.mobileL} {
     ${font('2xl')};
+    text-align: left;
   }
 `;
 
@@ -116,7 +120,8 @@ const Chips = styled.div`
 
   @media ${device.mobileL} {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    justify-content: flex-start;
   }
 `;
 
