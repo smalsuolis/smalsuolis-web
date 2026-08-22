@@ -289,20 +289,14 @@ const MapPage = () => {
 
 export default MapPage;
 
-// The map takes most of the viewport but stops short of the bottom, so the page
-// scrolls smoothly on past it to the footer (the iframe swallows wheel events,
-// so a full-height map would trap the scroll). The bottom corners are rounded
-// and the band sits a touch inset for a sleek edge.
+// The design runs the map edge to edge and all the way down to the fold — it
+// fills everything the 80px navbar leaves. The footer sits below it; the page's
+// own scrollbar reaches it, since the iframe swallows wheel events.
 const Page = styled.div`
   position: relative;
   width: 100%;
-  height: calc(100vh - 72px - 56px);
+  height: calc(100vh - 80px);
   min-height: 480px;
-  margin-bottom: 24px;
-
-  @media ${device.mobileL} {
-    height: calc(100vh - 64px - 48px);
-  }
 `;
 
 // Bottom controls over the map: register CTA (left) + list-view toggle (right).
@@ -458,17 +452,12 @@ const ListToggle = styled.button`
 const MapWrap = styled.div`
   position: absolute;
   inset: 0;
-  border-radius: 0 0 24px 24px;
   overflow: hidden;
 
   iframe {
     width: 100% !important;
     height: 100% !important;
     display: block;
-  }
-
-  @media ${device.mobileL} {
-    border-radius: 0 0 16px 16px;
   }
 `;
 
