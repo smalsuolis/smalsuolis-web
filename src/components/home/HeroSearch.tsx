@@ -47,8 +47,8 @@ const HeroSearch = ({
   return (
     <Hero>
       <HeroInner>
-        <HeroContent $centered={!supportCopy}>
-          <Heading $centered={!supportCopy}>
+        <HeroContent $centered={supportCopy === null}>
+          <Heading $centered={supportCopy === null}>
             {heading ?? (
               <>
                 Sužinok, kas vyksta
