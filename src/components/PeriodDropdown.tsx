@@ -77,7 +77,8 @@ const Trigger = styled.button`
   gap: 16px;
   width: 100%;
   height: 40px;
-  padding: 12px 20px;
+  padding: 8px 12px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[500]};
   border-radius: 54px;
   background: ${({ theme }) => theme.colors.white};
   cursor: pointer;

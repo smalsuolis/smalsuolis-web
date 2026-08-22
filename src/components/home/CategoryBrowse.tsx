@@ -31,35 +31,35 @@ const CategoryBrowse = () => {
       label: 'Žuvinimas',
       icon: '/home/cat_fish.svg',
       count: data?.byApp?.izuvinimas?.count,
-      bg: '#E8F1FF',
+      bg: '#9CDEFF',
     },
     {
       key: 'map',
       label: 'Žemėtvarkos planavimas',
       icon: '/home/cat_map.svg',
       count: data?.byApp?.zemetvarkosPlanavimas?.count,
-      bg: '#EDE9FE',
+      bg: '#DACDFF',
     },
     {
       key: 'building',
       label: 'Statiniai',
       icon: '/home/cat_building.svg',
       count: data?.byApp?.infostatyba?.count,
-      bg: '#FDE8E8',
+      bg: '#F9BEBF',
     },
     {
       key: 'autorenew',
       label: 'Žemės paskirties keitimas',
       icon: '/home/cat_autorenew.svg',
       count: data?.byApp?.savivaldybesZemetvarka?.count,
-      bg: '#DFF7E6',
+      bg: '#E3E3E3',
     },
     {
       key: 'forest',
       label: 'Miško kirtimai',
       icon: '/home/cat_forest.svg',
       count: data?.byApp?.miskoKirtimai?.count,
-      bg: '#DFF7E6',
+      bg: '#CEFFAF',
     },
   ];
 
@@ -71,9 +71,6 @@ const CategoryBrowse = () => {
           <Chip key={chip.key} onClick={() => navigate(slugs.events)}>
             <ChipMain>
               <IconCircle $bg={chip.bg}>
-                {/* Height-constrained, auto width: the icons aren't all square
-                    (the žuvinimas one is 10×13), so forcing 16×16 would stretch
-                    them. */}
                 <ChipIcon src={chip.icon} alt="" />
               </IconCircle>
               <ChipLabel>{chip.label}</ChipLabel>
@@ -92,7 +89,11 @@ const Wrap = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 36px;
+
+  @media ${device.mobileL} {
+    gap: 24px;
+  }
 `;
 
 const Title = styled.h2`
@@ -155,9 +156,8 @@ const IconCircle = styled.span<{ $bg: string }>`
 `;
 
 const ChipIcon = styled.img`
+  width: 16px;
   height: 16px;
-  width: auto;
-  max-width: 16px;
   display: block;
 `;
 

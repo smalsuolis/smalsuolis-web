@@ -139,12 +139,10 @@ const Hero = styled.div`
        squeezing it into a ~390px portrait band distorts the line work into
        noise. The colour underneath stays the one the design specifies. */
     background: #7eec9b;
-    /* The hero is pulled up under the 64px-tall transparent nav; clear it so
-       the heading sits below the logo/burger row (nav height + breathing room). */
-    padding-top: 88px;
-    /* Reserve room for the tall vertically-stacked search bar that overhangs
-       the hero's bottom edge. */
-    padding-bottom: 210px;
+    /* The 393x417 mobile band puts the heading at y=104 — below the 80px
+       transparent nav it is pulled under — and ends 151px past the copy. */
+    padding-top: 104px;
+    padding-bottom: 151px;
   }
 `;
 
@@ -170,7 +168,7 @@ const HeroContent = styled.div<{ $centered?: boolean }>`
   @media ${device.mobileL} {
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
+    gap: 12px;
   }
 `;
 
@@ -209,9 +207,9 @@ const SearchBarWrap = styled.div`
 
   @media ${device.mobileL} {
     padding: 0 16px;
-    /* The bar stacks vertically on mobile (much taller), so it overhangs by a
-       smaller amount; the first content section reserves clearance below. */
-    bottom: -24px;
+    /* Stacked vertically the card is 220 tall against a 417 band, so it hangs
+       105px past the bottom edge. */
+    bottom: -105px;
   }
 `;
 
@@ -253,8 +251,9 @@ const SearchInputWrap = styled.div`
 
   @media ${device.mobileL} {
     min-width: 0;
-    height: auto;
-    padding: 14px 16px;
+    /* Stacked, the card is a column flex, where flex: 1 zeroes the basis on
+       the main axis and collapses the field to its content height. */
+    flex: none;
   }
 `;
 

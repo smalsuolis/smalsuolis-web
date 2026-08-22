@@ -156,10 +156,10 @@ const Container = styled.div`
   width: 100%;
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  padding: 40px 32px 64px;
+  padding: 0 32px;
 
   @media ${device.mobileL} {
-    padding: 24px 20px 48px;
+    padding: 0 16px;
   }
 `;
 

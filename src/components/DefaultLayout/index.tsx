@@ -67,14 +67,18 @@ const ScrollableContainer = styled.div`
   background-color: white;
 `;
 
+// The design starts every inner page 37px below the nav (28 on phones) and
+// lets the page itself own the horizontal gutter, so the two never stack.
 const InnerContainer = styled.div`
   display: flex;
   width: 100%;
   min-height: 100%;
   flex-direction: column;
   align-items: center;
+  padding-top: 28px;
+
   @media ${device.desktop} {
-    padding: 40px 16px;
+    padding-top: 37px;
     height: fit-content;
   }
 `;

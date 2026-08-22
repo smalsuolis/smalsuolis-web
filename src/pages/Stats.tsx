@@ -382,14 +382,14 @@ export default Stats;
 
 const Page = styled.div`
   width: 100%;
+  max-width: ${CONTENT_WIDTH};
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  padding: 40px 0;
-  @media ${device.desktop} {
-    max-width: ${CONTENT_WIDTH};
-  }
-  @media ${device.tablet} {
-    padding: 32px 20px;
+  padding: 0 32px;
+
+  @media ${device.mobileL} {
+    padding: 0 16px;
   }
 `;
 

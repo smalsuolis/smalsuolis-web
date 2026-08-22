@@ -56,22 +56,27 @@ const Page = styled.div`
     margin-top: -80px;
   }
 
-  /* Vertical rhythm between top-level sections. First section (intro) needs
-     extra top space to clear the search bar that overlaps the hero. */
+  /* Vertical rhythm between top-level sections: the design frame puts 124px
+     between every section, and 153px below the hero band — the extra space is
+     what clears the search card hanging 66px past the green edge. */
   & > section {
-    margin-top: 80px;
+    margin-top: 124px;
   }
   & > section:first-of-type {
-    margin-top: 96px;
+    margin-top: 153px;
   }
 
   @media ${device.mobileL} {
     & > section {
-      margin-top: 48px;
+      margin-top: 42px;
     }
     & > section:first-of-type {
-      /* Search bar overhangs the hero by ~24px on mobile; clear it. */
-      margin-top: 48px;
+      margin-top: 147px;
+    }
+    /* The mobile frame groups the intro copy and the stat column into one
+       block, so the stats sit closer than the section rhythm. */
+    & > section:nth-of-type(2) {
+      margin-top: 24px;
     }
   }
 `;

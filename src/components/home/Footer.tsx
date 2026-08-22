@@ -92,7 +92,7 @@ const Wrap = styled.footer`
 const Inner = styled.div`
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  padding: 80px 32px 0;
+  padding: 42px 32px 0;
   display: grid;
   /* Logo occupies its own first column, top-aligned with the headings. */
   grid-template-columns: 220px 1fr;
@@ -101,7 +101,7 @@ const Inner = styled.div`
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
     gap: 32px;
-    padding: 56px 20px 0;
+    padding: 42px 20px 0;
   }
 `;
 
@@ -135,10 +135,24 @@ const Column = styled.div`
   gap: 16px;
 `;
 
+const ColLink = styled.div`
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
+  cursor: pointer;
+  width: fit-content;
+  text-decoration: none;
+`;
+
+// The design keeps the column headings and the two contact links at full
+// black, and drops every navigational/source link to 64%.
 const ColLinks = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+
+  ${ColLink} {
+    color: ${({ theme }) => theme.colors.grey[650]};
+  }
 `;
 
 const ColTitle = styled.div`
@@ -148,15 +162,7 @@ const ColTitle = styled.div`
 
 const ColText = styled.div`
   ${font('base')};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const ColLink = styled.div`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.text.primary};
-  cursor: pointer;
-  width: fit-content;
-  text-decoration: none;
+  color: ${({ theme }) => theme.colors.grey[650]};
 `;
 
 const Copyright = styled.div`

@@ -21,7 +21,7 @@ import {
 import { TimeRanges } from '../utils/types';
 import api from '../utils/api';
 import EmptyState from './EmptyState';
-import EventRow from './EventRow';
+import EventRow, { EventRowList } from './EventRow';
 import EventFilterModal from './EventFilterModal';
 import EventModal from './EventModal';
 import Pagination from './Pagination';
@@ -294,9 +294,11 @@ const EventsContainer = ({
     }
     return (
       <InnerContainer>
-        {events?.rows.map((event: Event) => (
-          <EventRow key={event.id} event={event} onSelect={setSelectedEvent} />
-        ))}
+        <EventRowList>
+          {events?.rows.map((event: Event) => (
+            <EventRow key={event.id} event={event} onSelect={setSelectedEvent} />
+          ))}
+        </EventRowList>
         {isFetching && <LoaderComponent />}
         <Pagination page={page} totalPages={events?.totalPages ?? 1} onChange={setPage} />
       </InnerContainer>
@@ -373,6 +375,8 @@ const EventsContainer = ({
           </ViewToggle>
         </HeaderActions>
       </Header>
+
+      <HeaderRule />
 
       <FilterBar>
         <SearchField>
@@ -453,10 +457,10 @@ const Page = styled.div`
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  padding: 40px 0;
+  padding: 0 32px;
 
-  @media ${device.tablet} {
-    padding: 32px 20px;
+  @media ${device.mobileL} {
+    padding: 0 16px;
   }
 `;
 
@@ -466,7 +470,6 @@ const Header = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 24px;
 
   @media ${device.mobileL} {
     flex-direction: column;
@@ -479,10 +482,17 @@ const PageTitle = styled.h1`
   margin: 0;
 `;
 
+// Design: a 1px rule sits 36px under the header and 36px above the filter row.
+const HeaderRule = styled.div`
+  height: 1px;
+  background: ${({ theme }) => theme.colors.grey[300]};
+  margin: 36px 0;
+`;
+
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 
   @media ${device.mobileL} {
     flex-direction: column;
@@ -494,13 +504,19 @@ const RegisterCta = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 20px;
-  border-radius: 100px;
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  width: 300px;
+  height: 40px;
+  padding: 7px 11px;
+  border-radius: 54px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[600]};
   background: ${({ theme }) => theme.colors.white};
   color: ${({ theme }) => theme.colors.text.primary};
-  ${font('base', 500)};
+  ${font('base')};
   cursor: pointer;
+
+  @media ${device.mobileL} {
+    width: 100%;
+  }
 
   &:hover {
     background: ${({ theme }) => theme.colors.background};
@@ -511,13 +527,19 @@ const ViewToggle = styled.button`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 100px;
+  gap: 4px;
+  width: 186px;
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
-  ${font('base', 600)};
+  ${font('base')};
   cursor: pointer;
+
+  @media ${device.mobileL} {
+    width: 100%;
+  }
 
   &:hover {
     opacity: 0.92;
@@ -527,8 +549,8 @@ const ViewToggle = styled.button`
 const FilterBar = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 16px;
+  margin-bottom: 24px;
 
   @media ${device.mobileL} {
     flex-direction: column;
@@ -536,22 +558,26 @@ const FilterBar = styled.div`
   }
 `;
 
+// Design: a fixed 422x40 field, not a flexible one — the two dropdowns keep
+// their own widths against the right edge and the space between simply grows.
 const SearchField = styled.div`
-  flex: 1;
-  min-width: 0;
+  flex: none;
+  width: 422px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  /* 40px to match the dropdowns beside it — the design's filter row is one
-     consistent control height (Figma: search input 422x40). */
+  gap: 12px;
   height: 40px;
-  padding: 0 20px;
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  border-radius: 44px;
+  padding: 0 12px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[500]};
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.white};
 
   &:focus-within {
-    border-color: ${({ theme }) => theme.colors.grey[500]};
+    border-color: ${({ theme }) => theme.colors.grey[600]};
+  }
+
+  @media ${device.mobileL} {
+    width: 100%;
   }
 `;
 
@@ -586,14 +612,27 @@ const ClearButton = styled.div`
 const InlineFilters = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   margin-left: auto;
+
+  /* Design widths for the two dropdowns; they are fixed, not shrink-to-fit. */
+  > *:nth-child(1) {
+    width: 300px;
+  }
+  > *:nth-child(2) {
+    width: 184px;
+  }
 
   @media ${device.mobileL} {
     width: 100%;
     margin-left: 0;
     flex-direction: column;
     align-items: stretch;
+
+    > *:nth-child(1),
+    > *:nth-child(2) {
+      width: 100%;
+    }
   }
 `;
 

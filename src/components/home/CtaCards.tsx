@@ -51,11 +51,15 @@ const Grid = styled.div`
   grid-template-columns: 836fr 580fr;
   gap: 24px;
   width: 100%;
-  margin-top: 80px;
+  margin-top: 54px;
+  /* The footer keeps a 42px lead-in of its own; the design leaves 114 below
+     this band, so the remainder lives here. */
+  margin-bottom: 72px;
 
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
-    margin-top: 48px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 `;
 

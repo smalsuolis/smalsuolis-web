@@ -141,7 +141,9 @@ const Bar = styled.header<{ $overHero: boolean }>`
   position: relative;
   width: 100%;
   background: ${({ $overHero, theme }) => ($overHero ? 'transparent' : theme.colors.white)};
-  ${({ $overHero, theme }) => !$overHero && `border-bottom: 1px solid ${theme.colors.grey[300]};`}
+  /* Inset rule, not a border: the design's navbar is 80px tall including its
+     hairline, and a border would make the bar 81 and shift every page down. */
+  ${({ $overHero, theme }) => !$overHero && `box-shadow: inset 0 -1px 0 ${theme.colors.grey[300]};`}
   /* Must sit above the homepage hero, which is pulled up underneath it with a
      negative margin. The hero establishes its own stacking context, so the nav
      needs an explicit z-index on a positioned box to paint over it. */

@@ -80,6 +80,8 @@ export const theme: Theme = {
       500: '#BCBCBC',
       550: '#818181',
       600: '#707070',
+      /* Flattened #000 at the 64% the design applies to muted footer copy. */
+      650: '#5C5C5C',
       700: '#333333',
     },
     black: '#000000',
@@ -119,6 +121,7 @@ export const typography = {
   xl: { size: 2.0, lineHeight: 1.5, weight: 400, tracking: '-0.02em' },
   lg: { size: 1.8, lineHeight: 1.5, weight: 400, tracking: '-0.02em' },
   base: { size: 1.6, lineHeight: 1.5, weight: 400, tracking: '-0.02em' },
+  sm: { size: 1.4, lineHeight: 1.5, weight: 400, tracking: '-0.02em' },
 } as const;
 
 export type TypographyToken = keyof typeof typography;
@@ -206,5 +209,33 @@ export const device = {
 export const checkmarkNudge = css`
   label::after {
     left: 0px;
+  }
+`;
+
+/**
+ * Hover tint for the borderless list rows (events, subscriptions). The design
+ * gives those rows no horizontal padding, so tinting the element itself hugs
+ * the text; this paints the tint on a layer that bleeds 16px past the content
+ * instead. `bottomBleed` is the row's own bottom padding minus that 16px, so
+ * the tint clears the divider. Children paint above it — they are positioned.
+ */
+export const rowHoverTint = (bottomBleed: string) => css`
+  position: relative;
+
+  > * {
+    position: relative;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -16px -16px ${bottomBleed};
+    border-radius: 16px;
+    background: transparent;
+    transition: background 0.15s ease;
+  }
+
+  &:hover::before {
+    background: ${({ theme }) => theme.colors.background};
   }
 `;
