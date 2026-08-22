@@ -7,7 +7,7 @@ import MapView from '../components/MapView';
 import AddressAutocomplete from '../components/home/AddressAutocomplete';
 import SritysFilterModal, { SritysValue } from '../components/home/SritysFilterModal';
 import PeriodDropdown from '../components/PeriodDropdown';
-import { CONTENT_WIDTH, device, font } from '../styles';
+import { device, font } from '../styles';
 import { AddressSuggestion, App, Category, IconName, slugs } from '../utils';
 import { statsTimeRangeItems, TimeRanges } from '../utils/types';
 import Icon from '../components/Icons';
@@ -18,10 +18,6 @@ import { useAuthModal } from '../components/auth/AuthModalContext';
 // The radius (metres) of the circle drawn around a searched address — matches
 // the /events/near lookup, so the map view and the popup count agree.
 const SEARCH_RADIUS_M = 2000;
-
-// Matches the nav / footer content column, so the floating map controls line up
-// with the rest of the site instead of hugging the viewport edges.
-const CONTENT_MAX_WIDTH = CONTENT_WIDTH;
 
 // The smalsuolis map iframe draws incoming geometry with dataProjection EPSG:3346
 // (LKS94) — hardcoded in its route. Address suggestions come in EPSG:4326
@@ -118,6 +114,9 @@ const MapPage = () => {
     return { appIds, categoriesByApp: {} };
   });
   const [filterOpen, setFilterOpen] = useState(false);
+  // The phone frame replaces the register pill with a dismissible card over the
+  // map; dismissing it leaves the map unobstructed.
+  const [registerCardOpen, setRegisterCardOpen] = useState(true);
   const [periodKey, setPeriodKey] = useState<string>(
     searchParams.get('range') ?? TimeRanges.LAST_28_DAYS,
   );
@@ -174,7 +173,6 @@ const MapPage = () => {
     if (periodKey) params.set('range', periodKey);
     navigate(`${slugs.events}?${params.toString()}`);
   };
-
 
   // When an address is selected, draw a 3346 circle around it (correct location
   // + a sensible zoom). When nothing is selected, geom is undefined so we don't
@@ -249,6 +247,23 @@ const MapPage = () => {
 
       {/* Bottom controls (Figma): register CTA left, list-view toggle right. On
           mobile they stack and center. */}
+      {!loggedIn && registerCardOpen && (
+        <RegisterCard>
+          <RegisterClose
+            type="button"
+            aria-label="Uždaryti"
+            onClick={() => setRegisterCardOpen(false)}
+          >
+            <Icon name={IconName.close} />
+          </RegisterClose>
+          <RegisterText>
+            <RegisterTitle>Dar neturite paskyros?</RegisterTitle>
+            <div>Užsiregistruokite ir tapkite Smalsuoliu.</div>
+          </RegisterText>
+          <RegisterButton onClick={() => openAuthModal('register')}>Registruotis</RegisterButton>
+        </RegisterCard>
+      )}
+
       <BottomBar>
         {!loggedIn && (
           <RegisterCta onClick={() => openAuthModal('register')}>
@@ -290,10 +305,6 @@ const Page = styled.div`
   }
 `;
 
-
-
-
-
 // Bottom controls over the map: register CTA (left) + list-view toggle (right).
 // On mobile they stack and center (per the mobile Figma frame).
 //
@@ -302,14 +313,10 @@ const Page = styled.div`
 // we move around them rather than restyling them.
 const BottomBar = styled.div`
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: ${CONTENT_MAX_WIDTH};
-  /* Right padding clears the map iframe's own zoom / locate controls, which the
-     embed draws hard against its right edge. */
-  padding: 0 72px 0 32px;
-  bottom: 24px;
+  left: 0;
+  right: 0;
+  padding: 0 36px;
+  bottom: 36px;
   z-index: 22;
   display: flex;
   align-items: center;
@@ -336,12 +343,15 @@ const BottomBar = styled.div`
 const RegisterCta = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 300px;
   height: 40px;
-  padding: 0 24px;
-  border-radius: 100px;
-  background: ${({ theme }) => theme.colors.white};
+  padding: 7px 11px;
+  border-radius: 54px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[600]};
+  background: #fafafa;
   color: ${({ theme }) => theme.colors.text.primary};
-  ${font('base', 500)};
+  ${font('base')};
   cursor: pointer;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 
@@ -349,23 +359,83 @@ const RegisterCta = styled.button`
     opacity: 0.92;
   }
 
+  /* Replaced by RegisterCard on phones. */
   @media ${device.mobileL} {
-    order: 2;
-    justify-content: center;
+    display: none;
   }
+`;
+
+// The phone frame's 361x164 card: heading, one line of copy, a full-width
+// register button, and a close control in the corner.
+const RegisterCard = styled.div`
+  display: none;
+
+  @media ${device.mobileL} {
+    position: absolute;
+    z-index: 22;
+    left: 16px;
+    right: 16px;
+    bottom: 76px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    border-radius: 8px;
+    background: ${({ theme }) => theme.colors.white};
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+`;
+
+const RegisterClose = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.text.primary};
+
+  svg {
+    font-size: 2.4rem;
+  }
+`;
+
+const RegisterText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const RegisterTitle = styled.div`
+  ${font('base', 700)};
+`;
+
+const RegisterButton = styled.button`
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base')};
+  cursor: pointer;
 `;
 
 const ListToggle = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
   margin-left: auto;
+  width: 186px;
   height: 40px;
-  padding: 0 24px;
-  border-radius: 100px;
+  padding: 8px 24px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
-  ${font('base', 600)};
+  ${font('base')};
   cursor: pointer;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 
@@ -378,9 +448,8 @@ const ListToggle = styled.button`
   }
 
   @media ${device.mobileL} {
-    order: 1;
-    margin-left: 0;
-    justify-content: center;
+    width: 321px;
+    margin: 0 auto;
   }
 `;
 
@@ -407,45 +476,45 @@ const MapWrap = styled.div`
 // and the rest of the site use, rather than the viewport edges.
 const Controls = styled.div`
   position: absolute;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: ${CONTENT_MAX_WIDTH};
-  padding: 0 32px;
+  top: 32px;
+  left: 0;
+  right: 0;
+  padding: 0 36px 0 42px;
   z-index: 20;
   display: flex;
   align-items: flex-start;
   gap: 16px;
 
+  /* The phone frame stacks the address field over a two-column row of the two
+     dropdowns, so they stay readable at 174px each. */
   @media ${device.mobileL} {
-    flex-direction: column;
-    align-items: stretch;
-    top: 12px;
-    padding: 0 20px;
+    flex-wrap: wrap;
+    top: 9px;
+    padding: 0 16px;
     gap: 12px;
   }
 `;
 
 const pillShadow = '0 8px 28px rgba(0, 0, 0, 0.14)';
 
-
 const SearchPill = styled.div`
-  /* Fixed-ish width on the left; the period pill is pushed to the far right via
-     its own margin-left:auto, keeping address + category grouped left. */
-  width: 380px;
-  max-width: 100%;
+  /* Design widths: 418 for the address field, 300 for Sritys, 206 for the
+     period — the last one pinned to the right edge. */
+  width: 418px;
   min-width: 0;
   height: 40px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 12px;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 44px;
+  border-radius: 54px;
   box-shadow: ${pillShadow};
 
   @media ${device.mobileL} {
     width: 100%;
+    box-shadow:
+      inset 0 0 0 1px rgba(83, 83, 83, 0.12),
+      ${pillShadow};
   }
 `;
 
@@ -454,25 +523,27 @@ const CategoryPill = styled.button<{ $active: boolean }>`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-width: 240px;
+  width: 300px;
   height: 40px;
-  padding: 12px 20px;
-  border-radius: 44px;
+  padding: 8px 12px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.white};
   box-shadow: ${pillShadow};
   cursor: pointer;
-  ${font('lg')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.text.primary : theme.colors.grey[600])};
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
 
   svg {
-    font-size: 1.6rem;
+    font-size: 2rem;
     flex-shrink: 0;
-    color: ${({ theme }) => theme.colors.grey[600]};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 
   @media ${device.mobileL} {
-    min-width: 0;
-    width: 100%;
+    width: calc(50% - 6px);
+    box-shadow:
+      inset 0 0 0 1px rgba(83, 83, 83, 0.12),
+      ${pillShadow};
   }
 `;
 
@@ -485,13 +556,22 @@ const PillLabel = styled.span`
 const PeriodWrap = styled.div`
   /* Pushed to the far right of the controls row (address + category stay left). */
   margin-left: auto;
-  min-width: 200px;
+  width: 206px;
   box-shadow: ${pillShadow};
-  border-radius: 44px;
+  border-radius: 54px;
+
+  /* Floating over the map the pill has no outline in the design; the events
+     page keeps the #BCBCBC one. */
+  button {
+    border-color: transparent;
+  }
 
   @media ${device.mobileL} {
     margin-left: 0;
-    min-width: 0;
-    width: 100%;
+    width: calc(50% - 6px);
+
+    button {
+      border-color: rgba(83, 83, 83, 0.12);
+    }
   }
 `;

@@ -1,8 +1,7 @@
 import { isFuture } from 'date-fns';
 import styled from 'styled-components';
 import { device, font, rowHoverTint } from '../styles';
-import { Event, getTimeLabel, IconName, subtitle } from '../utils';
-import Icon from './Icons';
+import { Event, getTimeLabel, subtitle } from '../utils';
 
 // The API returns a single combined `name` ("Type, location, address"); split on
 // the first comma so the type reads as the title and the location as its meta.
@@ -33,9 +32,7 @@ const EventRow = ({ event, onSelect }: { event: Event; onSelect: (e: Event) => v
           {future && <Tag>{subtitle.future}</Tag>}
         </Tags>
       </Main>
-      <Arrow>
-        <Icon name={IconName.right} />
-      </Arrow>
+      <Arrow src="/icons/arrow_right.svg" alt="" />
     </Row>
   );
 };
@@ -63,6 +60,10 @@ const Main = styled.div`
   flex-direction: column;
   gap: 22px;
   min-width: 0;
+
+  @media ${device.mobileL} {
+    width: 100%;
+  }
 `;
 
 // Design (Project Info): the title owns the first line at full width; location
@@ -112,17 +113,15 @@ const Tag = styled.span`
   color: ${({ theme }) => theme.colors.grey[700]};
 `;
 
-const Arrow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
+// The phone frame drops the arrow — the whole row is the tap target there.
+const Arrow = styled.img`
+  display: block;
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  color: ${({ theme }) => theme.colors.text.primary};
 
-  svg {
-    font-size: 2rem;
+  @media ${device.mobileL} {
+    display: none;
   }
 `;
 

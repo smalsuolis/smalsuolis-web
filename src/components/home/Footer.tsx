@@ -101,7 +101,7 @@ const Inner = styled.div`
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
     gap: 32px;
-    padding: 42px 20px 0;
+    padding: 42px 16px 0;
   }
 `;
 
@@ -173,6 +173,6 @@ const Copyright = styled.div`
   color: ${({ theme }) => theme.colors.text.primary};
 
   @media ${device.mobileL} {
-    padding: 32px 20px 24px;
+    padding: 32px 16px 24px;
   }
 `;
