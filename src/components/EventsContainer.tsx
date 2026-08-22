@@ -578,8 +578,18 @@ const SearchField = styled.div`
     border-color: ${({ theme }) => theme.colors.grey[600]};
   }
 
+  /* The row's fixed widths add up to more than a tablet's content column. The
+     dropdowns keep theirs; the address field gives up its 422 and takes what is
+     left, so nothing runs past the right edge. */
+  @media ${device.tablet} {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
   @media ${device.mobileL} {
     width: 100%;
+    flex: none;
   }
 `;
 

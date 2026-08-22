@@ -98,6 +98,10 @@ const Inner = styled.div`
   grid-template-columns: 220px 1fr;
   gap: 32px;
 
+  @media ${device.tablet} {
+    grid-template-columns: 1fr;
+  }
+
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
     gap: 32px;
@@ -120,6 +124,12 @@ const Columns = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 36px;
+
+  /* Four columns need ~1000px to hold the longest headings; below that they
+     break mid-word. */
+  @media ${device.tablet} {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
   /* Single stacked column on phones — the 2-up grid cramped the longer
      link labels. */

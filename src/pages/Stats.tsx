@@ -421,6 +421,13 @@ const KpiStrip = styled.div`
   grid-template-columns: repeat(5, 230px);
   justify-content: space-between;
 
+  /* Five 230px tiles need ~1214px; narrower than that they must share the row
+     instead of running past its right edge. */
+  @media ${device.tablet} {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px;
+  }
+
   /* Two per row on mobile (2/2/2 rather than the design's 3+2) — five tiles
      leave the last one alone on its row, which is intended. */
   @media ${device.mobileL} {

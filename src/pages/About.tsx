@@ -4,6 +4,7 @@ import { Section } from '../components/ui/Section';
 import HeroSearch from '../components/home/HeroSearch';
 import StatRow from '../components/home/StatRow';
 import CtaCards from '../components/home/CtaCards';
+import IntroCopy from '../components/home/IntroCopy';
 
 // Apie mus (About) page, redesigned per Figma (node 157:21728). Shares the hero
 // band, stat row, CTA cards, and footer with the homepage; adds the "Domina, kas
@@ -43,12 +44,7 @@ const About = () => {
       />
 
       <Section>
-        <Intro>
-          <IntroStrong>Mūsų valstybėje vyksta daug įvykių</IntroStrong>, tačiau apie juos nežinome
-          arba sužinome per vėlai. Nusprendėme tą pakeisti –{' '}
-          <IntroStrong>suteikti galimybę visiems piliečiams</IntroStrong> sekti kas vyksta šalyje
-          realiu laiku.
-        </Intro>
+        <IntroCopy />
       </Section>
 
       <Section>
@@ -136,22 +132,6 @@ const Page = styled.div`
       margin-top: 42px;
     }
   }
-`;
-
-const Intro = styled.p`
-  ${font('3xl', 400)};
-  text-align: center;
-  color: ${({ theme }) => theme.colors.grey[550]};
-  max-width: 876px;
-  margin: 0 auto;
-
-  @media ${device.mobileL} {
-    ${font('2xl', 400)};
-  }
-`;
-
-const IntroStrong = styled.span`
-  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 // Grey band behind the "Domina" section.

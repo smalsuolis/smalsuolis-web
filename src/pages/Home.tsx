@@ -4,6 +4,7 @@ import { Section } from '../components/ui/Section';
 import HeroSearch from '../components/home/HeroSearch';
 import StatRow from '../components/home/StatRow';
 import CategoryBrowse from '../components/home/CategoryBrowse';
+import IntroCopy from '../components/home/IntroCopy';
 import RecentEvents from '../components/home/RecentEvents';
 import CtaCards from '../components/home/CtaCards';
 
@@ -16,12 +17,7 @@ const Home = () => {
       <HeroSearch />
 
       <Section>
-        <Intro>
-          <IntroStrong>Mūsų valstybėje vyksta daug įvykių</IntroStrong>, tačiau apie juos nežinome
-          arba sužinome per vėlai. Nusprendėme tą pakeisti –{' '}
-          <IntroStrong>suteikti galimybę visiems piliečiams</IntroStrong> sekti kas vyksta šalyje
-          realiu laiku.
-        </Intro>
+        <IntroCopy />
       </Section>
 
       <Section>
@@ -79,21 +75,4 @@ const Page = styled.div`
       margin-top: 24px;
     }
   }
-`;
-
-const Intro = styled.p`
-  ${font('3xl', 400)};
-  text-align: center;
-  color: ${({ theme }) => theme.colors.grey[550]};
-  max-width: 876px;
-  margin: 0 auto;
-
-  @media ${device.mobileL} {
-    ${font('2xl', 400)};
-  }
-`;
-
-// The design emphasises these runs with colour alone — the weight stays 400.
-const IntroStrong = styled.span`
-  color: ${({ theme }) => theme.colors.text.primary};
 `;

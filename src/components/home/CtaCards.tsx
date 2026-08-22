@@ -10,9 +10,10 @@ const CtaCards = () => {
   return (
     <Grid>
       <GreenCard>
+        {/* The trailing space survives the break, so the headline still reads
+            as a sentence at widths where the break is dropped. */}
         <GreenText>
-          Darome tą, nes esame
-          <br />
+          Darome tą, nes esame <br />
           smalsūs. Kaip ir tu!
         </GreenText>
       </GreenCard>
@@ -20,8 +21,7 @@ const CtaCards = () => {
       <BlackCard>
         <BlackText>
           <BlackTitle>
-            Tapk Smalsuolio
-            <br />
+            Tapk Smalsuolio <br />
             prenumeratoriumi
           </BlackTitle>
           <BlackCopy>
@@ -51,6 +51,12 @@ const Grid = styled.div`
   grid-template-columns: 836fr 580fr;
   gap: 24px;
   width: 100%;
+
+  /* Between the phone and the 1440 frame the 836/580 split leaves the black
+     card too narrow for its copy — even the two halves. */
+  @media ${device.tablet} {
+    grid-template-columns: 1fr 1fr;
+  }
   margin-top: 54px;
   /* The footer keeps a 42px lead-in of its own; the design leaves 114 below
      this band, so the remainder lives here. */
@@ -70,6 +76,10 @@ const Card = styled.div`
   display: flex;
   flex-direction: column;
 
+  @media ${device.tablet} {
+    min-height: 420px;
+  }
+
   @media ${device.mobileL} {
     min-height: 0;
   }
@@ -86,6 +96,11 @@ const GreenCard = styled(Card)`
     linear-gradient(180deg, rgba(126, 236, 155, 0.3) 0%, #20853b 100%),
     url('/home/cta_city.png') center / cover no-repeat;
 
+  @media ${device.tablet} {
+    padding: 56px 40px;
+    justify-content: flex-end;
+  }
+
   /* No counterpart on the 393 frame. */
   @media ${device.mobileL} {
     display: none;
@@ -96,6 +111,16 @@ const GreenText = styled.div`
   ${font('5xl')};
   color: ${({ theme }) => theme.colors.white};
   position: relative;
+
+  /* The line breaks are set for the 1440 frame's column width; below it they
+     leave one word per line, so let the headline flow instead. */
+  @media ${device.tablet} {
+    ${font('3xl')};
+
+    br {
+      display: none;
+    }
+  }
 `;
 
 const BlackCard = styled(Card)`
@@ -104,6 +129,11 @@ const BlackCard = styled(Card)`
   gap: 40px;
   padding: 0 80px;
   border-radius: 20px 0 0 20px;
+
+  @media ${device.tablet} {
+    gap: 24px;
+    padding: 0 40px;
+  }
 
   @media ${device.mobileL} {
     /* The phone frame carries only this card, full-bleed and square. */
@@ -115,6 +145,13 @@ const BlackCard = styled(Card)`
 const CtaButtonWrap = styled.div`
   button {
     width: 420px;
+    max-width: 100%;
+  }
+
+  @media ${device.tablet} {
+    button {
+      width: 100%;
+    }
   }
 
   @media ${device.mobileL} {
@@ -134,8 +171,12 @@ const BlackTitle = styled.div`
   ${font('3xl')};
   color: ${({ theme }) => theme.colors.white};
 
-  @media ${device.mobileL} {
+  @media ${device.tablet} {
     ${font('2xl')};
+
+    br {
+      display: none;
+    }
   }
 `;
 

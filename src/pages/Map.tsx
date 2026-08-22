@@ -570,6 +570,8 @@ const PeriodWrap = styled.div`
 
   @media ${device.mobileL} {
     margin-left: 0;
+    /* Reset the desktop floor, or the two-column row cannot hold both pills. */
+    min-width: 0;
     width: calc(50% - 6px);
 
     button {
