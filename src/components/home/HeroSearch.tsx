@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
@@ -10,7 +10,8 @@ import SritysFilterModal, { SritysValue } from './SritysFilterModal';
 
 // Hero band: full-bleed green gradient, headline + supporting copy, and the white
 // search bar (address autocomplete + Sritys) overlapping the bottom edge.
-const HeroSearch = () => {
+// Apie mus reuses the band with its own centred heading and no support copy.
+const HeroSearch = ({ heading, supportCopy }: { heading?: ReactNode; supportCopy?: ReactNode }) => {
   const navigate = useNavigate();
   const [address, setAddress] = useState('');
   const [selected, setSelected] = useState<AddressSuggestion | null>(null);
@@ -37,17 +38,27 @@ const HeroSearch = () => {
   return (
     <Hero>
       <HeroInner>
-        <HeroContent>
-          <Heading>
-            Sužinok, kas vyksta
-            <br />
-            šalia tavęs
+        <HeroContent $centered={!supportCopy}>
+          <Heading $centered={!supportCopy}>
+            {heading ?? (
+              <>
+                Sužinok, kas vyksta
+                <br />
+                šalia tavęs
+              </>
+            )}
           </Heading>
-          <SupportCopy>
-            Statybų leidimai, miškų kirtimai, aplinkos vertinimai.
-            <br />
-            Sužinok pirmas, kas planuojama šalia tavęs.
-          </SupportCopy>
+          {supportCopy !== null && (
+            <SupportCopy>
+              {supportCopy ?? (
+                <>
+                  Statybų leidimai, miškų kirtimai, aplinkos vertinimai.
+                  <br />
+                  Sužinok pirmas, kas planuojama šalia tavęs.
+                </>
+              )}
+            </SupportCopy>
+          )}
         </HeroContent>
       </HeroInner>
 
@@ -134,9 +145,9 @@ const HeroInner = styled.div`
   }
 `;
 
-const HeroContent = styled.div`
+const HeroContent = styled.div<{ $centered?: boolean }>`
   display: flex;
-  justify-content: space-between;
+  justify-content: ${({ $centered }) => ($centered ? 'center' : 'space-between')};
   align-items: flex-end;
   gap: 48px;
   flex-wrap: wrap;
@@ -148,9 +159,10 @@ const HeroContent = styled.div`
   }
 `;
 
-const Heading = styled.h1`
+const Heading = styled.h1<{ $centered?: boolean }>`
   ${font('6xl')};
   color: ${({ theme }) => theme.colors.text.primary};
+  text-align: ${({ $centered }) => ($centered ? 'center' : 'left')};
   margin: 0;
 
   @media ${device.mobileL} {

@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { device, font } from '../styles';
 import { Section } from '../components/ui/Section';
+import HeroSearch from '../components/home/HeroSearch';
 import StatRow from '../components/home/StatRow';
 import CtaCards from '../components/home/CtaCards';
 
@@ -29,13 +30,16 @@ const steps = [
 const About = () => {
   return (
     <Page>
-      <Hero>
-        <Heading>
-          Smalsuolis visiems
-          <br />
-          smalsiems žmonėms
-        </Heading>
-      </Hero>
+      <HeroSearch
+        heading={
+          <>
+            Smalsuolis visiems
+            <br />
+            smalsiems žmonėms
+          </>
+        }
+        supportCopy={null}
+      />
 
       <Section>
         <Intro>
@@ -123,44 +127,16 @@ const Page = styled.div`
   }
 `;
 
-// Hero: the same 1440x436 green band as the homepage, artwork included — the
-// Figma About frame carries an identical texture layer, not flat green.
-const Hero = styled.div`
-  width: 100%;
-  background:
-    url('/hero_bg.png') center / 100% 100% no-repeat,
-    #7eec9b;
-  min-height: 436px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 96px 32px 64px;
-
-  @media ${device.mobileL} {
-    min-height: 0;
-    padding: 96px 20px 56px;
-  }
-`;
-
-const Heading = styled.h1`
-  ${font('6xl')};
-  color: ${({ theme }) => theme.colors.text.primary};
-  text-align: center;
-  margin: 0;
-
-  @media ${device.mobileL} {
-    ${font('3xl')};
-    font-weight: 700;
-  }
-`;
-
 const Intro = styled.p`
-  ${font('3xl')};
-  font-weight: 400;
+  ${font('3xl', 400)};
   text-align: center;
-  color: ${({ theme }) => theme.colors.grey[500]};
+  color: ${({ theme }) => theme.colors.grey[550]};
   max-width: 876px;
   margin: 0 auto;
+
+  @media ${device.mobileL} {
+    ${font('2xl', 400)};
+  }
 `;
 
 const IntroStrong = styled.span`

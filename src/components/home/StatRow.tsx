@@ -44,6 +44,7 @@ export default StatRow;
 
 const Grid = styled.div`
   display: flex;
+  justify-content: center;
   gap: 112px;
 
   @media ${device.mobileL} {

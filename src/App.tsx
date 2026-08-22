@@ -21,7 +21,15 @@ function App() {
   if (isLoading) return <LoaderComponent />;
 
   const authRoutes = filterRoutes(routes, loggedIn);
-  const menuRoutes = filterMenuRoutes(routes, loggedIn);
+  // The design orders the bar differently per state: signed out it reads
+  // Pagrindinis / Žemėlapis / Apie mus / Statistika, signed in the two tail
+  // items swap and Prenumeratos joins in the middle.
+  const navOrder = loggedIn
+    ? [slugs.home, slugs.map, slugs.subscriptions, slugs.stats, slugs.about]
+    : [slugs.home, slugs.map, slugs.about, slugs.stats];
+  const menuRoutes = [...filterMenuRoutes(routes, loggedIn)].sort(
+    (a, b) => navOrder.indexOf(a.slug) - navOrder.indexOf(b.slug),
+  );
 
   // Logged-in users land on their personalised feed; everyone else lands on
   // the public homepage.
