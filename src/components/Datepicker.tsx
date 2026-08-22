@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import 'react-datepicker/dist/react-datepicker.css';
 import styled from 'styled-components';
+import { Menu, MenuItem } from './ui/Menu';
 import Icon from './Icons';
 import {
   Frequency,
@@ -81,7 +82,8 @@ const Datepicker = ({ value, onChange, selectedDates }: DatepickerProps) => {
               return (
                 <Fragment key={item.key}>
                   {isFirstYearItem && <Divider />}
-                  <SelectedDateLabel
+                  <MenuItem
+                    $active={item.key === value}
                     onClick={() => {
                       if (item.key === TimeRanges.CUSTOM) {
                         setOpenDatePickerModal(true);
@@ -99,7 +101,7 @@ const Datepicker = ({ value, onChange, selectedDates }: DatepickerProps) => {
                     }}
                   >
                     {item.name}
-                  </SelectedDateLabel>
+                  </MenuItem>
                 </Fragment>
               );
             })}
@@ -133,17 +135,14 @@ const DateContainer = styled.div`
   }
 `;
 
-const FilterContainer = styled.div`
+// The same menu the address suggestions and the other pickers use.
+const FilterContainer = styled(Menu)`
   position: absolute;
   z-index: 8;
-  padding: 32px;
-  gap: 24px;
-  background-color: white;
-  top: 10px;
-  border-radius: 16px;
-  box-shadow: 0px 18px 41px #121a5529;
-  display: flex;
-  flex-direction: column;
+  top: 4px;
+  min-width: 100%;
+  width: max-content;
+  max-height: 320px;
 `;
 
 const Container = styled.div`
@@ -174,8 +173,7 @@ const FilterButton = styled.div`
 
 const Divider = styled.div`
   height: 1px;
-  background-color: #e5e7eb;
-  margin: 4px 0;
+  background-color: ${({ theme }) => theme.colors.grey[300]};
 `;
 
 const SelectedDateLabel = styled.div`

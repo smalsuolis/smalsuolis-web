@@ -53,7 +53,9 @@ const TopNav = (props: DefaultLayoutProps) => {
   return (
     <Bar $overHero={overHero}>
       <Inner>
-        <LogoContainer onClick={onGoHome}>{logo}</LogoContainer>
+        <LogoContainer $overHero={overHero} onClick={onGoHome}>
+          {logo}
+        </LogoContainer>
 
         <Links>
           {menuRoutes.map((route: any, index: number) => (
@@ -166,11 +168,14 @@ const Inner = styled.nav`
   }
 `;
 
-const LogoContainer = styled.div`
+// The mark is green wherever the bar is white, and black only while the bar is
+// transparent over the green hero — the wordmark stays black either way.
+const LogoContainer = styled.div<{ $overHero: boolean }>`
   cursor: pointer;
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  color: ${({ $overHero }) => ($overHero ? '#000000' : '#53ba6d')};
 `;
 
 const Links = styled.div`

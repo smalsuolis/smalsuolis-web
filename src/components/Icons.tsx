@@ -128,14 +128,14 @@ const Icon = ({ name, className, ...rest }: IconProps) => {
                 data-name="Path 3631"
                 d="M61.533,224h16.6a5.533,5.533,0,1,1,0,11.067h-16.6a5.533,5.533,0,1,1,0-11.067"
                 transform="translate(-56 -207.399)"
-                fill="#000000"
+                fill="currentColor"
               />
               <path
                 id="Path_3632"
                 data-name="Path 3632"
                 d="M229.533,56h0A5.533,5.533,0,1,1,224,61.533,5.533,5.533,0,0,1,229.533,56"
                 transform="translate(-207.4 -56)"
-                fill="#000000"
+                fill="currentColor"
               />
             </g>
             <g id="Group_7462" data-name="Group 7462" transform="translate(313.526 164)">

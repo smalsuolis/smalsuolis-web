@@ -243,25 +243,27 @@ const Stats = () => {
       <Header>
         <PageTitle>Statistika</PageTitle>
         <Controls>
+          <DatepickerWrap>
+            <Datepicker
+              onChange={(filterValue, date) => {
+                setDateFilter(filterValue);
+                setQuery(date);
+                if (filterValue === TimeRanges.CUSTOM) {
+                  setSearchParams({ range: filterValue, from: date.$gte, to: date.$lt });
+                } else {
+                  setSearchParams({ range: filterValue });
+                }
+              }}
+              value={dateFilter}
+              selectedDates={query}
+            />
+          </DatepickerWrap>
           <ToggleContainer onClick={() => setIsComparisonEnabled((v) => !v)}>
             <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
             <ToggleSwitch $isActive={isComparisonEnabled}>
               <ToggleCircle $isActive={isComparisonEnabled} />
             </ToggleSwitch>
           </ToggleContainer>
-          <Datepicker
-            onChange={(filterValue, date) => {
-              setDateFilter(filterValue);
-              setQuery(date);
-              if (filterValue === TimeRanges.CUSTOM) {
-                setSearchParams({ range: filterValue, from: date.$gte, to: date.$lt });
-              } else {
-                setSearchParams({ range: filterValue });
-              }
-            }}
-            value={dateFilter}
-            selectedDates={query}
-          />
         </Controls>
       </Header>
 
@@ -411,11 +413,20 @@ const Controls = styled.div`
   gap: 36px;
   flex-wrap: wrap;
 
+  /* The phone frame reverses them — the period picker on top, both full width. */
   @media ${device.mobileL} {
     width: 100%;
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: stretch;
-    gap: 16px;
+    gap: 24px;
+  }
+`;
+
+const DatepickerWrap = styled.div`
+  @media ${device.mobileL} {
+    > div > div {
+      width: 100%;
+    }
   }
 `;
 
@@ -433,11 +444,13 @@ const KpiStrip = styled.div`
     gap: 24px;
   }
 
-  /* Two per row on mobile (2/2/2 rather than the design's 3+2) — five tiles
-     leave the last one alone on its row, which is intended. */
+  /* The phone frame lets them wrap instead of gridding them, so each tile is
+     only as wide as its number. */
   @media ${device.mobileL} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 24px;
   }
 `;
 
@@ -464,6 +477,11 @@ const KpiValue = styled.div`
   font-weight: 400;
   letter-spacing: -0.05em;
   color: ${({ theme }) => theme.colors.text?.primary};
+
+  @media ${device.mobileL} {
+    font-size: 3rem;
+    line-height: 3.9rem;
+  }
 `;
 
 const SectionTitle = styled.h2`

@@ -1,33 +1,44 @@
-import { Button } from '@aplinkosministerija/design-system';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
+import { SubmitButton } from './authModalStyles';
 
-// Confirmation shown after a token flow (set/reset password) succeeds: a green
-// check, a message, and a button through to login. Matches the auth card look.
+// Confirmation shown after a token flow (set/reset password) succeeds. Same
+// shape as the "Pasitikrinkite el. paštą" frame: a green check over centred
+// copy, with the action as a black pill on the right.
 const TokenSuccessCard = ({
+  title,
   message,
   actionLabel,
   onAction,
 }: {
+  title: string;
   message: string;
   actionLabel: string;
   onAction: () => void;
 }) => (
   <Backdrop>
     <Card>
-      <CheckCircle aria-hidden="true">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M5 12.5l4 4 10-10"
-            stroke="#fff"
-            strokeWidth="2.4"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </CheckCircle>
-      <Message>{message}</Message>
-      <Action onClick={onAction}>{actionLabel}</Action>
+      <Content>
+        <CheckCircle aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 12.5l4 4 10-10"
+              stroke="#fff"
+              strokeWidth="2.4"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </CheckCircle>
+        <TextGroup>
+          <Heading>{title}</Heading>
+          <Message>{message}</Message>
+        </TextGroup>
+      </Content>
+
+      <Footer>
+        <SubmitButton onClick={onAction}>{actionLabel}</SubmitButton>
+      </Footer>
     </Card>
   </Backdrop>
 );
@@ -50,35 +61,65 @@ const Backdrop = styled.div`
 
 const Card = styled.div`
   width: 100%;
-  max-width: 480px;
+  max-width: 499px;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
-  padding: 32px 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+
+  @media ${device.mobileL} {
+    padding: 24px 16px;
+  }
+`;
+
+const Content = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   text-align: center;
 `;
 
 const CheckCircle = styled.div`
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background: ${({ theme }) => theme.colors.success};
+  background: #1fc84c;
   display: flex;
   align-items: center;
   justify-content: center;
 `;
 
-const Message = styled.div`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[700]};
-  max-width: 340px;
+const TextGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
 `;
 
-const Action = styled(Button)`
-  margin-top: 8px;
-  align-self: stretch;
+const Heading = styled.h2`
+  ${font('2xl')};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const Message = styled.div`
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+// Right-aligned on the 499 frame, full width on the 361 one.
+const Footer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+
+  @media ${device.mobileL} {
+    div:has(> button) {
+      width: 100%;
+    }
+  }
 `;
