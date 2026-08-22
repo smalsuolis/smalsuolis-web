@@ -10,18 +10,16 @@ const SubscribeBanner = () => {
   return (
     <Banner>
       <Content>
-        <Title>
-          Tapk Smalsuolio
-          <br />
-          prenumeratoriumi
-        </Title>
+        <Title>Tapk Smalsuolio prenumeratoriumi</Title>
         <Copy>
           Užsiregistruok. Pažymėk tave dominančias įvykių kategorijas. Gauk elektroniniu paštu
           naujausią informaciją apie tai, kas įvyko
         </Copy>
-        <Button variant="dark" size="lg" onClick={() => open('register')}>
-          Tapk Smalsiu
-        </Button>
+        <ButtonWrap>
+          <Button variant="dark" onClick={() => open('register')}>
+            Tapk Smalsiu
+          </Button>
+        </ButtonWrap>
       </Content>
     </Banner>
   );
@@ -36,7 +34,7 @@ const Banner = styled.div`
   position: relative;
   overflow: hidden;
   border-radius: 20px;
-  padding: 56px;
+  padding: 82px 56px 82px 83px;
   /* Design: 124px clear above, and 124 below — the footer already contributes
      its own 42px lead-in, so the rest lives here. */
   margin-top: 124px;
@@ -49,28 +47,43 @@ const Banner = styled.div`
      escapes the page gutter. */
   @media (max-width: 868px) {
     margin: 42px -16px 0;
-    padding: 36px;
+    padding: 46px 36px;
     border-radius: 0;
   }
 `;
 
+// The frame keeps 20px between the heading and the copy and 40 before the
+// button, so the button carries the remaining 20.
 const Content = styled.div`
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 20px;
   align-items: flex-start;
-  max-width: 560px;
+  max-width: 582px;
 `;
 
 const Title = styled.div`
-  ${font('3xl')};
+  font-size: 3.2rem;
+  line-height: 3.8rem;
+  font-weight: 500;
+  letter-spacing: -0.03em;
   color: ${({ theme }) => theme.colors.text?.primary};
 `;
 
 const Copy = styled.p`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.tertiary};
+  ${font('xl')};
+  color: ${({ theme }) => theme.colors.text?.primary};
   margin: 0;
-  max-width: 460px;
+`;
+
+const ButtonWrap = styled.div`
+  margin-top: 20px;
+
+  button {
+    width: 180px;
+    height: 40px;
+    min-height: 40px;
+    padding: 8px 24px;
+  }
 `;

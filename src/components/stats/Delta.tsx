@@ -58,11 +58,11 @@ export const DeltaPercent = ({
   );
 };
 
-const TONES = { up: '#1D7F36', down: '#7F1D1D', flat: '#5C5959' } as const;
+const TONES = { up: '#1D7F36', down: '#7F1D1D', flat: '#707070' } as const;
 
 const Percent = styled.span<{ $tone: keyof typeof TONES }>`
   font-size: 1.8rem;
-  line-height: 2.52rem;
+  line-height: 2.7rem;
   font-weight: 400;
   letter-spacing: -0.02em;
   white-space: nowrap;

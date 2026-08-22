@@ -87,7 +87,7 @@ const Meta = styled.div`
   flex-direction: column;
   ${font('sm')};
   line-height: 1.96rem;
-  color: #404040;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const MetaValue = styled.span`
@@ -99,6 +99,7 @@ const Pill = styled.div`
   padding: 8px 12px;
   border-radius: 128px;
   ${font('base', 500)};
+  letter-spacing: -0.01em;
   color: ${({ theme }) => theme.colors.text.primary};
   /* Inset ring, not a border: the design's 40px pill is padding + line box. */
   box-shadow: inset 0 0 0 1px rgba(83, 83, 83, 0.12);

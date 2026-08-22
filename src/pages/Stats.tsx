@@ -39,7 +39,7 @@ const APP_COLORS: Record<string, string> = {
   miskoKirtimai: '#CEFFAF',
   zemetvarkosPlanavimas: '#DACDFF',
   izuvinimas: '#9CDEFF',
-  savivaldybesZemetvarka: '#D9D9D9',
+  savivaldybesZemetvarka: '#DDDDDD',
 };
 
 const APP_SHORT_LABELS: Record<string, string> = {
@@ -217,7 +217,7 @@ const Stats = () => {
     return orderBy(
       Object.entries(byAppMap).map(([appType, count]) => ({
         label: APP_SHORT_LABELS[appType] || appType,
-        color: APP_COLORS[appType] || '#D9D9D9',
+        color: APP_COLORS[appType] || '#DDDDDD',
         count,
         previousCount: prevCity[appType],
         total: cityTotal,
@@ -243,6 +243,12 @@ const Stats = () => {
       <Header>
         <PageTitle>Statistika</PageTitle>
         <Controls>
+          <ToggleContainer onClick={() => setIsComparisonEnabled((v) => !v)}>
+            <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
+            <ToggleSwitch $isActive={isComparisonEnabled}>
+              <ToggleCircle $isActive={isComparisonEnabled} />
+            </ToggleSwitch>
+          </ToggleContainer>
           <DatepickerWrap>
             <Datepicker
               onChange={(filterValue, date) => {
@@ -258,12 +264,6 @@ const Stats = () => {
               selectedDates={query}
             />
           </DatepickerWrap>
-          <ToggleContainer onClick={() => setIsComparisonEnabled((v) => !v)}>
-            <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
-            <ToggleSwitch $isActive={isComparisonEnabled}>
-              <ToggleCircle $isActive={isComparisonEnabled} />
-            </ToggleSwitch>
-          </ToggleContainer>
         </Controls>
       </Header>
 
@@ -383,8 +383,8 @@ const Header = styled.div`
   @media ${device.mobileL} {
     flex-direction: column;
     align-items: stretch;
-    gap: 20px;
-    margin-bottom: 32px;
+    gap: 16px;
+    margin-bottom: 36px;
   }
 `;
 
@@ -396,7 +396,7 @@ const Rule = styled.div`
   margin: 48px 0;
 
   @media ${device.mobileL} {
-    margin: 32px 0;
+    margin: 36px 0;
   }
 `;
 
@@ -449,7 +449,7 @@ const KpiStrip = styled.div`
   @media ${device.mobileL} {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 24px;
   }
 `;
@@ -460,9 +460,10 @@ const Kpi = styled.div`
   gap: 4px;
 `;
 
+// Flattened #000 at the 70% the design applies to the caption.
 const KpiLabel = styled.div`
   ${font('lg')};
-  color: ${({ theme }) => theme.colors.grey[650]};
+  color: #4d4d4d;
 `;
 
 const KpiValueRow = styled.div`
@@ -487,6 +488,10 @@ const KpiValue = styled.div`
 const SectionTitle = styled.h2`
   ${font('xl', 500)};
   margin: 0 0 24px;
+
+  @media ${device.mobileL} {
+    margin-bottom: 16px;
+  }
 `;
 
 const CardGrid = styled.div`
@@ -535,6 +540,12 @@ const SourceGrid = styled.div`
      would push the track past the viewport instead of ellipsizing. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
+
+  /* The frame gives the odd card out the whole row. */
+  > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   @media ${device.mobileL} {
     grid-template-columns: minmax(0, 1fr);
   }

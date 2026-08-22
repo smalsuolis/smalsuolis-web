@@ -1,6 +1,15 @@
 import styled from 'styled-components';
 import Delta from './Delta';
-import { Card, CardHeader, CardHeading, RowLabel, RowList, RowValues, StatRow } from './cardStyles';
+import {
+  Card,
+  CardHeader,
+  CardHeading,
+  RowCount,
+  RowLabel,
+  RowList,
+  RowValues,
+  StatRow,
+} from './cardStyles';
 
 export interface CityRow {
   label: string;
@@ -36,12 +45,12 @@ const CityCard = ({
             <RowLabel>{r.label}</RowLabel>
             <RowValues>
               <Percent>{pct.toFixed(1)}%</Percent>
-              <Count>{r.count.toLocaleString('lt-LT')}</Count>
-              <DeltaCell>
+              <RowCount>
+                {r.count.toLocaleString('lt-LT')}
                 {showComparison && (
                   <Delta current={r.count} previous={r.previousCount} isFetching={isFetching} />
                 )}
-              </DeltaCell>
+              </RowCount>
             </RowValues>
           </Row>
         );
@@ -52,8 +61,14 @@ const CityCard = ({
 
 export default CityCard;
 
+// The frame leaves 4px between the dot and its label, not the row's 12.
 const Row = styled(StatRow)`
   grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 4px;
+
+  ${RowValues} {
+    margin-left: 8px;
+  }
 `;
 
 const Dot = styled.span<{ $color: string }>`
@@ -66,16 +81,5 @@ const Dot = styled.span<{ $color: string }>`
 
 const Percent = styled.span`
   color: ${({ theme }) => theme.colors.grey[500]};
-  text-align: right;
-`;
-
-const Count = styled.span`
-  font-weight: 700;
-  text-align: right;
-  min-width: 44px;
-`;
-
-const DeltaCell = styled.span`
-  min-width: 38px;
   text-align: right;
 `;

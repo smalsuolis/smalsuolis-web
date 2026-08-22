@@ -88,6 +88,14 @@ export const RowValues = styled.div`
   white-space: nowrap;
 `;
 
+// The count and its change read as one number — 4px apart, not 12.
+export const RowCount = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+`;
+
 export const MoreButton = styled.button`
   align-self: flex-start;
   padding: 0;

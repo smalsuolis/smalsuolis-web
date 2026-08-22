@@ -8,6 +8,7 @@ import {
   CircleIcon,
   IconCircle,
   MoreButton,
+  RowCount,
   RowLabel,
   RowList,
   RowValues,
@@ -68,12 +69,12 @@ const BreakdownCard = ({
               <RowLabel>{r.label}</RowLabel>
               <RowValues>
                 <Percent>{pct.toFixed(1)}%</Percent>
-                <Count>{r.count.toLocaleString('lt-LT')}</Count>
-                <DeltaCell>
+                <RowCount>
+                  {r.count.toLocaleString('lt-LT')}
                   {showComparison && (
                     <Delta current={r.count} previous={r.previousCount} isFetching={isFetching} />
                   )}
-                </DeltaCell>
+                </RowCount>
               </RowValues>
             </Row>
           );
@@ -112,16 +113,5 @@ const EmptyRow = styled.div`
 
 const Percent = styled.span`
   color: ${({ theme }) => theme.colors.grey[500]};
-  text-align: right;
-`;
-
-const Count = styled.span`
-  font-weight: 700;
-  text-align: right;
-  min-width: 48px;
-`;
-
-const DeltaCell = styled.span`
-  min-width: 40px;
   text-align: right;
 `;
