@@ -126,6 +126,8 @@ const Container = styled.div`
     opacity: 0.6;
   }
   .react-datepicker__day {
+    position: relative;
+    z-index: 0;
     width: 44px;
     height: 44px;
     line-height: 44px;
@@ -170,31 +172,8 @@ const Container = styled.div`
       transform: translate(-50%, -50%);
     }
   }
-  .react-datepicker__day--selected {
-    position: relative;
-    text-align: center;
-    z-index: 1;
-    font-size: 1.5rem;
-    background-color: ${({ theme }) => theme.colors.black} !important;
-    color: white;
-    border-radius: 50%;
-  }
-  .react-datepicker__day--keyboard-selected {
-    background-color: ${({ theme }) => theme.colors.black};
-    color: white;
-    text-align: center;
-    font-size: 1.5rem;
-    border-radius: 50%;
-    &:focus {
-      outline: none;
-    }
-    &::before {
-      content: '';
-      position: absolute;
-      background-color: ${({ theme }) => theme.colors.black};
-      text-align: center;
-      z-index: -1;
-    }
+  .react-datepicker__day--keyboard-selected:focus {
+    outline: none;
   }
   .react-datepicker__day-name {
     font-size: 1.4rem;
@@ -215,31 +194,69 @@ const Container = styled.div`
   .react-datepicker__current-month {
     display: none;
   }
-  /* The days between the ends read as a band, not as a filled block. */
-  .react-datepicker__day--in-range {
-    background-color: #fafafa !important;
-    color: ${({ theme }) => theme.colors.text.primary} !important;
-    border-radius: 0 !important;
-    z-index: 5 !important;
-    margin: 0 !important;
-  }
-  .react-datepicker__day--in-selecting-range {
-    background-color: #fafafa !important;
+  /* The range is drawn as one 36px track behind the numbers, with the two ends
+     as knobs sitting on it — a full-height filled cell read as stray grey
+     blocks with square corners where a week wrapped. */
+  .react-datepicker__day--in-range,
+  .react-datepicker__day--in-selecting-range,
+  .react-datepicker__day--selected,
+  .react-datepicker__day--range-start,
+  .react-datepicker__day--range-end {
+    background-color: transparent !important;
     color: ${({ theme }) => theme.colors.text.primary};
-    border-radius: 0 !important;
+    border-radius: 0;
   }
+  .react-datepicker__day--in-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected)::before,
+  .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected)::before {
+    content: '';
+    position: absolute;
+    inset: 4px 0;
+    background-color: #f3f3f3;
+    z-index: -1;
+  }
+  /* A wrapped week ends the track at Monday and Sunday, so round it there. */
+  .react-datepicker__day--in-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):first-child::before,
+  .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):first-child::before {
+    border-radius: 18px 0 0 18px;
+  }
+  .react-datepicker__day--in-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):last-child::before,
+  .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):last-child::before {
+    border-radius: 0 18px 18px 0;
+  }
+  .react-datepicker__day--selected::after,
+  .react-datepicker__day--range-start::after,
+  .react-datepicker__day--range-end::after,
+  .react-datepicker__day--selecting-range-start::after,
+  .react-datepicker__day--selecting-range-end::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background-color: ${({ theme }) => theme.colors.black};
+    z-index: -1;
+  }
+  .react-datepicker__day--selected,
   .react-datepicker__day--range-start,
   .react-datepicker__day--range-end,
   .react-datepicker__day--selecting-range-start,
   .react-datepicker__day--selecting-range-end,
+  .react-datepicker__day--selected:hover,
   .react-datepicker__day--range-start:hover,
-  .react-datepicker__day--range-end:hover,
-  .react-datepicker__day--selected:hover {
-    background-color: ${({ theme }) => theme.colors.black} !important;
-    color: white !important;
-    border-radius: 50% !important;
-    position: relative !important;
-    z-index: 1 !important;
+  .react-datepicker__day--range-end:hover {
+    background-color: transparent !important;
+    color: ${({ theme }) => theme.colors.white} !important;
   }
   .react-datepicker__children-container {
     width: 100%;
