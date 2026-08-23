@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Div100vh from 'react-div-100vh';
 import styled from 'styled-components';
 import { DefaultLayoutProps, Modal } from '@aplinkosministerija/design-system';
 import { device, font } from '../../../styles';
@@ -132,16 +131,25 @@ export default MobileMenu;
 // rather than a separate sheet dropping in.
 const HERO_GREEN = '#94EFAD';
 
-const Panel = styled(Div100vh)<{ $green: boolean }>`
-  width: 100%;
+// It drops from the bar and ends 20px under the last entry — the frame gives it
+// 558 of the phone's 800, not the whole screen.
+const Panel = styled.div<{ $green: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
   background: ${({ $green, theme }) => ($green ? HERO_GREEN : theme.colors.white)};
   display: flex;
   flex-direction: column;
+  padding-bottom: 20px;
 
   @media ${device.desktop} {
-    max-width: 480px;
-    min-height: fit-content;
-    border-radius: 16px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 480px;
+    border-radius: 0 0 16px 16px;
   }
 `;
 
