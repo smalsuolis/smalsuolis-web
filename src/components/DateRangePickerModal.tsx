@@ -3,6 +3,7 @@ import Datepicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import styled from 'styled-components';
 import { device, useWindowSize } from '@aplinkosministerija/design-system';
+import { font } from '../styles';
 import Icon from './Icons';
 import { IconName } from '../utils';
 
@@ -31,15 +32,6 @@ const DateRangePickerModal = ({
   return (
     <Container tabIndex={1} onBlur={handleBlur}>
       <DateContainer>
-        {isMobile && (
-          <div
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            <CloseIcon name={IconName.close} />
-          </div>
-        )}
         <Datepicker
           locale="lt"
           selected={startDate}
@@ -71,6 +63,11 @@ const DateRangePickerModal = ({
               <YearNavButton onClick={increaseYear} title="Kiti metai">
                 ››
               </YearNavButton>
+              {isMobile && (
+                <CloseButton type="button" aria-label="Uždaryti" onClick={() => setOpen(false)}>
+                  <CloseIcon name={IconName.close} />
+                </CloseButton>
+              )}
             </CustomHeader>
           )}
         >
@@ -102,14 +99,17 @@ const DateContainer = styled.div`
   }
 `;
 
-const CloseIcon = styled(Icon)`
-  color: white;
-  font-size: 2.8rem;
-  align-self: center;
-  position: absolute;
-  right: 10px;
-  top: 10px;
+const CloseButton = styled.button`
+  display: flex;
+  margin-left: 8px;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
+`;
+
+const CloseIcon = styled(Icon)`
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 2.4rem;
 `;
 
 const Container = styled.div`
@@ -137,8 +137,7 @@ const Container = styled.div`
     align-items: center;
     border-radius: 50%;
     &:hover {
-      background-color: ${({ theme }) => theme.colors.tertiary} !important;
-      color: white;
+      background-color: #fafafa !important;
     }
     @media ${device.mobileL} {
       width: 40px;
@@ -148,16 +147,24 @@ const Container = styled.div`
   }
   .react-datepicker {
     position: absolute;
-    top: 5px;
+    top: 4px;
+    /* The trigger sits at the right edge of the toolbar, so the panel hangs
+       leftwards from it instead of running off the viewport. */
+    right: 0;
     z-index: 8;
     background-color: #ffffff;
-    box-shadow: 0px 2px 16px #121a5529;
-    border-radius: 10px;
-    padding: 0px 26px 20px 26px;
-    border: none;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    padding: 0 24px 24px;
+    border: 1px solid #ededed;
+
+    /* On a phone it is a centred card, sized to the viewport rather than to a
+       fixed 375 that overflowed the narrower ones. */
     @media ${device.mobileL} {
-      padding: 0px 16px 20px 16px;
-      width: 375px;
+      width: calc(100vw - 32px);
+      max-width: 361px;
+      padding: 0 16px 24px;
+      right: auto;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
@@ -168,12 +175,12 @@ const Container = styled.div`
     text-align: center;
     z-index: 1;
     font-size: 1.5rem;
-    background-color: ${({ theme }) => theme.colors.tertiary} !important;
+    background-color: ${({ theme }) => theme.colors.black} !important;
     color: white;
     border-radius: 50%;
   }
   .react-datepicker__day--keyboard-selected {
-    background-color: ${({ theme }) => theme.colors.tertiary};
+    background-color: ${({ theme }) => theme.colors.black};
     color: white;
     text-align: center;
     font-size: 1.5rem;
@@ -184,14 +191,14 @@ const Container = styled.div`
     &::before {
       content: '';
       position: absolute;
-      background-color: ${({ theme }) => theme.colors.tertiary};
+      background-color: ${({ theme }) => theme.colors.black};
       text-align: center;
       z-index: -1;
     }
   }
   .react-datepicker__day-name {
-    font-size: 1.5rem;
-    color: ${({ theme }) => theme.colors.tertiary};
+    font-size: 1.4rem;
+    color: ${({ theme }) => theme.colors.grey[600]};
     width: 44px;
     padding: 0;
     margin: 0;
@@ -208,48 +215,36 @@ const Container = styled.div`
   .react-datepicker__current-month {
     display: none;
   }
+  /* The days between the ends read as a band, not as a filled block. */
   .react-datepicker__day--in-range {
-    background-color: ${({ theme }) => theme.colors.tertiary} !important;
-    color: #101828 !important;
-    border-radius: 0px !important;
+    background-color: #fafafa !important;
+    color: ${({ theme }) => theme.colors.text.primary} !important;
+    border-radius: 0 !important;
     z-index: 5 !important;
     margin: 0 !important;
-    color: white !important;
+  }
+  .react-datepicker__day--in-selecting-range {
+    background-color: #fafafa !important;
+    color: ${({ theme }) => theme.colors.text.primary};
+    border-radius: 0 !important;
   }
   .react-datepicker__day--range-start,
-  .react-datepicker__day--range-end {
-    background-color: ${({ theme }) => theme.colors.tertiary} !important;
+  .react-datepicker__day--range-end,
+  .react-datepicker__day--selecting-range-start,
+  .react-datepicker__day--selecting-range-end,
+  .react-datepicker__day--range-start:hover,
+  .react-datepicker__day--range-end:hover,
+  .react-datepicker__day--selected:hover {
+    background-color: ${({ theme }) => theme.colors.black} !important;
     color: white !important;
+    border-radius: 50% !important;
     position: relative !important;
     z-index: 1 !important;
   }
-  .react-datepicker__day--range-start {
-    border-top-left-radius: 50% !important;
-    border-bottom-left-radius: 50% !important;
-  }
-  .react-datepicker__day--range-end {
-    border-top-right-radius: 50% !important;
-    border-bottom-right-radius: 50% !important;
-  }
-  .react-datepicker__day--range-start::before,
-  .react-datepicker__day--range-end::before {
-    content: '';
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    position: absolute;
-    top: 50%;
-    left: 0px;
-    z-index: -1;
-  }
-  .react-datepicker__day--range-end::before {
-    margin-left: 13px;
-    transform: translate(-10px, -50%);
-  }
-  .react-datepicker__day--in-selecting-range {
-    background-color: #dff9e5 !important;
-    color: #101828;
-    border-radius: 50% !important;
+  .react-datepicker__children-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 `;
 
@@ -261,8 +256,7 @@ const CustomHeader = styled.div`
 `;
 
 const MonthLabel = styled.span`
-  font-size: 1.5rem;
-  font-weight: 600;
+  ${font('base', 500)};
   color: black;
   text-transform: capitalize;
   flex: 1;
@@ -281,10 +275,10 @@ const NavButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.tertiary};
+  color: ${({ theme }) => theme.colors.text.primary};
   transition: background-color 0.15s ease;
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary}40;
+    background-color: #fafafa;
   }
 `;
 
@@ -297,29 +291,30 @@ const YearNavButton = styled(NavButton)`
 
 const OkButtonContainer = styled.div`
   display: flex;
-  justify-content: flex-start;
-  padding: 16px 0 0 0;
-  border-top: 1px solid #e5e7eb;
+  justify-content: flex-end;
+  padding-top: 24px;
+  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
   margin-top: 16px;
-  width: 320px;
-  @media ${device.mobileL} {
-    width: 100%;
-  }
+  width: 100%;
 `;
 
+// The same black pill every other primary action uses.
 const OkButton = styled.button`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.colors.tertiary};
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 1.4rem;
-  font-weight: 600;
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
+  background-color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base')};
   cursor: pointer;
   transition: opacity 0.2s;
 
   &:hover {
-    opacity: 0.8;
+    opacity: 0.9;
+  }
+
+  @media ${device.mobileL} {
+    width: 100%;
   }
 `;
 
