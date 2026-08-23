@@ -103,7 +103,10 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
     geom: subscription?.geom,
     // WEEK is the first selectable pill; DAY is legacy-only (see FrequencyPills).
     frequency: subscription?.frequency || Frequency.WEEK,
-    futureApps: subscription?.id ? (subscription?.apps || []).length === 0 : true,
+    // Off to start with: a new subscription asks for an explicit choice (the
+    // validation requires one area), and the switch is opt-in rather than
+    // something to notice and undo. An existing one still reports what it holds.
+    futureApps: subscription?.id ? (subscription?.apps || []).length === 0 : false,
     textFilter: subscription?.textFilter ?? '',
   };
 
