@@ -181,7 +181,9 @@ export default SritysFilterModal;
 
 const Panel = styled.div`
   background: ${({ theme }) => theme.colors.white};
-  width: 100%;
+  /* Keeps its 16px gutters on a viewport narrower than the 361 phone frame,
+     rather than running flush to both edges with rounded corners cut off. */
+  width: calc(100% - 32px);
   max-width: 361px;
   max-height: 84vh;
   display: flex;

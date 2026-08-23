@@ -106,11 +106,12 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
 const Popover = styled(Menu)`
   position: absolute;
   top: calc(100% + 8px);
-  left: 0;
-  /* Grows past the trigger so rows stay on one line. */
+  /* Every trigger sits in the right-hand control slot, so the menu grows
+     leftwards past it — anchored left it ran off a narrow viewport. */
+  right: 0;
   min-width: 100%;
   width: max-content;
-  max-width: 320px;
+  max-width: min(320px, calc(100vw - 32px));
   max-height: 320px;
   z-index: 30;
 `;

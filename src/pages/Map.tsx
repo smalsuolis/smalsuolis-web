@@ -31,6 +31,8 @@ proj4.defs(
 // disappears. 400 m keeps the surrounding block in view.
 const ADDRESS_EXTENT_M = 400;
 
+const REGISTER_CARD_DISMISSED = 'smalsuolis.registerCardDismissed';
+
 const addressFeatureCollection3346 = (geometry: AddressSuggestion['geometry']) => {
   const [lng, lat] = geometry.coordinates;
   const [cx, cy] = proj4('EPSG:4326', 'EPSG:3346', [lng, lat]);
@@ -109,8 +111,24 @@ const MapPage = () => {
   });
   const [filterOpen, setFilterOpen] = useState(false);
   // The phone frame replaces the register pill with a dismissible card over the
-  // map; dismissing it leaves the map unobstructed.
-  const [registerCardOpen, setRegisterCardOpen] = useState(true);
+  // map. Dismissing it sticks: it is a prompt, and re-covering a third of the
+  // map on every visit after the user said no is what made it feel intrusive.
+  const [registerCardOpen, setRegisterCardOpen] = useState(() => {
+    try {
+      return localStorage.getItem(REGISTER_CARD_DISMISSED) !== '1';
+    } catch {
+      return true;
+    }
+  });
+
+  const dismissRegisterCard = () => {
+    setRegisterCardOpen(false);
+    try {
+      localStorage.setItem(REGISTER_CARD_DISMISSED, '1');
+    } catch {
+      // A browser with storage blocked just shows the card again next visit.
+    }
+  };
   // A range from the events page belongs to a different vocabulary, so anything
   // this page cannot render falls back to its own default rather than blanking.
   const [periodKey, setPeriodKey] = useState<string>(() => {
@@ -244,24 +262,7 @@ const MapPage = () => {
 
       {/* Bottom controls (Figma): register CTA left, list-view toggle right. On
           mobile they stack and center. */}
-      {!loggedIn && registerCardOpen && (
-        <RegisterCard>
-          <RegisterClose
-            type="button"
-            aria-label="Uždaryti"
-            onClick={() => setRegisterCardOpen(false)}
-          >
-            <Icon name={IconName.close} />
-          </RegisterClose>
-          <RegisterText>
-            <RegisterTitle>Dar neturite paskyros?</RegisterTitle>
-            <div>Užsiregistruokite ir tapkite Smalsuoliu.</div>
-          </RegisterText>
-          <RegisterButton onClick={() => openAuthModal('register')}>Registruotis</RegisterButton>
-        </RegisterCard>
-      )}
-
-      <BottomBar $liftedForCard={!loggedIn && registerCardOpen}>
+      <BottomBar>
         {!loggedIn && (
           <RegisterCta onClick={() => openAuthModal('register')}>
             Dar neturite paskyros? Užsiregistruokite
@@ -271,6 +272,18 @@ const MapPage = () => {
           <Icon name={IconName.list} />
           Rodyti įvykių sąrašą
         </ListToggle>
+        {!loggedIn && registerCardOpen && (
+          <RegisterCard>
+            <RegisterClose type="button" aria-label="Uždaryti" onClick={dismissRegisterCard}>
+              <Icon name={IconName.close} />
+            </RegisterClose>
+            <RegisterText>
+              <RegisterTitle>Dar neturite paskyros?</RegisterTitle>
+              <div>Užsiregistruokite ir tapkite Smalsuoliu.</div>
+            </RegisterText>
+            <RegisterButton onClick={() => openAuthModal('register')}>Registruotis</RegisterButton>
+          </RegisterCard>
+        )}
       </BottomBar>
 
       <SritysFilterModal
@@ -302,7 +315,7 @@ const Page = styled.div`
 // The right inset clears the map iframe's own zoom / locate / layer controls,
 // which the embed draws hard against its right edge — they're cross-origin, so
 // we move around them rather than restyling them.
-const BottomBar = styled.div<{ $liftedForCard: boolean }>`
+const BottomBar = styled.div`
   position: absolute;
   left: 0;
   right: 0;
@@ -322,10 +335,11 @@ const BottomBar = styled.div<{ $liftedForCard: boolean }>`
   @media ${device.mobileL} {
     /* Stacked on mobile the bar spans the full width, so it clears the side
        controls by sitting below them instead. */
-    padding: 0 20px;
-    /* The register card owns the bottom slot while it is up, so step over it
-       rather than letting it bury the list toggle. */
-    bottom: ${({ $liftedForCard }) => ($liftedForCard ? '203px' : '23px')};
+    /* One bottom-anchored stack: the toggle sits above the register card with
+       a real gap, whatever height the card's text wraps to. */
+    padding: 0 16px;
+    bottom: 23px;
+    gap: 16px;
     flex-direction: column;
     align-items: stretch;
   }
@@ -365,15 +379,11 @@ const RegisterCard = styled.div`
   display: none;
 
   @media ${device.mobileL} {
-    position: absolute;
-    z-index: 22;
-    left: 50%;
-    transform: translateX(-50%);
-    /* 361 wide, 23 off the bottom — the phone frame's own numbers, kept when
-       the viewport is wider than that frame. */
-    width: calc(100% - 32px);
+    position: relative;
+    align-self: center;
+    /* 361 wide — the phone frame's number, kept when the viewport is wider. */
+    width: 100%;
     max-width: 361px;
-    bottom: 23px;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -383,6 +393,13 @@ const RegisterCard = styled.div`
     box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
     ${font('base')};
     color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  /* Narrower than the phone frame the copy wraps to a third line, so trade
+     padding for map rather than growing the card. */
+  @media (max-width: 360px) {
+    gap: 12px;
+    padding: 16px;
   }
 `;
 
@@ -447,7 +464,9 @@ const ListToggle = styled.button`
   }
 
   @media ${device.mobileL} {
-    width: 321px;
+    width: 100%;
+    max-width: 321px;
+    min-width: 0;
     margin: 0 auto;
   }
 `;
