@@ -133,7 +133,12 @@ const TopNav = (props: DefaultLayoutProps) => {
         </Right>
       </Inner>
 
-      <MobileMenu visible={showMenu} onClose={() => setShowMenu(false)} {...props} />
+      <MobileMenu
+        visible={showMenu}
+        onClose={() => setShowMenu(false)}
+        overHero={overHero}
+        {...props}
+      />
     </Bar>
   );
 };
