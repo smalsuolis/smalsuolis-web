@@ -8,6 +8,7 @@ import { timeRangeQuery, TimeRanges } from '../../utils/types';
 import api from '../../utils/api';
 import Icon from '../Icons';
 import SritysCheckList from '../SritysCheckList';
+import Loader from '../Loader';
 import { useCategoryLeafIds } from '../../utils/sritys';
 
 const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
@@ -82,7 +83,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
   // row already loaded (api.getStats(ALL_TIME).count). Because it's shared cache,
   // the number is already in memory before the modal opens — it shows instantly,
   // no modal-specific request, no loading state.
-  const { data: statsData } = useQuery({
+  const { data: statsData, isFetching: statsFetching } = useQuery({
     queryKey: ['home-stats', ALL_TIME],
     queryFn: () => api.getStats(ALL_TIME),
     staleTime: 5 * 60 * 1000,
@@ -91,7 +92,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
   // Filtered count: fetched fresh for the current filter query. No placeholder —
   // `data` is only ever the real result for the current query key (undefined
   // while a new query loads).
-  const { data: filteredCount } = useQuery({
+  const { data: filteredCount, isFetching: filteredFetching } = useQuery({
     queryKey: ['events', 'count', query],
     queryFn: () => api.getEventsCount({ query }),
     enabled: hasFilters,
@@ -99,6 +100,9 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
   });
 
   const freshCount = hasFilters ? filteredCount : statsData?.count;
+  // Ticking a row refetches the count, and the button kept showing the previous
+  // number until it landed. Say it is working instead of looking already done.
+  const countLoading = hasFilters ? filteredFetching : statsFetching;
 
   // Hold the last real count so the button never blanks while a new one loads;
   // it updates (and the label fades once) only when fresh data arrives.
@@ -170,6 +174,11 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
                 ? 'Rodyti rezultatus'
                 : buttonsTitles.showResults(settledCount)}
             </FadeText>
+            {/* The slot is always there, so showing the spinner cannot shift the
+                label under the pointer. */}
+            <Spinner $visible={countLoading} aria-hidden={!countLoading}>
+              <Loader size="16px" color="#ffffff" />
+            </Spinner>
           </ApplyButton>
         </Footer>
       </Panel>
@@ -271,6 +280,10 @@ const ClearLink = styled.button`
 
 const ApplyButton = styled.button`
   ${font('base')};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   min-width: 205px;
   height: 40px;
   padding: 8px 24px;
@@ -279,6 +292,14 @@ const ApplyButton = styled.button`
   color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   white-space: nowrap;
+`;
+
+const Spinner = styled.span<{ $visible: boolean }>`
+  display: flex;
+  width: 16px;
+  height: 16px;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 0.15s ease;
 `;
 
 const fadeIn = keyframes`

@@ -29,6 +29,7 @@ import Pagination from './Pagination';
 import PeriodDropdown from './PeriodDropdown';
 import Icon from './Icons';
 import LoaderComponent from './LoaderComponent';
+import Loader from './Loader';
 import MapView from './MapView';
 import { UserContext, UserContextType } from './UserProvider';
 import { useAuthModal } from './auth/AuthModalContext';
@@ -306,6 +307,10 @@ const EventsContainer = ({
     placeholderData: (previous: any) => previous,
   });
 
+  // The debounce means the query has not started yet, but the user has already
+  // typed — so the field counts as busy from the keystroke, not from the request.
+  const searchPending = searchInput !== search || (isFetching && !!search);
+
   const setPage = (next: number) => {
     setSearchParams(
       (prev) => {
@@ -321,6 +326,9 @@ const EventsContainer = ({
 
   const renderListContent = () => {
     if (isEmpty(events?.rows)) {
+      // Mid-fetch there is no answer yet, and "the feed is empty" is the wrong
+      // one to show while typing a search that is still running.
+      if (isFetching) return <LoaderComponent />;
       return (
         <EmptyState
           title={emptyStateTitle}
@@ -426,6 +434,11 @@ const EventsContainer = ({
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder={inputLabels.searchEvents}
           />
+          {/* Covers the debounce too: from the keystroke until the rows land,
+              the field is the thing the user is looking at. */}
+          <SearchSpinner $visible={searchPending}>
+            <Loader size="16px" color="#9AA4B2" />
+          </SearchSpinner>
           {searchInput && (
             <ClearButton onClick={() => setSearchInput('')}>
               <Icon name={IconName.close} size={16} color={'#9AA4B2'} />
@@ -639,6 +652,15 @@ const SearchField = styled.div`
     width: 100%;
     flex: none;
   }
+`;
+
+const SearchSpinner = styled.span<{ $visible: boolean }>`
+  display: flex;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 0.15s ease;
 `;
 
 const SearchInput = styled.input`

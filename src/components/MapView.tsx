@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { device } from '../styles';
 import { IconName } from '../utils';
 import Icon from './Icons';
+import Loader from './Loader';
 
 const mapsHost = import.meta.env.VITE_MAPS_HOST || 'https://dev-maps.biip.lt';
 
@@ -75,6 +76,11 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
             </StyledIconContainer>
           </StyledButton>
         )}
+        {!isIframeLoaded && (
+          <MapLoader>
+            <Loader color="#7c7c7c" />
+          </MapLoader>
+        )}
         <StyledIframe
           allow="geolocation *"
           ref={iframeRef}
@@ -123,6 +129,9 @@ const InnerContainer = styled.div<{
   position: relative;
   width: 100%;
   height: 100%;
+  /* The map's own ground colour, so the wait is a map that has not drawn yet
+     rather than a blank page. */
+  background: #f7f5f2;
   justify-content: center;
   align-items: center;
   ${({ $showModal }) =>
@@ -134,6 +143,19 @@ const InnerContainer = styled.div<{
   @media ${device.mobileL} {
     padding: 0;
   }
+`;
+
+// The frame paints nothing until its document is up. It reports that much and
+// no more — there is no message for "tiles are drawn" — so the spinner covers
+// the fetch and the neutral ground below covers the rest of the wait, instead
+// of the area reading as a broken white page.
+const MapLoader = styled.div`
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
 `;
 
 const StyledIframe = styled.iframe<{

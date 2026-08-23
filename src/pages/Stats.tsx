@@ -91,10 +91,13 @@ const Stats = () => {
       ? { ...query, $gte: lastUpdateData.firstGlobalEvent.slice(0, 16) }
       : query;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['stats', effectiveQuery],
     queryFn: () => api.getStats(effectiveQuery),
     refetchOnWindowFocus: false,
+    // Changing the range used to blank the whole page behind one big spinner.
+    // Keep the numbers on screen and let the title say a new set is coming.
+    placeholderData: (previous) => previous,
   });
 
   // Adaptive default range: when the user hasn't explicitly chosen a range and
@@ -241,7 +244,14 @@ const Stats = () => {
   return (
     <Page>
       <Header>
-        <PageTitle>Statistika</PageTitle>
+        <PageTitle>
+          Statistika
+          {/* Changing the range refetches every number on the page. Without this
+              the old ones sit there looking settled for the second it takes. */}
+          <TitleSpinner $visible={isFetching && !isLoading}>
+            <Loader size="20px" color="#7c7c7c" />
+          </TitleSpinner>
+        </PageTitle>
         <Controls>
           <ToggleContainer onClick={() => setIsComparisonEnabled((v) => !v)}>
             <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
@@ -555,6 +565,17 @@ const SourceGrid = styled.div`
   @media ${device.mobileL} {
     grid-template-columns: minmax(0, 1fr);
   }
+`;
+
+// The slot is always rendered, so the title never shifts when it appears.
+const TitleSpinner = styled.span<{ $visible: boolean }>`
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  margin-left: 12px;
+  vertical-align: middle;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 0.15s ease;
 `;
 
 const LoaderContainer = styled.div`
