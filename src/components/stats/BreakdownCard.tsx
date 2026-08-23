@@ -4,6 +4,7 @@ import Delta from './Delta';
 import {
   Card,
   CardHeader,
+  CardTotal,
   CardHeading,
   CircleIcon,
   IconCircle,
@@ -57,7 +58,7 @@ const BreakdownCard = ({
           </IconCircle>
           <CardHeading>{title}</CardHeading>
         </TitleGroup>
-        <CardHeading as="div">{total.toLocaleString('lt-LT')}</CardHeading>
+        <CardTotal as="div">{total.toLocaleString('lt-LT')}</CardTotal>
       </CardHeader>
 
       <RowList>

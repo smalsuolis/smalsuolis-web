@@ -444,13 +444,19 @@ const KpiStrip = styled.div`
     gap: 24px;
   }
 
-  /* The phone frame lets them wrap instead of gridding them, so each tile is
-     only as wide as its number. */
+  /* Equal columns would clip the longer labels well before the tiles stop
+     fitting, so below the grid they hug their number and wrap — still spread
+     across the row, as the desktop frame spreads them. */
   @media ${device.mobileL} {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: space-between;
     gap: 24px;
+  }
+
+  /* The phone frame centres each wrapped row. */
+  @media ${device.mobileM} {
+    justify-content: center;
   }
 `;
 

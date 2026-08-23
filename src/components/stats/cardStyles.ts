@@ -35,6 +35,13 @@ export const CardHeading = styled.div`
   white-space: nowrap;
 `;
 
+// The card's count is its payload: the title gives up width to it, never the
+// other way round.
+export const CardTotal = styled(CardHeading)`
+  flex-shrink: 0;
+  overflow: visible;
+`;
+
 export const IconCircle = styled.span<{ $bg: string }>`
   width: 24px;
   height: 24px;
