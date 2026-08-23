@@ -1,9 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { font } from '../styles';
 import { Menu, MenuItem } from './ui/Menu';
 import { IconName } from '../utils';
+import {
+  displayCustomDateFilterLabel,
+  formatDateAndTime,
+  formatDateFrom,
+  formatDateTo,
+} from '../utils/functions';
+import { TimeRanges } from '../utils/types';
 import Icon from './Icons';
+import DateRangePickerModal from './DateRangePickerModal';
 
 export interface PeriodOption {
   key: string;
@@ -11,13 +19,14 @@ export interface PeriodOption {
   query: { $gte: string; $lt: string };
 }
 
-// Compact pill dropdown for selecting a time range. Used as a floating control
-// on the map page; options come from the shared statsTimeRangeItems.
+// The one time-range control: the map, the events feed and the statistics page
+// all use it, so "Pasirinkite datą" behaves the same in each.
 const PeriodDropdown = ({
   options,
   value,
   onChange,
   placeholder = 'Pasirinkite',
+  selectedDates,
 }: {
   options: PeriodOption[];
   value: string;
@@ -25,9 +34,23 @@ const PeriodDropdown = ({
   // Shown when nothing is selected. The events filters pass a meaningful
   // label ("Sritys", "Data") rather than a generic prompt.
   placeholder?: string;
+  // The range behind a CUSTOM selection, so the trigger can name it and the
+  // picker can open on it.
+  selectedDates?: { $gte: string; $lt: string };
 }) => {
   const [open, setOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [range, setRange] = useState({ start: new Date(), end: new Date() });
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedDates?.$gte) {
+      setRange({ start: new Date(selectedDates.$gte), end: new Date(selectedDates.$lt) });
+    }
+    // Seeds the picker from the incoming range on mount only — tracking it would
+    // clobber a selection in progress.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -38,30 +61,66 @@ const PeriodDropdown = ({
   }, []);
 
   const current = options.find((o) => o.key === value);
+  const label =
+    value === TimeRanges.CUSTOM && selectedDates?.$gte
+      ? displayCustomDateFilterLabel({
+          start: new Date(selectedDates.$gte),
+          end: new Date(selectedDates.$lt),
+        })
+      : current?.name ?? placeholder;
+
+  const commitRange = (start: Date, end: Date) =>
+    onChange({
+      key: TimeRanges.CUSTOM,
+      name: displayCustomDateFilterLabel({ start, end }),
+      query: {
+        $gte: formatDateAndTime(formatDateFrom(start)),
+        $lt: formatDateAndTime(formatDateTo(end || start)),
+      },
+    });
 
   return (
     <Wrap ref={ref}>
       <Trigger type="button" onClick={() => setOpen((v) => !v)}>
-        <Label>{current?.name ?? placeholder}</Label>
+        <Label>{label}</Label>
         <Chevron name={IconName.dropdownArrow} $open={open} />
       </Trigger>
       {open && (
         <Popover>
-          {options.map((o) => (
-            <Item
-              as="button"
-              type="button"
-              key={o.key}
-              $active={o.key === value}
-              onClick={() => {
-                onChange(o);
-                setOpen(false);
-              }}
-            >
-              {o.name}
-            </Item>
-          ))}
+          {options.map((o, i) => {
+            // The statistics list ends with per-year entries; the design sets
+            // them off from the rolling ranges above.
+            const startsYears = /^\d{4}$/.test(o.key) && !/^\d{4}$/.test(options[i - 1]?.key ?? '');
+            return (
+              <Fragment key={o.key}>
+                {startsYears && <Divider />}
+                <Item
+                  as="button"
+                  type="button"
+                  $active={o.key === value}
+                  onClick={() => {
+                    setOpen(false);
+                    if (o.key === TimeRanges.CUSTOM) setPickerOpen(true);
+                    else onChange(o);
+                  }}
+                >
+                  {o.name}
+                </Item>
+              </Fragment>
+            );
+          })}
         </Popover>
+      )}
+      {pickerOpen && (
+        <DateRangePickerModal
+          startDate={range.start}
+          endDate={range.end}
+          onDateChange={(val) => val && setRange({ start: val.start, end: val.end })}
+          setOpen={(val) => {
+            commitRange(range.start, range.end);
+            setPickerOpen(val);
+          }}
+        />
       )}
     </Wrap>
   );
@@ -95,10 +154,11 @@ const Label = styled.span`
   text-overflow: ellipsis;
 `;
 
+// Every dropdown arrow in the design is black; this one was the odd grey out.
 const Chevron = styled(Icon)<{ $open: boolean }>`
   font-size: 1.6rem;
   flex-shrink: 0;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  color: ${({ theme }) => theme.colors.text.primary};
   transform: ${({ $open }) => ($open ? 'rotate(180deg)' : 'none')};
   transition: transform 0.15s ease;
 `;
@@ -114,6 +174,11 @@ const Popover = styled(Menu)`
   max-width: min(320px, calc(100vw - 32px));
   max-height: 320px;
   z-index: 30;
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background: ${({ theme }) => theme.colors.grey[300]};
 `;
 
 const Item = styled(MenuItem)`

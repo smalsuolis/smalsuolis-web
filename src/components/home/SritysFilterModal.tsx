@@ -254,7 +254,9 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
 // The phone frame stacks and centres the pair; the wide one keeps them apart.
 const Footer = styled.div`
   display: flex;
-  flex-direction: column;
+  /* The phone frame puts the action first and "Išvalyti viską" under it; the
+     source order stays link-then-button for the desktop row. */
+  flex-direction: column-reverse;
   align-items: center;
   gap: 24px;
   margin: 24px -16px -24px;

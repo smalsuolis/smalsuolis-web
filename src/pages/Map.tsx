@@ -56,6 +56,7 @@ const PERIOD_OPTIONS = statsTimeRangeItems.filter((i) =>
     TimeRanges.LAST_90_DAYS,
     TimeRanges.LAST_365_DAYS,
     TimeRanges.ALL_TIME,
+    TimeRanges.CUSTOM,
   ].includes(i.key as TimeRanges),
 );
 
@@ -133,7 +134,16 @@ const MapPage = () => {
   // this page cannot render falls back to its own default rather than blanking.
   const [periodKey, setPeriodKey] = useState<string>(() => {
     const fromUrl = searchParams.get('range');
-    return PERIOD_OPTIONS.some((p) => p.key === fromUrl) ? fromUrl! : TimeRanges.LAST_28_DAYS;
+    if (PERIOD_OPTIONS.some((p) => p.key === fromUrl)) return fromUrl!;
+    return searchParams.get('from') ? TimeRanges.CUSTOM : TimeRanges.LAST_28_DAYS;
+  });
+
+  // The feed and the map name their periods differently, so a selection travels
+  // between them as the dates themselves and lands here as a custom range.
+  const [customRange, setCustomRange] = useState<{ $gte: string; $lt: string } | undefined>(() => {
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    return from && to ? { $gte: from, $lt: to } : undefined;
   });
 
   const appIds = srities.appIds;
@@ -175,9 +185,13 @@ const MapPage = () => {
     if (appIds.length) next.app = appIds.join(',');
     if (selectedCategoryIds.length) next.categories = selectedCategoryIds.join(',');
     if (periodKey) next.range = periodKey;
+    if (periodKey === TimeRanges.CUSTOM && customRange) {
+      next.from = customRange.$gte;
+      next.to = customRange.$lt;
+    }
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, appIds, selectedCategoryIds, periodKey]);
+  }, [address, appIds, selectedCategoryIds, periodKey, customRange]);
 
   // Switch to the list view, carrying the current filters. The events page uses
   // different param names than the map (?apps= vs ?app=), and reads them via
@@ -186,7 +200,11 @@ const MapPage = () => {
     const params = new URLSearchParams({ view: 'list' });
     if (appIds.length) params.set('apps', appIds.join(','));
     if (selectedCategoryIds.length) params.set('categories', selectedCategoryIds.join(','));
-    // The period stays behind — see the note in EventsContainer.goToMap.
+    // The key means nothing on the feed, so send the window it resolves to.
+    if (period && period.key !== TimeRanges.ALL_TIME) {
+      params.set('from', period.query.$gte);
+      params.set('to', period.query.$lt);
+    }
     navigate(`${slugs.events}?${params.toString()}`);
   };
 
@@ -197,7 +215,13 @@ const MapPage = () => {
     [selected],
   );
 
-  const period = PERIOD_OPTIONS.find((p) => p.key === periodKey);
+  const period = useMemo(
+    () =>
+      periodKey === TimeRanges.CUSTOM && customRange
+        ? { key: TimeRanges.CUSTOM, name: 'Pasirinkite datą', query: customRange }
+        : PERIOD_OPTIONS.find((p) => p.key === periodKey),
+    [periodKey, customRange],
+  );
 
   // Map filters: apps + selected categories + time range (startAt). The maps
   // iframe already understands `app`, `category`, and `startAt`.
@@ -251,7 +275,11 @@ const MapPage = () => {
           <PeriodDropdown
             options={PERIOD_OPTIONS}
             value={periodKey}
-            onChange={(o) => setPeriodKey(o.key)}
+            selectedDates={customRange}
+            onChange={(o) => {
+              setPeriodKey(o.key);
+              setCustomRange(o.key === TimeRanges.CUSTOM ? o.query : undefined);
+            }}
           />
         </PeriodWrap>
       </Controls>

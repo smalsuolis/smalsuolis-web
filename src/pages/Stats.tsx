@@ -6,10 +6,10 @@ import { orderBy } from 'lodash';
 import { CONTENT_WIDTH, device, font } from '../styles';
 import { timeRangeQuery } from '../utils';
 import { appIcon } from '../utils/appIcons';
-import { TimeRanges, yearQuery } from '../utils/types';
+import { TimeRanges, yearQuery, statsTimeRangeItems } from '../utils/types';
 import api from '../utils/api';
 import Loader from '../components/Loader';
-import Datepicker from '../components/Datepicker';
+import PeriodDropdown from '../components/PeriodDropdown';
 import { calculatePreviousPeriod } from '../utils/functions';
 import Delta, { DeltaPercent } from '../components/stats/Delta';
 import BreakdownCard, { BreakdownRow } from '../components/stats/BreakdownCard';
@@ -260,18 +260,19 @@ const Stats = () => {
             </ToggleSwitch>
           </ToggleContainer>
           <DatepickerWrap>
-            <Datepicker
-              onChange={(filterValue, date) => {
-                setDateFilter(filterValue);
-                setQuery(date);
-                if (filterValue === TimeRanges.CUSTOM) {
-                  setSearchParams({ range: filterValue, from: date.$gte, to: date.$lt });
-                } else {
-                  setSearchParams({ range: filterValue });
-                }
-              }}
+            <PeriodDropdown
+              options={statsTimeRangeItems}
               value={dateFilter}
               selectedDates={query}
+              onChange={({ key, query: date }) => {
+                setDateFilter(key);
+                setQuery(date);
+                if (key === TimeRanges.CUSTOM) {
+                  setSearchParams({ range: key, from: date.$gte, to: date.$lt });
+                } else {
+                  setSearchParams({ range: key });
+                }
+              }}
             />
           </DatepickerWrap>
         </Controls>

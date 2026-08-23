@@ -113,6 +113,8 @@ export const buttonsTitles = {
   beCurious: 'Tapk smalsiu',
   ourTeam: 'Mūsų komanda',
   clearAll: 'Išvalyti viską',
+  selectAll: 'Žymėti viską',
+  deselectAll: 'Atžymėti viską',
   showResults: (n: number) => `Rodyti ${n.toLocaleString('lt-LT')} rezultatus`,
 };
 

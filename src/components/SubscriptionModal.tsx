@@ -4,7 +4,13 @@ import { Form, Formik } from 'formik';
 import { useState } from 'react';
 import styled, { css } from 'styled-components';
 import { device, font } from '../styles';
-import { App, Frequency, SubscriptionForm, validateSubscriptionForm } from '../utils';
+import {
+  App,
+  buttonsTitles,
+  Frequency,
+  SubscriptionForm,
+  validateSubscriptionForm,
+} from '../utils';
 import api from '../utils/api';
 import FrequencyPills from './FrequencyPills';
 import SritysCheckList from './SritysCheckList';
@@ -99,6 +105,23 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
     textFilter: subscription?.textFilter ?? '',
   };
 
+  // Every source is on either because each one is ticked or because the
+  // automatic toggle stands in for the whole set.
+  const allSelected = (values: SubscriptionForm) =>
+    (isExisting && values.futureApps) ||
+    (allApps.length > 0 && values.apps.length >= allApps.length);
+
+  const toggleAll = (
+    values: SubscriptionForm,
+    setFieldValue: (field: string, value: unknown) => void,
+  ) => {
+    const clearing = allSelected(values);
+    setFieldValue('apps', clearing ? [] : allApps);
+    if (clearing) setFieldValue('categories', []);
+    // Either way this is an explicit choice, so it supersedes the automatic set.
+    setFieldValue('futureApps', false);
+  };
+
   const handleSubmit = (values: SubscriptionForm) => {
     const params: SubscriptionForm = { ...values };
     if (values.futureApps) {
@@ -160,18 +183,21 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                         <Label>Pasirinkite dominančias sritis</Label>
                         <SelectAllButton
                           type="button"
-                          onClick={() => setFieldValue('apps', allApps)}
+                          onClick={() => toggleAll(values, setFieldValue)}
                         >
-                          Žymėti viską
+                          {allSelected(values)
+                            ? buttonsTitles.deselectAll
+                            : buttonsTitles.selectAll}
                         </SelectAllButton>
                       </HeadingRow>
                       <SritysCheckList
                         apps={apps}
                         categories={categoryOptions}
-                        // `futureApps` is stored as an empty app list, which is
-                        // what the row already renders as every chip. Show it
-                        // the same way here instead of an empty checklist.
-                        appIds={values.futureApps ? allApps : values.apps}
+                        // An existing subscription stores `futureApps` as an
+                        // empty app list, which its row already renders as every
+                        // chip — so show it ticked here too. A new one starts
+                        // empty, as the design opens it.
+                        appIds={isExisting && values.futureApps ? allApps : values.apps}
                         onAppIdsChange={(ids) => {
                           setFieldValue('apps', ids);
                           if (ids.length < apps.length) setFieldValue('futureApps', false);

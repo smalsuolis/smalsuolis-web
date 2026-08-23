@@ -120,22 +120,20 @@ const EventsContainer = ({
       newFilters.categories = allCategories.filter((c) => ids.includes(c.id));
     }
 
-    if (rangeParam) {
-      if (rangeParam === TimeRanges.CUSTOM) {
-        const from = searchParams.get('from');
-        const to = searchParams.get('to');
-        if (from && to) {
-          newFilters.timeRange = {
-            key: TimeRanges.CUSTOM,
-            name: 'Pasirinkite datą',
-            query: { $gte: from, $lt: to },
-          };
-        }
-      } else {
-        const item = timeRangeItems.find((i) => i.key === rangeParam);
-        if (item) {
-          newFilters.timeRange = item;
-        }
+    const item = rangeParam ? timeRangeItems.find((i) => i.key === rangeParam) : undefined;
+    if (item) {
+      newFilters.timeRange = item;
+    } else {
+      // The map names its periods differently, so it hands the window over as
+      // dates. Same shape as an explicit CUSTOM selection.
+      const from = searchParams.get('from');
+      const to = searchParams.get('to');
+      if (from && to) {
+        newFilters.timeRange = {
+          key: TimeRanges.CUSTOM,
+          name: 'Pasirinkite datą',
+          query: { $gte: from, $lt: to },
+        };
       }
     }
 
@@ -274,6 +272,28 @@ const EventsContainer = ({
     categoriesByApp: {},
   }));
 
+  // The seed above runs once, but the stored filter is only reconstructed from
+  // the URL a tick later (it waits for the app and category lists). Without this
+  // the dialog opened on whatever was current at mount — switching between the
+  // map and the list showed a selection that no longer matched the query string.
+  useEffect(() => {
+    if (sritysOpen) return;
+    const appIds = (filters.value.apps ?? []).map((a) => a.id);
+    const live = new Set((filters.value.categories ?? []).map((c) => c.id));
+    setSritysValue((prev) => {
+      const categoriesByApp = Object.fromEntries(
+        Object.entries(prev.categoriesByApp)
+          .map(([appId, ids]) => [appId, ids.filter((id) => live.has(id))] as const)
+          .filter(([, ids]) => ids.length),
+      );
+      const same =
+        prev.appIds.length === appIds.length &&
+        prev.appIds.every((id) => appIds.includes(id)) &&
+        JSON.stringify(prev.categoriesByApp) === JSON.stringify(categoriesByApp);
+      return same ? prev : { appIds, categoriesByApp };
+    });
+  }, [filters.value, sritysOpen]);
+
   const applySritys = (next: SritysValue) => {
     setSritysValue(next);
     const withCategories = Object.entries(next.categoriesByApp)
@@ -371,9 +391,13 @@ const EventsContainer = ({
 
     if (apps?.length) params.set('app', apps.map((a) => a.id).join(','));
     if (categories?.length) params.set('categories', categories.map((c) => c.id).join(','));
-    // The period is deliberately not carried: the two pages offer different
-    // ranges (this one "Šios savaitės", the map "Paskutinės 28 dienos"), so a
-    // key from here would land on nothing there and blank the map's default.
+    // The two pages offer different ranges ("Šios savaitės" here, "Paskutinės
+    // 28 dienos" there), so the window travels as dates rather than as a key
+    // the other side would not recognise.
+    if (timeRange?.query?.$gte && timeRange.query.$lt) {
+      params.set('from', timeRange.query.$gte);
+      params.set('to', timeRange.query.$lt);
+    }
 
     const query = params.toString();
     navigate(query ? `${slugs.map}?${query}` : slugs.map);
@@ -456,6 +480,7 @@ const EventsContainer = ({
             placeholder="Data"
             options={timeRangeItems}
             value={filters.value.timeRange?.key ?? ''}
+            selectedDates={filters.value.timeRange?.query}
             onChange={(option) =>
               filters.setValue({
                 ...filters.value,
@@ -617,6 +642,9 @@ const FilterBar = styled.div`
   @media ${device.mobileL} {
     flex-direction: column;
     align-items: stretch;
+    /* The phone frame gives the stacked bar more air before the feed than the
+       desktop row gets: 50 against the row's 24. */
+    margin-bottom: 50px;
   }
 `;
 
