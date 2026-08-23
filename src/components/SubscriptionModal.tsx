@@ -168,7 +168,10 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                       <SritysCheckList
                         apps={apps}
                         categories={categoryOptions}
-                        appIds={values.apps}
+                        // `futureApps` is stored as an empty app list, which is
+                        // what the row already renders as every chip. Show it
+                        // the same way here instead of an empty checklist.
+                        appIds={values.futureApps ? allApps : values.apps}
                         onAppIdsChange={(ids) => {
                           setFieldValue('apps', ids);
                           if (ids.length < apps.length) setFieldValue('futureApps', false);

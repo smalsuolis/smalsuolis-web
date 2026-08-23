@@ -5,7 +5,7 @@ import { device, font } from '../../styles';
 import api from '../../utils/api';
 import { slugs } from '../../utils';
 import { appIcon } from '../../utils/appIcons';
-import { timeRangeQuery, TimeRanges } from '../../utils/types';
+import { App, timeRangeQuery, TimeRanges } from '../../utils/types';
 
 // Shares the canonical ALL_TIME window (same object → same server cache key)
 // with StatRow and the Stats page.
@@ -19,6 +19,12 @@ const compact = (n?: number) => {
 
 const CategoryBrowse = () => {
   const navigate = useNavigate();
+  const { data: apps = [] } = useQuery({
+    queryKey: ['apps', 'all'],
+    queryFn: () => api.getAllApps(),
+    staleTime: Infinity,
+  });
+
   const { data } = useQuery({
     queryKey: ['home-stats', ALL_TIME],
     queryFn: () => api.getStats(ALL_TIME),
@@ -28,35 +34,35 @@ const CategoryBrowse = () => {
 
   const chips = [
     {
-      key: 'fish',
+      key: 'izuvinimas',
       label: 'Žuvinimas',
       icon: appIcon.izuvinimas,
       count: data?.byApp?.izuvinimas?.count,
       bg: '#9CDEFF',
     },
     {
-      key: 'map',
+      key: 'zemetvarkosPlanavimas',
       label: 'Žemėtvarkos planavimas',
       icon: appIcon.zemetvarkosPlanavimas,
       count: data?.byApp?.zemetvarkosPlanavimas?.count,
       bg: '#DACDFF',
     },
     {
-      key: 'building',
+      key: 'infostatyba',
       label: 'Statiniai',
       icon: appIcon.infostatyba,
       count: data?.byApp?.infostatyba?.count,
       bg: '#F9BEBF',
     },
     {
-      key: 'autorenew',
+      key: 'savivaldybesZemetvarka',
       label: 'Žemės paskirties keitimas',
       icon: appIcon.savivaldybesZemetvarka,
       count: data?.byApp?.savivaldybesZemetvarka?.count,
       bg: '#E3E3E3',
     },
     {
-      key: 'forest',
+      key: 'miskoKirtimai',
       label: 'Miško kirtimai',
       icon: appIcon.miskoKirtimai,
       count: data?.byApp?.miskoKirtimai?.count,
@@ -64,12 +70,19 @@ const CategoryBrowse = () => {
     },
   ];
 
+  // Browsing by purpose lands on the map with that source already filtered —
+  // the same place the hero search goes.
+  const browse = (key: string) => {
+    const app = apps.find((a: App) => a.key === key);
+    navigate(app ? `${slugs.map}?app=${app.id}` : slugs.map);
+  };
+
   return (
     <Wrap>
       <Title>Naršyk pagal paskirtį</Title>
       <Chips>
         {chips.map((chip) => (
-          <Chip key={chip.key} onClick={() => navigate(slugs.events)}>
+          <Chip key={chip.key} onClick={() => browse(chip.key)}>
             <ChipMain>
               <IconCircle $bg={chip.bg}>
                 <ChipIcon src={chip.icon} alt="" />

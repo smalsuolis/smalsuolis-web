@@ -15,10 +15,6 @@ import api from '../utils/api';
 import { UserContext, UserContextType } from '../components/UserProvider';
 import { useAuthModal } from '../components/auth/AuthModalContext';
 
-// The radius (metres) of the circle drawn around a searched address — matches
-// the /events/near lookup, so the map view and the popup count agree.
-const SEARCH_RADIUS_M = 2000;
-
 // The smalsuolis map iframe draws incoming geometry with dataProjection EPSG:3346
 // (LKS94) — hardcoded in its route. Address suggestions come in EPSG:4326
 // (lng/lat), so we must convert to 3346 before sending, or the point lands far
@@ -29,31 +25,23 @@ proj4.defs(
     '+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
 );
 
-// Build a circle (as a Polygon) of `radiusM` around a lng/lat point, with all
-// coordinates already in EPSG:3346 so the iframe draws + zooms correctly. In
-// 3346 (metres) the circle is a simple metric offset from the projected centre.
-const circleFeatureCollection3346 = (
-  geometry: AddressSuggestion['geometry'],
-  radiusM = SEARCH_RADIUS_M,
-  steps = 64,
-) => {
+// A searched address is one place, so send one point and let the iframe pin it.
+// The extent it fits to is a small square around that point: without it the
+// frame zooms a single coordinate to its maximum level and the street
+// disappears. 400 m keeps the surrounding block in view.
+const ADDRESS_EXTENT_M = 400;
+
+const addressFeatureCollection3346 = (geometry: AddressSuggestion['geometry']) => {
   const [lng, lat] = geometry.coordinates;
   const [cx, cy] = proj4('EPSG:4326', 'EPSG:3346', [lng, lat]);
-  const ring: [number, number][] = [];
-  for (let i = 0; i <= steps; i++) {
-    const a = (i / steps) * 2 * Math.PI;
-    ring.push([cx + radiusM * Math.cos(a), cy + radiusM * Math.sin(a)]);
-  }
+  const r = ADDRESS_EXTENT_M;
   return {
     type: 'FeatureCollection',
     features: [
       { type: 'Feature', geometry: { type: 'Point', coordinates: [cx, cy] }, properties: {} },
-      {
-        type: 'Feature',
-        geometry: { type: 'Polygon', coordinates: [ring] },
-        properties: {},
-      },
     ],
+    // Some renderers fit to a bbox when one is present; harmless when ignored.
+    bbox: [cx - r, cy - r, cx + r, cy + r],
   };
 };
 
@@ -184,11 +172,10 @@ const MapPage = () => {
     navigate(`${slugs.events}?${params.toString()}`);
   };
 
-  // When an address is selected, draw a 3346 circle around it (correct location
-  // + a sensible zoom). When nothing is selected, geom is undefined so we don't
-  // post it (deselect handling that resets the view lives in MapView).
+  // When an address is selected, pin it (deselect handling that resets the view
+  // lives in MapView, so an unset selection posts nothing).
   const geom = useMemo(
-    () => (selected ? circleFeatureCollection3346(selected.geometry) : undefined),
+    () => (selected ? addressFeatureCollection3346(selected.geometry) : undefined),
     [selected],
   );
 
@@ -274,7 +261,7 @@ const MapPage = () => {
         </RegisterCard>
       )}
 
-      <BottomBar>
+      <BottomBar $liftedForCard={!loggedIn && registerCardOpen}>
         {!loggedIn && (
           <RegisterCta onClick={() => openAuthModal('register')}>
             Dar neturite paskyros? Užsiregistruokite
@@ -315,7 +302,7 @@ const Page = styled.div`
 // The right inset clears the map iframe's own zoom / locate / layer controls,
 // which the embed draws hard against its right edge — they're cross-origin, so
 // we move around them rather than restyling them.
-const BottomBar = styled.div`
+const BottomBar = styled.div<{ $liftedForCard: boolean }>`
   position: absolute;
   left: 0;
   right: 0;
@@ -336,7 +323,9 @@ const BottomBar = styled.div`
     /* Stacked on mobile the bar spans the full width, so it clears the side
        controls by sitting below them instead. */
     padding: 0 20px;
-    bottom: 23px;
+    /* The register card owns the bottom slot while it is up, so step over it
+       rather than letting it bury the list toggle. */
+    bottom: ${({ $liftedForCard }) => ($liftedForCard ? '203px' : '23px')};
     flex-direction: column;
     align-items: stretch;
   }
@@ -378,9 +367,13 @@ const RegisterCard = styled.div`
   @media ${device.mobileL} {
     position: absolute;
     z-index: 22;
-    left: 16px;
-    right: 16px;
-    bottom: 76px;
+    left: 50%;
+    transform: translateX(-50%);
+    /* 361 wide, 23 off the bottom — the phone frame's own numbers, kept when
+       the viewport is wider than that frame. */
+    width: calc(100% - 32px);
+    max-width: 361px;
+    bottom: 23px;
     display: flex;
     flex-direction: column;
     gap: 24px;

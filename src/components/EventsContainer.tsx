@@ -226,7 +226,9 @@ const EventsContainer = ({
       filterSubs = subscriptions && subscriptions.length ? subscriptions : allSubscriptions;
     }
     return {
-      ...(apps ? { app: { $in: apps.map((app) => app.id) } } : null),
+      // An empty array is truthy: guard on length, or clearing the last chosen
+      // source sends `app IN ()` and the list comes back empty for good.
+      ...(apps?.length ? { app: { $in: apps.map((app) => app.id) } } : null),
       ...(filterSubs.length ? { subscription: { $in: filterSubs.map((sub) => sub.id) } } : null),
       // categoryGroup expands selected categories' subtrees server-side, so a
       // user picking 'pastatai' transparently matches all leaves under it.
