@@ -125,14 +125,31 @@ const Container = styled.div`
     color: #151229;
     opacity: 0.6;
   }
+  /* The library floats the month and lets it size to its content, which spilled
+     past a card narrower than the phone frame. */
+  .react-datepicker__month-container {
+    float: none;
+    width: 100%;
+  }
+  .react-datepicker__month {
+    margin: 0;
+  }
+
+  /* Seven equal columns rather than seven fixed cells: the grid then fits any
+     card width, and the cells abut so the range track has no seams. */
+  .react-datepicker__day-names,
+  .react-datepicker__week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
   .react-datepicker__day {
     position: relative;
     z-index: 0;
-    width: 44px;
+    width: auto;
     height: 44px;
     line-height: 44px;
     padding: 0;
-    margin: auto;
+    margin: 0;
     font-size: 1.5rem;
     display: inline-flex;
     justify-content: center;
@@ -142,7 +159,6 @@ const Container = styled.div`
       background-color: #fafafa !important;
     }
     @media ${device.mobileL} {
-      width: 40px;
       height: 40px;
       line-height: 40px;
     }
@@ -178,15 +194,12 @@ const Container = styled.div`
   .react-datepicker__day-name {
     font-size: 1.4rem;
     color: ${({ theme }) => theme.colors.grey[600]};
-    width: 44px;
+    width: auto;
     padding: 0;
     margin: 0;
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    @media ${device.mobileL} {
-      width: 40px;
-    }
   }
   .react-datepicker__navigation {
     display: none;
@@ -242,10 +255,42 @@ const Container = styled.div`
   .react-datepicker__day--selecting-range-end::after {
     content: '';
     position: absolute;
-    inset: 4px;
+    top: 50%;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    transform: translate(-50%, -50%);
     border-radius: 50%;
     background-color: ${({ theme }) => theme.colors.black};
     z-index: -1;
+    @media ${device.mobileL} {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  /* The track runs into each knob from the inside of the range, so the two do
+     not sit apart with the cell's own gap showing between them. */
+  .react-datepicker__day--range-start:not(.react-datepicker__day--range-end)::before,
+  .react-datepicker__day--range-end:not(.react-datepicker__day--range-start)::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: 50%;
+    background-color: #f3f3f3;
+    z-index: -2;
+  }
+  .react-datepicker__day--range-start:not(.react-datepicker__day--range-end)::before {
+    right: 0;
+  }
+  .react-datepicker__day--range-end:not(.react-datepicker__day--range-start)::before {
+    left: 0;
+  }
+  /* A knob at the row's own edge has nothing to connect to. */
+  .react-datepicker__day--range-start:last-child::before,
+  .react-datepicker__day--range-end:first-child::before {
+    content: none;
   }
   .react-datepicker__day--selected,
   .react-datepicker__day--range-start,
@@ -274,6 +319,7 @@ const CustomHeader = styled.div`
 
 const MonthLabel = styled.span`
   ${font('base', 500)};
+  white-space: nowrap;
   color: black;
   text-transform: capitalize;
   flex: 1;
