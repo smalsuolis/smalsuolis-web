@@ -94,9 +94,11 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
   const initialValues: SubscriptionForm = {
     id: subscription?.id ?? 0,
     name: subscription?.name ?? '',
-    // The design opens a new subscription with nothing ticked and the automatic
+    // The design opens a NEW subscription with nothing ticked and the automatic
     // toggle on — that pair already means "every source, including future ones".
-    apps: noSubscription || futureApps ? [] : subscription?.apps || [],
+    // An existing automatic one is stored as an empty list but means every
+    // source, so the form holds them and handleSubmit writes the empty list back.
+    apps: noSubscription ? [] : futureApps ? allApps : subscription?.apps || [],
     categories: subscription?.categories ?? [],
     geom: subscription?.geom,
     // WEEK is the first selectable pill; DAY is legacy-only (see FrequencyPills).
@@ -193,11 +195,7 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                       <SritysCheckList
                         apps={apps}
                         categories={categoryOptions}
-                        // An existing subscription stores `futureApps` as an
-                        // empty app list, which its row already renders as every
-                        // chip — so show it ticked here too. A new one starts
-                        // empty, as the design opens it.
-                        appIds={isExisting && values.futureApps ? allApps : values.apps}
+                        appIds={values.apps}
                         onAppIdsChange={(ids) => {
                           setFieldValue('apps', ids);
                           if (ids.length < apps.length) setFieldValue('futureApps', false);
@@ -224,8 +222,9 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                             value={values.futureApps}
                             onChange={(e) => {
                               setFieldValue('futureApps', e.target.checked);
-                              // Turning it on supersedes a manual selection.
-                              if (e.target.checked) setFieldValue('apps', []);
+                              // Turning it on means every source, so show every
+                              // source — it used to wipe the ticks instead.
+                              if (e.target.checked) setFieldValue('apps', allApps);
                             }}
                           />
                         </FutureAppsHeader>
