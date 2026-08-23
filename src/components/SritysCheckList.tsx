@@ -23,6 +23,10 @@ interface Props {
   // Selected category leaf ids for a given infostatyba app.
   catsFor: (appId: number) => number[];
   onCatsChange: (appId: number, ids: number[]) => void;
+  // The subscription form stores one flat category list for every infostatyba
+  // app, because that is all the API can hold. Rows there must not read their
+  // own tick from it, or ticking one would tick all four.
+  sharedCategories?: boolean;
 }
 
 const SritysCheckList = ({
@@ -32,6 +36,7 @@ const SritysCheckList = ({
   onAppIdsChange,
   catsFor,
   onCatsChange,
+  sharedCategories = false,
 }: Props) => {
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const categoryLeafIds = useCategoryLeafIds(categories);
@@ -54,7 +59,7 @@ const SritysCheckList = ({
   // ticked inside it shows as "partial" on the parent — and from the app
   // selection otherwise.
   const appState = (app: App): NodeState => {
-    if (hasCategories(app)) {
+    if (hasCategories(app) && !sharedCategories) {
       const selected = catsFor(app.id).length;
       if (selected > 0) return selected >= categoryLeafIds.length ? 'all' : 'partial';
     }
@@ -64,8 +69,10 @@ const SritysCheckList = ({
   const toggleAppNode = (app: App) => {
     const on = appIds.includes(app.id);
     onAppIdsChange(on ? appIds.filter((v) => v !== app.id) : [...appIds, app.id]);
-    // Selecting an expandable row takes every leaf under it; clearing drops them.
-    if (hasCategories(app)) onCatsChange(app.id, on ? [] : [...categoryLeafIds]);
+    // Selecting an expandable row takes every leaf under it; clearing drops
+    // them. Skipped where the list is shared, since it is not this row's to set.
+    if (hasCategories(app) && !sharedCategories)
+      onCatsChange(app.id, on ? [] : [...categoryLeafIds]);
   };
 
   return (

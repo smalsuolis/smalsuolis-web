@@ -206,6 +206,7 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                         // shared by the infostatyba apps (the API filters by
                         // categoryGroup, not per app), so every app row reads
                         // and writes the same `categories` value.
+                        sharedCategories
                         catsFor={() => values.categories}
                         onCatsChange={(appId, ids) => {
                           setFieldValue('categories', ids);
