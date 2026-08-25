@@ -424,29 +424,9 @@ const EventsContainer = ({
   // "Rodyti žemėlapį" goes back to the full-size map page, carrying the current
   // filters over. The two pages name some params differently (map: ?app= &
   // ?range=, list: ?apps= & ?range=), so translate rather than pass through.
+  // See Map.goToList: the map keeps its own filters, so this only switches view.
   const goToMap = () => {
-    const params = new URLSearchParams();
-    const { apps, categories, timeRange } = filters.value;
-
-    // Rode along from the map and belongs back there — the point too, or the map
-    // would have to guess which address the text meant.
-    for (const key of ['address', 'lng', 'lat']) {
-      const value = searchParams.get(key);
-      if (value) params.set(key, value);
-    }
-
-    if (apps?.length) params.set('app', apps.map((a) => a.id).join(','));
-    if (categories?.length) params.set('categories', categories.map((c) => c.id).join(','));
-    // The two pages offer different ranges ("Šios savaitės" here, "Paskutinės
-    // 28 dienos" there), so the window travels as dates rather than as a key
-    // the other side would not recognise.
-    if (timeRange?.query?.$gte && timeRange.query.$lt) {
-      params.set('from', timeRange.query.$gte);
-      params.set('to', timeRange.query.$lt);
-    }
-
-    const query = params.toString();
-    navigate(query ? `${slugs.map}?${query}` : slugs.map);
+    navigate(slugs.map);
   };
 
   const toggleView = () => {

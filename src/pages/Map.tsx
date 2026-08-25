@@ -263,6 +263,8 @@ const MapPage = () => {
         MAP_FILTERS_KEY,
         JSON.stringify({
           address,
+          // Without the point a restored address has no place to zoom to.
+          point: selected?.geometry.coordinates,
           appIds,
           categoriesByApp: srities.categoriesByApp,
           periodKey,
@@ -278,23 +280,10 @@ const MapPage = () => {
   // Switch to the list view, carrying the current filters. The events page uses
   // different param names than the map (?apps= vs ?app=), and reads them via
   // its own URL-init effect, so translate here.
+  // The two views keep their own filters, so switching just switches the view.
+  // Each page restores what it was last set to, not what the other was showing.
   const goToList = () => {
-    const params = new URLSearchParams({ view: 'list' });
-    // The feed has nowhere to show an address, but it is still part of what the
-    // user set up here — carry it so coming back lands on the same place.
-    if (address) params.set('address', address);
-    if (selected) {
-      params.set('lng', String(selected.geometry.coordinates[0]));
-      params.set('lat', String(selected.geometry.coordinates[1]));
-    }
-    if (appIds.length) params.set('apps', appIds.join(','));
-    if (selectedCategoryIds.length) params.set('categories', selectedCategoryIds.join(','));
-    // The key means nothing on the feed, so send the window it resolves to.
-    if (period && period.key !== TimeRanges.ALL_TIME) {
-      params.set('from', period.query.$gte);
-      params.set('to', period.query.$lt);
-    }
-    navigate(`${slugs.events}?${params.toString()}`);
+    navigate(`${slugs.events}?view=list`);
   };
 
   // When an address is selected, pin it (deselect handling that resets the view
