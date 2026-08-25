@@ -65,6 +65,12 @@ const HeroSearch = ({
     // clean query param, and re-openable via the Sritys modal).
     const params = new URLSearchParams();
     if (address) params.set('address', address);
+    // The point too: router state is gone after a reload, and the map would be
+    // left re-searching the text to work out where to zoom.
+    if (selected) {
+      params.set('lng', String(selected.geometry.coordinates[0]));
+      params.set('lat', String(selected.geometry.coordinates[1]));
+    }
     if (srities.appIds.length) params.set('app', srities.appIds.join(','));
     navigate(`${slugs.map}?${params.toString()}`, {
       state: { address, suggestion: selected, srities },

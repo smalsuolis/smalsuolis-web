@@ -105,16 +105,17 @@ const MapPage = () => {
 
   // Read once: later renders must not resurrect a filter the user just cleared.
   const storedRef = useRef<StoredMapFilters>(readStoredFilters());
+  // Sources and period are one question, the address another: a link that names
+  // sources says nothing about where to look, and discarding the whole snapshot
+  // for it left the map holding an address with no point to zoom to.
   const urlHasFilters =
-    searchParams.has('address') ||
-    searchParams.has('lat') ||
-    searchParams.has('app') ||
-    searchParams.has('categories') ||
-    searchParams.has('range');
+    searchParams.has('app') || searchParams.has('categories') || searchParams.has('range');
+  const urlHasAddress = searchParams.has('address') || searchParams.has('lat');
   const stored = urlHasFilters ? {} : storedRef.current;
+  const storedAddress = urlHasAddress ? {} : storedRef.current;
 
   const [address, setAddress] = useState(
-    navState?.address ?? searchParams.get('address') ?? stored.address ?? '',
+    navState?.address ?? searchParams.get('address') ?? storedAddress.address ?? '',
   );
   // The resolved point travels with the address. Re-searching the text to find
   // it again returned the first match, not the one that was picked — "Antakalnio
@@ -124,14 +125,14 @@ const MapPage = () => {
     const lat = Number(searchParams.get('lat'));
     return lng && lat ? [lng, lat] : undefined;
   })();
-  const point = pointFromUrl ?? stored.point;
+  const point = pointFromUrl ?? storedAddress.point;
 
   const [selected, setSelected] = useState<AddressSuggestion | null>(
     navState?.suggestion ??
-      (point && (searchParams.get('address') ?? stored.address)
+      (point && (searchParams.get('address') ?? storedAddress.address)
         ? {
             code: 0,
-            label: (searchParams.get('address') ?? stored.address)!,
+            label: (searchParams.get('address') ?? storedAddress.address)!,
             geometry: { type: 'Point', coordinates: point },
           }
         : null),
@@ -167,9 +168,6 @@ const MapPage = () => {
     return { appIds, categoriesByApp };
   });
   const [filterOpen, setFilterOpen] = useState(false);
-  // Same rule as the feed: a handoff sets these too, and remembering it would
-  // make the map inherit whatever the feed was showing.
-  const userEdited = useRef(false);
   // The phone frame replaces the register pill with a dismissible card over the
   // map. Dismissing it sticks: it is a prompt, and re-covering a third of the
   // map on every visit after the user said no is what made it feel intrusive.
@@ -257,7 +255,6 @@ const MapPage = () => {
       next.to = customRange.$lt;
     }
     setSearchParams(next, { replace: true });
-    if (!userEdited.current) return;
     try {
       sessionStorage.setItem(
         MAP_FILTERS_KEY,
@@ -342,10 +339,7 @@ const MapPage = () => {
               setAddress(text);
               if (!text.trim() && selected) clearSelection();
             }}
-            onSelect={(s) => {
-              userEdited.current = true;
-              setSelected(s);
-            }}
+            onSelect={setSelected}
           />
         </SearchPill>
         <CategoryPill type="button" onClick={() => setFilterOpen(true)} $active={hasCategory}>
@@ -358,7 +352,6 @@ const MapPage = () => {
             value={periodKey}
             selectedDates={customRange}
             onChange={(o) => {
-              userEdited.current = true;
               setPeriodKey(o.key);
               setCustomRange(o.key === TimeRanges.CUSTOM ? o.query : undefined);
             }}
@@ -399,10 +392,7 @@ const MapPage = () => {
       <SritysFilterModal
         visible={filterOpen}
         value={srities}
-        onChange={(next) => {
-          userEdited.current = true;
-          setSrities(next);
-        }}
+        onChange={setSrities}
         onApply={() => setFilterOpen(false)}
         onClose={() => setFilterOpen(false)}
       />
