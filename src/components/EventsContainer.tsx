@@ -1,4 +1,3 @@
-import { useStorage } from '@aplinkosministerija/design-system';
 import { useQuery } from '@tanstack/react-query';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -34,6 +33,10 @@ import MapView from './MapView';
 import { UserContext, UserContextType } from './UserProvider';
 import { useAuthModal } from './auth/AuthModalContext';
 
+// The feed's own filters. The map keeps its set under its own key — sharing one
+// store made each surface inherit whatever the other was last showing.
+const LIST_FILTERS_KEY = 'smalsuolis.listFilters';
+
 const EventsContainer = ({
   isMyEvents = false,
   apiEndpoint,
@@ -49,10 +52,30 @@ const EventsContainer = ({
   emptyStateDescription?: string;
   emptyStateTitle: string;
 }) => {
-  const filters = useStorage<Filters>('filters', {}, true);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Each surface remembers its own filters: arriving from the map applies what
+  // the URL carries for that visit, but does not overwrite what the feed had.
+  const [filtersValue, setFiltersValue] = useState<Filters>(() => {
+    const carried =
+      searchParams.has('apps') ||
+      searchParams.has('range') ||
+      searchParams.has('categories') ||
+      searchParams.has('from');
+    if (carried) return {};
+    try {
+      const raw = sessionStorage.getItem(LIST_FILTERS_KEY);
+      return raw ? (JSON.parse(raw) as Filters) : {};
+    } catch {
+      return {};
+    }
+  });
+  const filters = useMemo(
+    () => ({ value: filtersValue, setValue: setFiltersValue }),
+    [filtersValue],
+  );
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
   const [search, setSearch] = useState(searchInput);
 
@@ -150,6 +173,12 @@ const EventsContainer = ({
     if (skipSyncAfterInit.current) {
       skipSyncAfterInit.current = false;
       return;
+    }
+
+    try {
+      sessionStorage.setItem(LIST_FILTERS_KEY, JSON.stringify(filters.value));
+    } catch {
+      // Storage blocked: the filters still hold for this visit and in the URL.
     }
 
     setSearchParams(

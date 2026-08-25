@@ -47,8 +47,11 @@ const HeroSearch = ({
 
   const allSelected = !!apps?.length && srities.appIds.length >= apps.length;
   const picked = (apps ?? []).filter((a: App) => srities.appIds.includes(a.id));
-  const sritysLabel =
-    allSelected || !picked.length
+  // Everything selected is a choice, not an empty field — say so, and in the
+  // same weight as any other value rather than in the placeholder grey.
+  const sritysLabel = allSelected
+    ? 'Visos sritys'
+    : !picked.length
       ? 'Sritys'
       : picked.length === 1
         ? picked[0].name
@@ -110,7 +113,7 @@ const HeroSearch = ({
               <SritysButton
                 type="button"
                 onClick={() => setSritysOpen(true)}
-                $active={!allSelected}
+                $active={!!picked.length}
               >
                 <SritysLabel>{sritysLabel}</SritysLabel>
                 <ChevronIcon name={IconName.dropdownArrow} />
