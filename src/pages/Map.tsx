@@ -167,6 +167,9 @@ const MapPage = () => {
     return { appIds, categoriesByApp };
   });
   const [filterOpen, setFilterOpen] = useState(false);
+  // Same rule as the feed: a handoff sets these too, and remembering it would
+  // make the map inherit whatever the feed was showing.
+  const userEdited = useRef(false);
   // The phone frame replaces the register pill with a dismissible card over the
   // map. Dismissing it sticks: it is a prompt, and re-covering a third of the
   // map on every visit after the user said no is what made it feel intrusive.
@@ -254,6 +257,7 @@ const MapPage = () => {
       next.to = customRange.$lt;
     }
     setSearchParams(next, { replace: true });
+    if (!userEdited.current) return;
     try {
       sessionStorage.setItem(
         MAP_FILTERS_KEY,
@@ -349,7 +353,10 @@ const MapPage = () => {
               setAddress(text);
               if (!text.trim() && selected) clearSelection();
             }}
-            onSelect={setSelected}
+            onSelect={(s) => {
+              userEdited.current = true;
+              setSelected(s);
+            }}
           />
         </SearchPill>
         <CategoryPill type="button" onClick={() => setFilterOpen(true)} $active={hasCategory}>
@@ -362,6 +369,7 @@ const MapPage = () => {
             value={periodKey}
             selectedDates={customRange}
             onChange={(o) => {
+              userEdited.current = true;
               setPeriodKey(o.key);
               setCustomRange(o.key === TimeRanges.CUSTOM ? o.query : undefined);
             }}
@@ -402,7 +410,10 @@ const MapPage = () => {
       <SritysFilterModal
         visible={filterOpen}
         value={srities}
-        onChange={setSrities}
+        onChange={(next) => {
+          userEdited.current = true;
+          setSrities(next);
+        }}
         onApply={() => setFilterOpen(false)}
         onClose={() => setFilterOpen(false)}
       />

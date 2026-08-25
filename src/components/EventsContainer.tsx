@@ -72,8 +72,17 @@ const EventsContainer = ({
       return {};
     }
   });
+  // Only what the user changes here is remembered. A handoff from the map also
+  // lands in `filters`, and persisting that made the feed inherit the map's set.
+  const userEdited = useRef(false);
   const filters = useMemo(
-    () => ({ value: filtersValue, setValue: setFiltersValue }),
+    () => ({
+      value: filtersValue,
+      setValue: (next: Filters) => {
+        userEdited.current = true;
+        setFiltersValue(next);
+      },
+    }),
     [filtersValue],
   );
   const [searchInput, setSearchInput] = useState(searchParams.get('q') ?? '');
@@ -98,7 +107,7 @@ const EventsContainer = ({
     queryKey: ['apps', 'all'],
     queryFn: () => api.getAllApps(),
   });
-  const allApps = appsResponse ?? [];
+  const allApps = useMemo(() => appsResponse ?? [], [appsResponse]);
 
   // Categories are static (seed-only) — fetch once, reuse for URL hydration
   // and any other consumers that need to map ids back to Category objects.
@@ -107,7 +116,7 @@ const EventsContainer = ({
     queryFn: () => api.getAllCategories('infostatyba'),
     staleTime: Infinity,
   });
-  const allCategories = categoriesResponse ?? [];
+  const allCategories = useMemo(() => categoriesResponse ?? [], [categoriesResponse]);
 
   const { data: subsResponse, isFetching: subResponseLoading } = useQuery({
     queryKey: ['allSubscriptions'],
@@ -115,7 +124,7 @@ const EventsContainer = ({
     enabled: loggedIn && isMyEvents,
     refetchOnWindowFocus: false,
   });
-  const allSubscriptions = subsResponse ?? [];
+  const allSubscriptions = useMemo(() => subsResponse ?? [], [subsResponse]);
 
   // Initialize filters from URL params (runs once when data is ready)
   useEffect(() => {
@@ -161,10 +170,9 @@ const EventsContainer = ({
     }
 
     skipSyncAfterInit.current = true;
-    filters.setValue(newFilters);
-    // Reads the URL into filters. `filters` is written here, so listing it as
-    // a dependency would re-enter this effect on its own write.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setFiltersValue(newFilters);
+    // Reads the URL into filters. The raw setter is used on purpose: this write
+    // is not a user edit, so it must not be remembered as the feed's own.
   }, [allApps, allCategories, allSubscriptions, searchParams]);
 
   // Sync filters to URL params whenever they change
@@ -175,10 +183,12 @@ const EventsContainer = ({
       return;
     }
 
-    try {
-      sessionStorage.setItem(LIST_FILTERS_KEY, JSON.stringify(filters.value));
-    } catch {
-      // Storage blocked: the filters still hold for this visit and in the URL.
+    if (userEdited.current) {
+      try {
+        sessionStorage.setItem(LIST_FILTERS_KEY, JSON.stringify(filters.value));
+      } catch {
+        // Storage blocked: the filters still hold for this visit and in the URL.
+      }
     }
 
     setSearchParams(
