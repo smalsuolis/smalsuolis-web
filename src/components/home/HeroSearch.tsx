@@ -28,6 +28,9 @@ const HeroSearch = ({
   const [address, setAddress] = useState('');
   const [selected, setSelected] = useState<AddressSuggestion | null>(null);
   const [srities, setSrities] = useState<SritysValue>({ appIds: [], categoriesByApp: {} });
+  // The homepage starts with everything selected — searching from here means
+  // "show me what is happening", not "show me nothing until I pick a source".
+  const seeded = useRef(false);
   const [sritysOpen, setSritysOpen] = useState(false);
   const sritysRef = useRef<HTMLDivElement>(null);
 
@@ -45,8 +48,15 @@ const HeroSearch = ({
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  useEffect(() => {
+    if (seeded.current || !apps?.length) return;
+    seeded.current = true;
+    setSrities({ appIds: apps.map((a: App) => a.id), categoriesByApp: {} });
+  }, [apps]);
+
+  const allSelected = !!apps?.length && srities.appIds.length >= apps.length;
   const selectedApp = (apps ?? []).find((a: App) => a.id === srities.appIds[0]);
-  const sritysLabel = selectedApp?.name ?? 'Sritys';
+  const sritysLabel = allSelected ? 'Sritys' : selectedApp?.name ?? 'Sritys';
 
   const goToMap = () => {
     // Go to the map page with the search pre-filled. The resolved point and the

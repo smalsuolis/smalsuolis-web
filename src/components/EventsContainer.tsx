@@ -389,6 +389,10 @@ const EventsContainer = ({
     const params = new URLSearchParams();
     const { apps, categories, timeRange } = filters.value;
 
+    // Rode along from the map and belongs back there.
+    const address = searchParams.get('address');
+    if (address) params.set('address', address);
+
     if (apps?.length) params.set('app', apps.map((a) => a.id).join(','));
     if (categories?.length) params.set('categories', categories.map((c) => c.id).join(','));
     // The two pages offer different ranges ("Šios savaitės" here, "Paskutinės

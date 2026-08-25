@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import proj4 from 'proj4';
@@ -32,6 +32,27 @@ proj4.defs(
 const ADDRESS_EXTENT_M = 400;
 
 const REGISTER_CARD_DISMISSED = 'smalsuolis.registerCardDismissed';
+
+// The URL carries the filters when you switch to the list and back, but coming
+// back through the navbar has no params to carry them — so the last set is kept
+// for the session too, and used only when the URL says nothing.
+const MAP_FILTERS_KEY = 'smalsuolis.mapFilters';
+
+type StoredMapFilters = {
+  address?: string;
+  appIds?: number[];
+  categoriesByApp?: Record<number, number[]>;
+  periodKey?: string;
+  customRange?: { $gte: string; $lt: string };
+};
+
+const readStoredFilters = (): StoredMapFilters => {
+  try {
+    return JSON.parse(sessionStorage.getItem(MAP_FILTERS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+};
 
 const addressFeatureCollection3346 = (geometry: AddressSuggestion['geometry']) => {
   const [lng, lat] = geometry.coordinates;
@@ -81,7 +102,18 @@ const MapPage = () => {
     appIds?: number[];
   } | null;
 
-  const [address, setAddress] = useState(navState?.address ?? searchParams.get('address') ?? '');
+  // Read once: later renders must not resurrect a filter the user just cleared.
+  const storedRef = useRef<StoredMapFilters>(readStoredFilters());
+  const urlHasFilters =
+    searchParams.has('address') ||
+    searchParams.has('app') ||
+    searchParams.has('categories') ||
+    searchParams.has('range');
+  const stored = urlHasFilters ? {} : storedRef.current;
+
+  const [address, setAddress] = useState(
+    navState?.address ?? searchParams.get('address') ?? stored.address ?? '',
+  );
   const [selected, setSelected] = useState<AddressSuggestion | null>(navState?.suggestion ?? null);
   // Bumped when an address is cleared, to remount the map iframe back to its
   // default view (the iframe's zoomToFeatureCollection ignores empty geometry,
@@ -101,11 +133,14 @@ const MapPage = () => {
       navState?.appIds ??
       (searchParams.get('app')
         ? searchParams.get('app')!.split(',').map(Number).filter(Boolean)
-        : []);
+        : stored.appIds ?? []);
     const categoryIds = (searchParams.get('categories') ?? '')
       .split(',')
       .map(Number)
       .filter(Boolean);
+    if (!categoryIds.length && stored.categoriesByApp) {
+      return { appIds, categoriesByApp: stored.categoriesByApp };
+    }
     const categoriesByApp: Record<number, number[]> = {};
     if (categoryIds.length) appIds.forEach((id: number) => (categoriesByApp[id] = categoryIds));
     return { appIds, categoriesByApp };
@@ -135,7 +170,8 @@ const MapPage = () => {
   const [periodKey, setPeriodKey] = useState<string>(() => {
     const fromUrl = searchParams.get('range');
     if (PERIOD_OPTIONS.some((p) => p.key === fromUrl)) return fromUrl!;
-    return searchParams.get('from') ? TimeRanges.CUSTOM : TimeRanges.LAST_28_DAYS;
+    if (searchParams.get('from')) return TimeRanges.CUSTOM;
+    return stored.periodKey ?? TimeRanges.LAST_28_DAYS;
   });
 
   // The feed and the map name their periods differently, so a selection travels
@@ -143,7 +179,8 @@ const MapPage = () => {
   const [customRange, setCustomRange] = useState<{ $gte: string; $lt: string } | undefined>(() => {
     const from = searchParams.get('from');
     const to = searchParams.get('to');
-    return from && to ? { $gte: from, $lt: to } : undefined;
+    if (from && to) return { $gte: from, $lt: to };
+    return stored.customRange;
   });
 
   const appIds = srities.appIds;
@@ -190,6 +227,20 @@ const MapPage = () => {
       next.to = customRange.$lt;
     }
     setSearchParams(next, { replace: true });
+    try {
+      sessionStorage.setItem(
+        MAP_FILTERS_KEY,
+        JSON.stringify({
+          address,
+          appIds,
+          categoriesByApp: srities.categoriesByApp,
+          periodKey,
+          customRange,
+        }),
+      );
+    } catch {
+      // Storage blocked: the URL still carries everything between the two views.
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, appIds, selectedCategoryIds, periodKey, customRange]);
 
@@ -198,6 +249,9 @@ const MapPage = () => {
   // its own URL-init effect, so translate here.
   const goToList = () => {
     const params = new URLSearchParams({ view: 'list' });
+    // The feed has nowhere to show an address, but it is still part of what the
+    // user set up here — carry it so coming back lands on the same place.
+    if (address) params.set('address', address);
     if (appIds.length) params.set('apps', appIds.join(','));
     if (selectedCategoryIds.length) params.set('categories', selectedCategoryIds.join(','));
     // The key means nothing on the feed, so send the window it resolves to.
