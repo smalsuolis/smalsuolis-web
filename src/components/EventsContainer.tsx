@@ -389,9 +389,12 @@ const EventsContainer = ({
     const params = new URLSearchParams();
     const { apps, categories, timeRange } = filters.value;
 
-    // Rode along from the map and belongs back there.
-    const address = searchParams.get('address');
-    if (address) params.set('address', address);
+    // Rode along from the map and belongs back there — the point too, or the map
+    // would have to guess which address the text meant.
+    for (const key of ['address', 'lng', 'lat']) {
+      const value = searchParams.get(key);
+      if (value) params.set(key, value);
+    }
 
     if (apps?.length) params.set('app', apps.map((a) => a.id).join(','));
     if (categories?.length) params.set('categories', categories.map((c) => c.id).join(','));

@@ -9,7 +9,7 @@ import Button from '../ui/Button';
 import Icon from '../Icons';
 import { Menu, MenuItem } from '../ui/Menu';
 import AddressAutocomplete from './AddressAutocomplete';
-import { SritysValue } from './SritysFilterModal';
+import SritysFilterModal, { SritysValue } from './SritysFilterModal';
 
 // Hero band: full-bleed green gradient, headline + supporting copy, and the white
 // search bar (address autocomplete + Sritys) overlapping the bottom edge.
@@ -32,7 +32,6 @@ const HeroSearch = ({
   // "show me what is happening", not "show me nothing until I pick a source".
   const seeded = useRef(false);
   const [sritysOpen, setSritysOpen] = useState(false);
-  const sritysRef = useRef<HTMLDivElement>(null);
 
   const { data: apps } = useQuery({
     queryKey: ['apps', 'all'],
@@ -41,22 +40,19 @@ const HeroSearch = ({
   });
 
   useEffect(() => {
-    const onDoc = (e: MouseEvent) => {
-      if (sritysRef.current && !sritysRef.current.contains(e.target as Node)) setSritysOpen(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
-
-  useEffect(() => {
     if (seeded.current || !apps?.length) return;
     seeded.current = true;
     setSrities({ appIds: apps.map((a: App) => a.id), categoriesByApp: {} });
   }, [apps]);
 
   const allSelected = !!apps?.length && srities.appIds.length >= apps.length;
-  const selectedApp = (apps ?? []).find((a: App) => a.id === srities.appIds[0]);
-  const sritysLabel = allSelected ? 'Sritys' : selectedApp?.name ?? 'Sritys';
+  const picked = (apps ?? []).filter((a: App) => srities.appIds.includes(a.id));
+  const sritysLabel =
+    allSelected || !picked.length
+      ? 'Sritys'
+      : picked.length === 1
+        ? picked[0].name
+        : `${picked[0].name} +${picked.length - 1}`;
 
   const goToMap = () => {
     // Go to the map page with the search pre-filled. The resolved point and the
@@ -110,31 +106,15 @@ const HeroSearch = ({
                 onSubmit={goToMap}
               />
             </SearchInputWrap>
-            <SritysWrap ref={sritysRef}>
+            <SritysWrap>
               <SritysButton
                 type="button"
-                onClick={() => setSritysOpen((v) => !v)}
-                $active={!!selectedApp}
+                onClick={() => setSritysOpen(true)}
+                $active={!allSelected}
               >
                 <SritysLabel>{sritysLabel}</SritysLabel>
                 <ChevronIcon name={IconName.dropdownArrow} />
               </SritysButton>
-              {sritysOpen && (
-                <SritysMenu>
-                  {(apps ?? []).map((app: App) => (
-                    <MenuItem
-                      key={app.id}
-                      $active={app.id === srities.appIds[0]}
-                      onClick={() => {
-                        setSrities({ appIds: [app.id], categoriesByApp: {} });
-                        setSritysOpen(false);
-                      }}
-                    >
-                      {app.name}
-                    </MenuItem>
-                  ))}
-                </SritysMenu>
-              )}
             </SritysWrap>
             <SearchButtonWrap>
               <Button onClick={goToMap}>Ieškoti</Button>
@@ -142,6 +122,16 @@ const HeroSearch = ({
           </SearchBar>
         </SearchBarWrap>
       )}
+
+      {/* The same dialog the map and the feed open, so a source is picked the
+          same way wherever the user starts. */}
+      <SritysFilterModal
+        visible={sritysOpen}
+        value={srities}
+        onChange={setSrities}
+        onApply={() => setSritysOpen(false)}
+        onClose={() => setSritysOpen(false)}
+      />
     </Hero>
   );
 };
@@ -311,16 +301,6 @@ const SritysWrap = styled.div`
   @media ${device.mobileL} {
     width: 100%;
   }
-`;
-
-const SritysMenu = styled(Menu)`
-  position: absolute;
-  /* The frame hangs the menu 4px under the input and draws all eight rows. */
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 40;
-  max-height: 392px;
 `;
 
 const SritysLabel = styled.span`

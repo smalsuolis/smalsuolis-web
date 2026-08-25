@@ -40,6 +40,7 @@ const MAP_FILTERS_KEY = 'smalsuolis.mapFilters';
 
 type StoredMapFilters = {
   address?: string;
+  point?: [number, number];
   appIds?: number[];
   categoriesByApp?: Record<number, number[]>;
   periodKey?: string;
@@ -106,6 +107,7 @@ const MapPage = () => {
   const storedRef = useRef<StoredMapFilters>(readStoredFilters());
   const urlHasFilters =
     searchParams.has('address') ||
+    searchParams.has('lat') ||
     searchParams.has('app') ||
     searchParams.has('categories') ||
     searchParams.has('range');
@@ -114,7 +116,26 @@ const MapPage = () => {
   const [address, setAddress] = useState(
     navState?.address ?? searchParams.get('address') ?? stored.address ?? '',
   );
-  const [selected, setSelected] = useState<AddressSuggestion | null>(navState?.suggestion ?? null);
+  // The resolved point travels with the address. Re-searching the text to find
+  // it again returned the first match, not the one that was picked — "Antakalnio
+  // g. 1" led with "Antakalnio g. 17", so the map zoomed to the wrong street.
+  const pointFromUrl = ((): [number, number] | undefined => {
+    const lng = Number(searchParams.get('lng'));
+    const lat = Number(searchParams.get('lat'));
+    return lng && lat ? [lng, lat] : undefined;
+  })();
+  const point = pointFromUrl ?? stored.point;
+
+  const [selected, setSelected] = useState<AddressSuggestion | null>(
+    navState?.suggestion ??
+      (point && (searchParams.get('address') ?? stored.address)
+        ? {
+            code: 0,
+            label: (searchParams.get('address') ?? stored.address)!,
+            geometry: { type: 'Point', coordinates: point },
+          }
+        : null),
+  );
   // Bumped when an address is cleared, to remount the map iframe back to its
   // default view (the iframe's zoomToFeatureCollection ignores empty geometry,
   // so there's no message to "unzoom" — a fresh mount is the reliable reset).
@@ -201,14 +222,16 @@ const MapPage = () => {
     staleTime: Infinity,
   });
 
-  // On reload with ?address= but no resolved point, re-run suggest once.
+  // Only for a link that carries the text without the point: match the label
+  // exactly rather than taking whatever comes back first.
   useEffect(() => {
     const urlAddress = searchParams.get('address');
     if (!selected && urlAddress && urlAddress.trim().length >= 3) {
       api
         .suggestAddresses(urlAddress)
         .then((results) => {
-          if (results[0]) setSelected(results[0]);
+          const exact = results.find((r) => r.label === urlAddress);
+          if (exact) setSelected(exact);
         })
         .catch(() => undefined);
     }
@@ -219,6 +242,10 @@ const MapPage = () => {
   useEffect(() => {
     const next: Record<string, string> = {};
     if (address) next.address = address;
+    if (selected) {
+      next.lng = String(selected.geometry.coordinates[0]);
+      next.lat = String(selected.geometry.coordinates[1]);
+    }
     if (appIds.length) next.app = appIds.join(',');
     if (selectedCategoryIds.length) next.categories = selectedCategoryIds.join(',');
     if (periodKey) next.range = periodKey;
@@ -242,7 +269,7 @@ const MapPage = () => {
       // Storage blocked: the URL still carries everything between the two views.
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, appIds, selectedCategoryIds, periodKey, customRange]);
+  }, [address, selected, appIds, selectedCategoryIds, periodKey, customRange]);
 
   // Switch to the list view, carrying the current filters. The events page uses
   // different param names than the map (?apps= vs ?app=), and reads them via
@@ -252,6 +279,10 @@ const MapPage = () => {
     // The feed has nowhere to show an address, but it is still part of what the
     // user set up here — carry it so coming back lands on the same place.
     if (address) params.set('address', address);
+    if (selected) {
+      params.set('lng', String(selected.geometry.coordinates[0]));
+      params.set('lat', String(selected.geometry.coordinates[1]));
+    }
     if (appIds.length) params.set('apps', appIds.join(','));
     if (selectedCategoryIds.length) params.set('categories', selectedCategoryIds.join(','));
     // The key means nothing on the feed, so send the window it resolves to.
