@@ -626,21 +626,6 @@ const SearchPill = styled.div`
   border-radius: 54px;
   box-shadow: ${pillShadow};
 
-  /* Reads as one control alongside the Sritys and period pills, which already
-     do — the arrow over the pill and the I-beam over the placeholder made the
-     same row answer the pointer three different ways. */
-  cursor: pointer;
-
-  input {
-    cursor: pointer;
-  }
-
-  /* Once it is focused it is a text field again, so give the caret back. */
-  &:focus-within,
-  &:focus-within input {
-    cursor: text;
-  }
-
   @media ${device.mobileL} {
     width: 100%;
     box-shadow:
