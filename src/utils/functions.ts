@@ -168,3 +168,39 @@ export const getUpdateStatusColor = (dateString: string | null): string => {
     return '#EF4444'; // red
   }
 };
+
+/**
+ * The filters one surface hands to the other when the reader switches view.
+ *
+ * The map and the feed name the same things differently — `app` against `apps`
+ * — and used to speak different period vocabularies too, so a selection could
+ * not survive the trip. The periods are one list now, so only the names need
+ * translating.
+ *
+ * Address is deliberately left behind: the feed has nowhere to show it, and the
+ * map keeps its own.
+ */
+export const viewHandoffParams = (
+  target: 'map' | 'list',
+  filters: {
+    appIds?: number[];
+    categoryIds?: number[];
+    rangeKey?: string;
+    customRange?: { $gte: string; $lt: string };
+  },
+): URLSearchParams => {
+  const params = new URLSearchParams();
+  const { appIds = [], categoryIds = [], rangeKey, customRange } = filters;
+
+  if (appIds.length) params.set(target === 'map' ? 'app' : 'apps', appIds.join(','));
+  if (categoryIds.length) params.set('categories', categoryIds.join(','));
+  if (rangeKey) params.set('range', rangeKey);
+  // A custom range travels as the dates themselves; the key alone means nothing
+  // on the other side.
+  if (customRange?.$gte && customRange?.$lt) {
+    params.set('from', customRange.$gte);
+    params.set('to', customRange.$lt);
+  }
+  if (target === 'list') params.set('view', 'list');
+  return params;
+};

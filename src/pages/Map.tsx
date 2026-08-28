@@ -8,8 +8,8 @@ import AddressAutocomplete from '../components/home/AddressAutocomplete';
 import SritysFilterModal, { SritysValue } from '../components/home/SritysFilterModal';
 import PeriodDropdown from '../components/PeriodDropdown';
 import { device, font } from '../styles';
-import { AddressSuggestion, App, Category, IconName, slugs } from '../utils';
-import { statsTimeRangeItems, TimeRanges } from '../utils/types';
+import { AddressSuggestion, App, Category, IconName, slugs, viewHandoffParams } from '../utils';
+import { defaultTimeRange, timeRangeItems, TimeRanges } from '../utils/types';
 import Icon from '../components/Icons';
 import api from '../utils/api';
 import { UserContext, UserContextType } from '../components/UserProvider';
@@ -69,18 +69,10 @@ const addressFeatureCollection3346 = (geometry: AddressSuggestion['geometry']) =
   };
 };
 
-// Period options for the map: the shared preset ranges, minus the year/custom
-// entries (kept simple for a floating dropdown).
-const PERIOD_OPTIONS = statsTimeRangeItems.filter((i) =>
-  [
-    TimeRanges.LAST_7_DAYS,
-    TimeRanges.LAST_28_DAYS,
-    TimeRanges.LAST_90_DAYS,
-    TimeRanges.LAST_365_DAYS,
-    TimeRanges.ALL_TIME,
-    TimeRanges.CUSTOM,
-  ].includes(i.key as TimeRanges),
-);
+// The same periods the feed and the statistics page offer. They used to differ,
+// so a period picked on one surface could not be carried to another and had to
+// be rewritten as raw dates.
+const PERIOD_OPTIONS = timeRangeItems;
 
 // Redesigned map page: the events map (maps.biip.lt iframe) fills the viewport,
 // with three floating controls overlaid — address search, category (Sritys)
@@ -187,13 +179,11 @@ const MapPage = () => {
       // A browser with storage blocked just shows the card again next visit.
     }
   };
-  // A range from the events page belongs to a different vocabulary, so anything
-  // this page cannot render falls back to its own default rather than blanking.
   const [periodKey, setPeriodKey] = useState<string>(() => {
     const fromUrl = searchParams.get('range');
     if (PERIOD_OPTIONS.some((p) => p.key === fromUrl)) return fromUrl!;
     if (searchParams.get('from')) return TimeRanges.CUSTOM;
-    return stored.periodKey ?? TimeRanges.LAST_28_DAYS;
+    return stored.periodKey ?? defaultTimeRange.key;
   });
 
   // The feed and the map name their periods differently, so a selection travels
@@ -279,8 +269,17 @@ const MapPage = () => {
   // its own URL-init effect, so translate here.
   // The two views keep their own filters, so switching just switches the view.
   // Each page restores what it was last set to, not what the other was showing.
+  // Hands the map's sources, categories and period to the feed. The two used to
+  // switch view and nothing else, so a reader who had narrowed the map arrived
+  // at an unfiltered list and had to set it all again.
   const goToList = () => {
-    navigate(`${slugs.events}?view=list`);
+    const params = viewHandoffParams('list', {
+      appIds,
+      categoryIds: selectedCategoryIds,
+      rangeKey: periodKey,
+      customRange: periodKey === TimeRanges.CUSTOM ? customRange : undefined,
+    });
+    navigate(`${slugs.events}?${params.toString()}`);
   };
 
   // When an address is selected, pin it (deselect handling that resets the view

@@ -6,7 +6,7 @@ import { orderBy } from 'lodash';
 import { CONTENT_WIDTH, device, font } from '../styles';
 import { timeRangeQuery } from '../utils';
 import { appIcon } from '../utils/appIcons';
-import { TimeRanges, yearQuery, statsTimeRangeItems } from '../utils/types';
+import { defaultTimeRange, TimeRanges, yearQuery, statsTimeRangeItems } from '../utils/types';
 import api from '../utils/api';
 import Loader from '../components/Loader';
 import PeriodDropdown from '../components/PeriodDropdown';
@@ -19,7 +19,7 @@ import SubscribeBanner from '../components/stats/SubscribeBanner';
 
 const resolveQueryFromKey = (key: string): { $gte: string; $lt: string } => {
   if (/^\d{4}$/.test(key)) return yearQuery(Number(key));
-  const q = timeRangeQuery[key as TimeRanges] ?? timeRangeQuery[TimeRanges.LAST_7_DAYS];
+  const q = timeRangeQuery[key as TimeRanges] ?? defaultTimeRange.query;
   return q as { $gte: string; $lt: string };
 };
 
@@ -56,22 +56,10 @@ const APP_SHORT_LABELS: Record<string, string> = {
 const prettyMunicipality = (name: string): string =>
   name.replace(/\s+(m\.|r\.)?\s*sav\.?$/i, '').trim();
 
-// Widening ladder for the adaptive default: if the default window has no
-// events (e.g. a source feed went stale), step out to the next wider range so
-// the page opens with data rather than looking empty. Only applied when the
-// user hasn't explicitly picked a range.
-const RANGE_LADDER: TimeRanges[] = [
-  TimeRanges.LAST_7_DAYS,
-  TimeRanges.LAST_28_DAYS,
-  TimeRanges.LAST_90_DAYS,
-  TimeRanges.LAST_365_DAYS,
-  TimeRanges.ALL_TIME,
-];
-
 const Stats = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const initialRange = searchParams.get('range') ?? TimeRanges.LAST_7_DAYS;
+  const initialRange = searchParams.get('range') ?? defaultTimeRange.key;
   const initialQuery: { $gte: string; $lt: string } =
     initialRange === TimeRanges.CUSTOM && searchParams.get('from') && searchParams.get('to')
       ? { $gte: searchParams.get('from')!, $lt: searchParams.get('to')! }
@@ -99,20 +87,6 @@ const Stats = () => {
     // Keep the numbers on screen and let the title say a new set is coming.
     placeholderData: (previous) => previous,
   });
-
-  // Adaptive default range: when the user hasn't explicitly chosen a range and
-  // the current window returned zero events, step out to the next wider range.
-  // Runs at most once per rung and stops at ALL_TIME, so it can't loop.
-  const userPickedRange = !!searchParams.get('range');
-  useEffect(() => {
-    if (userPickedRange || isLoading || !data) return;
-    if (data.count > 0) return;
-    const idx = RANGE_LADDER.indexOf(dateFilter as TimeRanges);
-    if (idx === -1 || idx >= RANGE_LADDER.length - 1) return; // unknown or already widest
-    const next = RANGE_LADDER[idx + 1];
-    setDateFilter(next);
-    setQuery(resolveQueryFromKey(next));
-  }, [data, isLoading, dateFilter, userPickedRange]);
 
   const previousQuery = calculatePreviousPeriod(effectiveQuery);
   const { data: previousData, isFetching: isPreviousFetching } = useQuery({

@@ -17,6 +17,7 @@ import {
   TimeRangeItem,
   timeRangeItems,
   useGetCurrentRoute,
+  viewHandoffParams,
 } from '../utils';
 import { TimeRanges } from '../utils/types';
 import api from '../utils/api';
@@ -421,12 +422,18 @@ const EventsContainer = ({
     }
   };
 
-  // "Rodyti žemėlapį" goes back to the full-size map page, carrying the current
-  // filters over. The two pages name some params differently (map: ?app= &
-  // ?range=, list: ?apps= & ?range=), so translate rather than pass through.
-  // See Map.goToList: the map keeps its own filters, so this only switches view.
+  // Hands the feed's sources, categories and period to the map. The two name
+  // some params differently (map: ?app=, list: ?apps=), so the shared helper
+  // translates rather than passing through.
   const goToMap = () => {
-    navigate(slugs.map);
+    const { apps, categories, timeRange } = filters.value;
+    const params = viewHandoffParams('map', {
+      appIds: (apps ?? []).map((a) => a.id),
+      categoryIds: (categories ?? []).map((c) => c.id),
+      rangeKey: timeRange?.key,
+      customRange: timeRange?.key === TimeRanges.CUSTOM ? timeRange.query : undefined,
+    });
+    navigate(`${slugs.map}?${params.toString()}`);
   };
 
   const toggleView = () => {

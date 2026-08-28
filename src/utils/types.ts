@@ -218,11 +218,28 @@ export const timeRangeItems: TimeRangeItem[] = [
     name: 'Būsimi',
   },
   {
+    key: TimeRanges.ALL_TIME,
+    query: timeRangeQuery[TimeRanges.ALL_TIME],
+    name: 'Visi laikai',
+  },
+  {
     key: TimeRanges.CUSTOM,
     query: timeRangeQuery[TimeRanges.CUSTOM],
     name: 'Pasirinkite datą',
   },
 ];
+
+/**
+ * What every surface opens on.
+ *
+ * The map used to open on the last 28 days while the filter beside it counted
+ * every event, so the same screen showed 76 pins next to a count of 12,513 and
+ * nothing said why. Opening on everything and letting the reader narrow is the
+ * honest way round.
+ */
+export const defaultTimeRange: TimeRangeItem = timeRangeItems.find(
+  (i) => i.key === TimeRanges.ALL_TIME,
+)!;
 
 const currentYear = new Date().getFullYear();
 const yearItems: TimeRangeItem[] = Array.from(
@@ -233,32 +250,17 @@ const yearItems: TimeRangeItem[] = Array.from(
   },
 );
 
+/**
+ * Statistics offers the same periods as everywhere else, plus whole years.
+ *
+ * The three surfaces used to offer three different sets — rolling windows here
+ * and on the map, calendar periods in the feed — so the same question was asked
+ * three ways. Years stay, and only here: comparing one year with another is
+ * what this page is for, and it would only lengthen a dropdown nobody opens for
+ * that reason on a map.
+ */
 export const statsTimeRangeItems: TimeRangeItem[] = [
-  {
-    key: TimeRanges.LAST_7_DAYS,
-    query: timeRangeQuery[TimeRanges.LAST_7_DAYS],
-    name: 'Paskutinės 7 dienos',
-  },
-  {
-    key: TimeRanges.LAST_28_DAYS,
-    query: timeRangeQuery[TimeRanges.LAST_28_DAYS],
-    name: 'Paskutinės 28 dienos',
-  },
-  {
-    key: TimeRanges.LAST_90_DAYS,
-    query: timeRangeQuery[TimeRanges.LAST_90_DAYS],
-    name: 'Paskutinės 90 dienų',
-  },
-  {
-    key: TimeRanges.LAST_365_DAYS,
-    query: timeRangeQuery[TimeRanges.LAST_365_DAYS],
-    name: 'Paskutinės 365 dienos',
-  },
-  {
-    key: TimeRanges.ALL_TIME,
-    query: timeRangeQuery[TimeRanges.ALL_TIME],
-    name: 'Visi laikai',
-  },
+  ...timeRangeItems.filter((i) => i.key !== TimeRanges.CUSTOM),
   ...yearItems,
   {
     key: TimeRanges.CUSTOM,
