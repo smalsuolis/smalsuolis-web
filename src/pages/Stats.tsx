@@ -238,7 +238,7 @@ const Stats = () => {
     { label: 'Žuvų įveisimas', app: 'izuvinimas' },
     { label: 'Statybos leidimai', app: 'infostatyba' },
     { label: 'Žemėtvarkos planavimas', app: 'zemetvarkosPlanavimas' },
-    { label: 'Žemės paskirties keitimas (Vilnius)', app: 'savivaldybesZemetvarka' },
+    { label: 'Žemės paskirties keitimas', app: 'savivaldybesZemetvarka' },
   ].map((s) => ({ ...s, upd: getUpd(s.app) }));
 
   return (
