@@ -180,6 +180,11 @@ const Body = styled.div`
     margin: 0;
     padding: 8px 0;
     color: ${({ theme }) => theme.colors.text.primary};
+    /* Values arrive from the integrations and some have no spaces to wrap at —
+       a source URL, a long list of cadastral numbers. Without this the row
+       cannot break and widens the modal until it scrolls sideways. anywhere
+       rather than break-all, so ordinary text still breaks between words. */
+    overflow-wrap: anywhere;
   }
 
   strong {
