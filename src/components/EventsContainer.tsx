@@ -17,6 +17,7 @@ import {
   TimeRangeItem,
   timeRangeItems,
   useGetCurrentRoute,
+  sritysFieldLabel,
   viewHandoffParams,
 } from '../utils';
 import { TimeRanges } from '../utils/types';
@@ -348,11 +349,10 @@ const EventsContainer = ({
     });
   };
 
-  const sritysLabel = (() => {
-    const picked = filters.value.apps ?? [];
-    if (!picked.length) return 'Sritys';
-    return picked.length === 1 ? picked[0].name : `${picked[0].name} +${picked.length - 1}`;
-  })();
+  const sritysLabel = sritysFieldLabel(
+    allApps,
+    (filters.value.apps ?? []).map((a) => a.id),
+  );
 
   // Paged (not infinite) so any page is linkable: ?page=N rides alongside the
   // existing q / apps / range / categories params.

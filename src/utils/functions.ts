@@ -204,3 +204,26 @@ export const viewHandoffParams = (
   if (target === 'list') params.set('view', 'list');
   return params;
 };
+
+/**
+ * What the "Sritys" field shows for a selection.
+ *
+ * Three surfaces built this themselves and disagreed: the homepage and the feed
+ * named the selected sources, while the map named the selected *categories*
+ * instead — so one selection read as "Statinio remontas/rekonstravim…" in the
+ * feed and "Asmeninio poilsio (sodybos) +54" on the map, and the +N counted
+ * different things in each.
+ *
+ * The field is called Sritys, so it names sources and counts sources. Selecting
+ * everything is a choice rather than an empty field, so it says so.
+ */
+export const sritysFieldLabel = (
+  allApps: { id: number; name: string }[],
+  selectedAppIds: number[],
+): string => {
+  const picked = allApps.filter((a) => selectedAppIds.includes(a.id));
+  if (allApps.length && picked.length >= allApps.length) return 'Visos sritys';
+  if (!picked.length) return 'Sritys';
+  if (picked.length === 1) return picked[0].name;
+  return `${picked[0].name} +${picked.length - 1}`;
+};

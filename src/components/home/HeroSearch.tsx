@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
-import { AddressSuggestion, App, IconName, slugs } from '../../utils';
+import { AddressSuggestion, App, IconName, slugs, sritysFieldLabel } from '../../utils';
 import api from '../../utils/api';
 import Button from '../ui/Button';
 import Icon from '../Icons';
@@ -45,17 +45,7 @@ const HeroSearch = ({
     setSrities({ appIds: apps.map((a: App) => a.id), categoriesByApp: {} });
   }, [apps]);
 
-  const allSelected = !!apps?.length && srities.appIds.length >= apps.length;
-  const picked = (apps ?? []).filter((a: App) => srities.appIds.includes(a.id));
-  // Everything selected is a choice, not an empty field — say so, and in the
-  // same weight as any other value rather than in the placeholder grey.
-  const sritysLabel = allSelected
-    ? 'Visos sritys'
-    : !picked.length
-      ? 'Sritys'
-      : picked.length === 1
-        ? picked[0].name
-        : `${picked[0].name} +${picked.length - 1}`;
+  const sritysLabel = sritysFieldLabel(apps ?? [], srities.appIds);
 
   const goToMap = () => {
     // Go to the map page with the search pre-filled. The resolved point and the
@@ -119,7 +109,7 @@ const HeroSearch = ({
               <SritysButton
                 type="button"
                 onClick={() => setSritysOpen(true)}
-                $active={!!picked.length}
+                $active={!!srities.appIds.length}
               >
                 <SritysLabel>{sritysLabel}</SritysLabel>
                 <ChevronIcon name={IconName.dropdownArrow} />

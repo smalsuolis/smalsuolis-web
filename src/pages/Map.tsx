@@ -8,7 +8,15 @@ import AddressAutocomplete from '../components/home/AddressAutocomplete';
 import SritysFilterModal, { SritysValue } from '../components/home/SritysFilterModal';
 import PeriodDropdown from '../components/PeriodDropdown';
 import { device, font } from '../styles';
-import { AddressSuggestion, App, Category, IconName, slugs, viewHandoffParams } from '../utils';
+import {
+  AddressSuggestion,
+  App,
+  Category,
+  IconName,
+  slugs,
+  sritysFieldLabel,
+  viewHandoffParams,
+} from '../utils';
 import { defaultTimeRange, timeRangeItems, TimeRanges } from '../utils/types';
 import Icon from '../components/Icons';
 import api from '../utils/api';
@@ -307,21 +315,10 @@ const MapPage = () => {
     return Object.keys(f).length ? f : undefined;
   }, [appIds, selectedCategoryIds, period]);
 
-  // Category pill label: first selected category name, else first app name,
-  // else the generic "Sritys" — with a +N suffix when more are selected.
-  const categoryLabel = useMemo(() => {
-    if (selectedCategoryIds.length) {
-      const first = categories.find((c: Category) => c.id === selectedCategoryIds[0]);
-      const extra = selectedCategoryIds.length - 1;
-      return `${first?.name ?? 'Kategorija'}${extra > 0 ? ` +${extra}` : ''}`;
-    }
-    if (appIds.length) {
-      const first = apps.find((a: App) => a.id === appIds[0]);
-      const extra = appIds.length - 1;
-      return `${first?.name ?? 'Sritis'}${extra > 0 ? ` +${extra}` : ''}`;
-    }
-    return 'Sritys';
-  }, [selectedCategoryIds, appIds, apps, categories]);
+  // Named and counted the same way as on the homepage and in the feed. It used
+  // to name the selected categories instead, so one selection read differently
+  // on each surface and the +N counted categories here and sources there.
+  const categoryLabel = useMemo(() => sritysFieldLabel(apps ?? [], appIds), [apps, appIds]);
 
   const hasCategory = appIds.length > 0 || selectedCategoryIds.length > 0;
 
