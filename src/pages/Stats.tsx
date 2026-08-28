@@ -273,7 +273,7 @@ const Stats = () => {
       upd: getUpd('zemetvarkosPlanavimas'),
     },
     {
-      label: 'Žemės paskirties keitimas (Vilnius)',
+      label: 'Žemės paskirties keitimas',
       icon: IconName.buildings,
       upd: getUpd('savivaldybesZemetvarka'),
     },
