@@ -64,6 +64,8 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
       <InnerContainer $showModal={showModal}>
         {!hideFullscreen && (
           <StyledButton
+            type="button"
+            aria-label={showModal ? 'Sumažinti žemėlapį' : 'Padidinti žemėlapį'}
             $popup={showModal}
             onClick={(e) => {
               e.preventDefault();
@@ -166,28 +168,31 @@ const StyledIframe = styled.iframe<{
   height: ${({ $height }) => $height};
 `;
 
-const StyledButton = styled.div<{ $popup: boolean }>`
+// This route draws no controls in its top left corner, so the button stays
+// there — but wearing the chrome the frame gives its own: a 36px box on a 6px
+// radius with a tight shadow, around a 20px glyph. It used to be a sharp-
+// cornered square with the glyph pressed against all four edges, under a shadow
+// thrown 18px down, and it read as an artefact rather than a control.
+const StyledButton = styled.button<{ $popup: boolean }>`
   position: absolute;
   z-index: 10;
-  top: ${({ $popup }) => ($popup ? 30 : 15)}px;
-  left: ${({ $popup }) => ($popup ? 28 : 11)}px;
-  min-width: 28px;
-  height: 28px;
-  @media ${device.mobileL} {
-    top: 10px;
-    left: 10px;
-  }
-
-  border-color: #e5e7eb;
-  background-color: white !important;
-  width: 30px;
-  height: 30px;
+  top: ${({ $popup }) => ($popup ? 26 : 10)}px;
+  left: ${({ $popup }) => ($popup ? 26 : 10)}px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   padding: 0;
-  box-shadow: 0px 18px 41px #121a5529;
+  border: none;
+  border-radius: 6px;
+  background-color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
 `;
 
 const StyledIcon = styled(Icon)`
-  font-size: 3rem;
+  font-size: 2rem;
   color: #6b7280;
 `;
 
