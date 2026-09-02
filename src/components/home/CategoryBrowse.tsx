@@ -72,9 +72,18 @@ const CategoryBrowse = () => {
 
   // Browsing by purpose lands on the map with that source already filtered —
   // the same place the hero search goes.
+  //
+  // Matched by prefix, not by an exact key: "Statiniai" is one chip over the
+  // four Infostatyba sources (…-naujas, -remontas, -griovimas,
+  // -paskirties-keitimas). The statistics count them under the single key the
+  // chip carries, the app registry keeps them apart — so an exact `find` came
+  // back empty and that chip, the largest of the five, opened the map with no
+  // filter at all.
   const browse = (key: string) => {
-    const app = apps.find((a: App) => a.key === key);
-    navigate(app ? `${slugs.map}?app=${app.id}` : slugs.map);
+    const ids = apps
+      .filter((a: App) => a.key === key || a.key?.startsWith(`${key}-`))
+      .map((a: App) => a.id);
+    navigate(ids.length ? `${slugs.map}?app=${ids.join(',')}` : slugs.map);
   };
 
   return (
