@@ -66,6 +66,7 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
           <StyledButton
             type="button"
             aria-label={showModal ? 'Sumažinti žemėlapį' : 'Padidinti žemėlapį'}
+            title={showModal ? 'Sumažinti žemėlapį' : 'Padidinti žemėlapį'}
             $popup={showModal}
             onClick={(e) => {
               e.preventDefault();
@@ -168,16 +169,17 @@ const StyledIframe = styled.iframe<{
   height: ${({ $height }) => $height};
 `;
 
-// This route draws no controls in its top left corner, so the button stays
-// there — but wearing the chrome the frame gives its own: a 36px box on a 6px
-// radius with a tight shadow, around a 20px glyph. It used to be a sharp-
-// cornered square with the glyph pressed against all four edges, under a shadow
-// thrown 18px down, and it read as an artefact rather than a control.
+// Top right, the corner the eye looks to for a view control — the frame keeps
+// its own locate and zoom stack on that side but anchored to the bottom (in a
+// 540px map the first of them starts ~474px down), so the corner is free.
+// The chrome is the frame's own: a 36px box on a 6px radius under a tight
+// shadow, around a 20px glyph. It used to be a sharp-cornered square with the
+// glyph pressed against all four edges, under a shadow thrown 18px down.
 const StyledButton = styled.button<{ $popup: boolean }>`
   position: absolute;
   z-index: 10;
   top: ${({ $popup }) => ($popup ? 26 : 10)}px;
-  left: ${({ $popup }) => ($popup ? 26 : 10)}px;
+  right: ${({ $popup }) => ($popup ? 26 : 10)}px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -191,9 +193,11 @@ const StyledButton = styled.button<{ $popup: boolean }>`
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
 `;
 
+// The frame inks its own glyphs at #4C545F; #6B7280 beside them read as a
+// control that had been disabled.
 const StyledIcon = styled(Icon)`
   font-size: 2rem;
-  color: #6b7280;
+  color: #4c545f;
 `;
 
 const StyledIconContainer = styled.div`

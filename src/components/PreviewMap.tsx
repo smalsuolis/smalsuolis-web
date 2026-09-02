@@ -35,6 +35,7 @@ const PreviewMap = ({ height = '230px', error, value, showError = true, label }:
           <StyledButton
             type="button"
             aria-label={showModal ? 'Sumažinti žemėlapį' : 'Padidinti žemėlapį'}
+            title={showModal ? 'Sumažinti žemėlapį' : 'Padidinti žemėlapį'}
             $popup={showModal}
             onClick={(e) => {
               e.preventDefault();
@@ -115,16 +116,19 @@ const StyledIframe = styled.iframe<{
   height: ${({ $height }) => $height};
 `;
 
-// Third in the row the frame draws at its top left — layers, share, then this.
+// Top right, with the frame's own view controls — locate, basemap, zoom — and
+// not in the top-left row, which holds its content actions (layers, share).
+// Expanding is a view control, and that corner is where the eye looks for it.
+// The frame anchors that column to the bottom (in a 350px map its first button
+// starts ~244px down), so the corner is free at every height we render.
+//
 // It used to sit at 11px, square on top of the layers button, which is what made
-// it read as a broken control rather than a button. The frame's own two are 36px
-// boxes on a 6px radius, 13px apart, starting 9px in; this takes the next slot
-// and the same chrome, so the three read as one set.
+// it read as a broken control rather than a button.
 const StyledButton = styled.button<{ $popup: boolean }>`
   position: absolute;
   z-index: 10;
   top: ${({ $popup }) => ($popup ? 25 : 9)}px;
-  left: ${({ $popup }) => ($popup ? 121 : 105)}px;
+  right: ${({ $popup }) => ($popup ? 25 : 9)}px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,9 +142,11 @@ const StyledButton = styled.button<{ $popup: boolean }>`
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
 `;
 
+// The frame inks its own glyphs at #4C545F; #6B7280 beside them read as a
+// control that had been disabled.
 const StyledIcon = styled(Icon)`
   font-size: 2rem;
-  color: #6b7280;
+  color: #4c545f;
 `;
 
 const StyledIconContainer = styled.div`
