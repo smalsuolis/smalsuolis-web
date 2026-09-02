@@ -154,7 +154,12 @@ const CloseButton = styled.button`
 
 // The frame draws the map flush — no radius. Taller than the frame's 239:
 // the preview is the thing readers look at first, and 350 is what it takes to
-// see the street around the point (120 on a phone).
+// see the street around the point.
+//
+// The narrow rule carries the same +111 the wide one got (120 → 240). It runs
+// to 868px, so a tablet was reading a 120px strip too; 240 still leaves the
+// title, the detail rows and the button in view at once on a 375x667 phone,
+// where the card may not scroll past 88vh.
 const MapWrap = styled.div`
   width: 100%;
   overflow: hidden;
@@ -166,7 +171,7 @@ const MapWrap = styled.div`
   @media ${device.mobileL} {
     iframe,
     > div {
-      height: 120px !important;
+      height: 240px !important;
     }
   }
 `;
