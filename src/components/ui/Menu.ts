@@ -22,10 +22,18 @@ export const MenuItem = styled.div<{ $active?: boolean }>`
   ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
-  background: ${({ $active }) => ($active ? '#fafafa' : 'transparent')};
+  /* Two states, not one: the frame tints a row #FAFAFA under the pointer, and
+     the row being acted on — pressed, or picked with the arrow keys — goes one
+     step further down the same grey ramp so it reads apart from a mere hover. */
+  background: ${({ $active }) => ($active ? '#ededed' : 'transparent')};
+  transition: background 0.12s ease;
 
   &:hover {
     background: #fafafa;
+  }
+
+  &:active {
+    background: #ededed;
   }
 
   & + & {
