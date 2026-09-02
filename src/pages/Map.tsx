@@ -412,7 +412,12 @@ export default MapPage;
 const Page = styled.div`
   position: relative;
   width: 100%;
+  /* Safari on iOS measures 100vh against the viewport its toolbars are hidden
+     in, so a page sized by it runs under the bottom bar and takes the list
+     button with it. dvh is the visible height; the vh line stays for browsers
+     that predate it (they keep today's behaviour rather than nothing). */
   height: calc(100vh - 80px);
+  height: calc(100dvh - 80px);
   min-height: 480px;
 `;
 

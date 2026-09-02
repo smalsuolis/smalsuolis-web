@@ -91,7 +91,10 @@ const DateContainer = styled.div`
     left: 0px;
     top: 0px;
     width: 100vw;
+    /* Sized to what iOS Safari actually shows, or the picker's own buttons end
+       up beneath its toolbar. */
     height: 100vh;
+    height: 100dvh;
     overflow: auto;
     justify-content: center;
     align-items: center;

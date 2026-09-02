@@ -78,6 +78,7 @@ const Backdrop = styled.div`
      this the card never reaches its 499px. */
   width: 100%;
   min-height: calc(100vh - 72px);
+  min-height: calc(100dvh - 72px);
   display: flex;
   align-items: center;
   justify-content: center;
