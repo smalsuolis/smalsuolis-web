@@ -41,6 +41,11 @@ const ADDRESS_EXTENT_M = 400;
 
 const REGISTER_CARD_DISMISSED = 'smalsuolis.registerCardDismissed';
 
+// The embed draws its own locate and zoom controls hard against the right edge —
+// a ~40px column we cannot restyle from here, being cross-origin. Everything of
+// ours along the bottom stops short of it, or it covers them.
+const MAP_CONTROLS_GUTTER = '56px';
+
 // The URL carries the filters when you switch to the list and back, but coming
 // back through the navbar has no params to carry them — so the last set is kept
 // for the session too, and used only when the URL says nothing.
@@ -421,7 +426,7 @@ const BottomBar = styled.div`
   position: absolute;
   left: 0;
   right: 0;
-  padding: 0 36px;
+  padding: 0 ${MAP_CONTROLS_GUTTER} 0 36px;
   bottom: 36px;
   z-index: 22;
   display: flex;
@@ -438,7 +443,7 @@ const BottomBar = styled.div`
     /* Stacked on mobile the bar spans the full width, so it clears the side
        controls by sitting below them instead. The register card is taken out
        of this flow and laid over the bar, so what stacks here is the toggle. */
-    padding: 0 16px;
+    padding: 0 ${MAP_CONTROLS_GUTTER} 0 16px;
     bottom: 23px;
     gap: 16px;
     flex-direction: column;
@@ -487,7 +492,7 @@ const RegisterCard = styled.div`
        uncovers the button that was underneath all along. */
     position: absolute;
     left: 16px;
-    right: 16px;
+    right: ${MAP_CONTROLS_GUTTER};
     bottom: 0;
     margin: 0 auto;
     align-self: center;
