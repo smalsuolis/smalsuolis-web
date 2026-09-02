@@ -367,9 +367,13 @@ const MapPage = () => {
             Dar neturite paskyros? Užsiregistruokite
           </RegisterCta>
         )}
-        {/* Above the toggle, not below it: on a phone the card is the thing you
-            dismiss, and once it is gone the single button left sits where it
-            already was, giving the map back the whole strip. */}
+        <ListToggle onClick={goToList}>
+          <Icon name={IconName.list} />
+          Rodyti įvykių sąrašą
+        </ListToggle>
+        {/* Last, so it lies over the toggle rather than pushing it up the map:
+            on a phone the card covers that strip until the X is pressed, and
+            what is underneath is the button that was always there. */}
         {!loggedIn && registerCardOpen && (
           <RegisterCard>
             <RegisterClose type="button" aria-label="Uždaryti" onClick={dismissRegisterCard}>
@@ -382,10 +386,6 @@ const MapPage = () => {
             <RegisterButton onClick={() => openAuthModal('register')}>Registruotis</RegisterButton>
           </RegisterCard>
         )}
-        <ListToggle onClick={goToList}>
-          <Icon name={IconName.list} />
-          Rodyti įvykių sąrašą
-        </ListToggle>
       </BottomBar>
 
       <SritysFilterModal
@@ -436,9 +436,8 @@ const BottomBar = styled.div`
 
   @media ${device.mobileL} {
     /* Stacked on mobile the bar spans the full width, so it clears the side
-       controls by sitting below them instead. */
-    /* One bottom-anchored stack: the register card sits above the toggle with
-       a real gap, whatever height the card's text wraps to. */
+       controls by sitting below them instead. The register card is taken out
+       of this flow and laid over the bar, so what stacks here is the toggle. */
     padding: 0 16px;
     bottom: 23px;
     gap: 16px;
@@ -482,10 +481,18 @@ const RegisterCard = styled.div`
   display: none;
 
   @media ${device.mobileL} {
-    position: relative;
+    /* Laid over the bottom strip rather than stacked in it: in the flow the
+       card pushed the list button up the map and cost the view its own height
+       on top of the button's. Over it, the strip is spent once, and the X
+       uncovers the button that was underneath all along. */
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 0;
+    margin: 0 auto;
     align-self: center;
     /* 361 wide — the phone frame's number, kept when the viewport is wider. */
-    width: 100%;
+    width: auto;
     max-width: 361px;
     display: flex;
     flex-direction: column;
