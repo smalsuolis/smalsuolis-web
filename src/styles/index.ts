@@ -296,6 +296,29 @@ export const checkmarkNudge = css`
 `;
 
 /**
+ * The two states every outlined field answers with, wherever it sits: a
+ * mid-grey hairline under the pointer, black once it is focused (or its menu is
+ * open — a trigger holds focus while that menu is up). The resting colour stays
+ * with the field itself, since a few of them rest on a different grey.
+ *
+ * The Figma homepage frame draws the address field focused, in 1px #000000
+ * against its resting #BCBCBC; the mid-grey between the two is the ramp's own
+ * #818181. Apply to the element that carries the border — for a text field that
+ * is the wrapper, hence `:focus-within` rather than `:focus`.
+ */
+export const fieldStates = css`
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.grey[550]};
+  }
+
+  &:focus-within {
+    border-color: ${({ theme }) => theme.colors.black};
+  }
+`;
+
+/**
  * Hover tint for the borderless list rows (events, subscriptions). The design
  * gives those rows no horizontal padding, so tinting the element itself hugs
  * the text; this paints the tint on a layer that bleeds 16px past the content

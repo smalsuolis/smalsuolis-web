@@ -684,8 +684,12 @@ const PeriodWrap = styled.div`
   border-radius: 54px;
 
   /* Floating over the map the pill has no outline in the design; the events
-     page keeps the #BCBCBC one. */
-  button {
+     page keeps the #BCBCBC one. The shared field states must not draw one back
+     under the pointer either: the address and Sritys pills beside it carry no
+     hairline at all, so only this one would answer. */
+  button,
+  button:hover,
+  button:focus-within {
     border-color: transparent;
   }
 
@@ -695,7 +699,9 @@ const PeriodWrap = styled.div`
     min-width: 0;
     width: calc(50% - 6px);
 
-    button {
+    button,
+    button:hover,
+    button:focus-within {
       border-color: rgba(83, 83, 83, 0.12);
     }
   }

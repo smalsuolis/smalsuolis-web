@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import styled from 'styled-components';
-import { CONTENT_WIDTH, device, font } from '../../styles';
+import { CONTENT_WIDTH, device, fieldStates, font } from '../../styles';
 import { AddressSuggestion, App, IconName, slugs, sritysFieldLabel } from '../../utils';
 import api from '../../utils/api';
 import Button from '../ui/Button';
@@ -283,17 +283,7 @@ const SearchInputWrap = styled.div`
   padding: 0 16px;
   border: 1px solid ${({ theme }) => theme.colors.grey[500]};
   border-radius: 44px;
-  transition: border-color 0.15s ease;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.grey[550]};
-  }
-
-  /* The Figma homepage draws the field in its focused state — a black hairline,
-     the same weight as the resting one. */
-  &:focus-within {
-    border-color: ${({ theme }) => theme.colors.black};
-  }
+  ${fieldStates};
 
   @media ${device.mobileL} {
     min-width: 0;
@@ -334,17 +324,9 @@ const SritysButton = styled.button<{ $active: boolean; $open: boolean }>`
   cursor: pointer;
   ${font('lg')};
   color: ${({ $active, theme }) => ($active ? theme.colors.text.primary : theme.colors.grey[500])};
-  transition: border-color 0.15s ease;
-
-  /* Same two states the address field beside it answers with: a mid-grey
-     hairline under the pointer, black while the picker is open. */
-  &:hover {
-    border-color: ${({ $open, theme }) => ($open ? theme.colors.black : theme.colors.grey[550])};
-  }
-
-  &:focus-visible {
-    border-color: ${({ theme }) => theme.colors.black};
-  }
+  /* The picker is a dialog, so this button does not hold focus while it is
+     open — hence the explicit black above; the shared rule covers the rest. */
+  ${fieldStates};
 
   @media ${device.mobileL} {
     width: 100%;

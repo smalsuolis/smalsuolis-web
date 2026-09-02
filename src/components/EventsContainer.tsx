@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { CONTENT_WIDTH, device, font } from '../styles';
+import { CONTENT_WIDTH, device, fieldStates, font } from '../styles';
 import {
   App,
   Category,
@@ -654,6 +654,7 @@ const SritysTrigger = styled.button`
   cursor: pointer;
   ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
+  ${fieldStates};
 
   svg {
     flex-shrink: 0;
@@ -694,10 +695,7 @@ const SearchField = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.grey[500]};
   border-radius: 54px;
   background: ${({ theme }) => theme.colors.white};
-
-  &:focus-within {
-    border-color: ${({ theme }) => theme.colors.grey[600]};
-  }
+  ${fieldStates};
 
   /* The row's fixed widths add up to more than a tablet's content column. The
      dropdowns keep theirs; the address field gives up its 422 and takes what is

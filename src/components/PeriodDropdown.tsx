@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
-import { font } from '../styles';
+import { fieldStates, font } from '../styles';
 import { Menu, MenuItem } from './ui/Menu';
 import { IconName } from '../utils';
 import {
@@ -146,6 +146,7 @@ const Trigger = styled.button`
   cursor: pointer;
   ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
+  ${fieldStates};
 `;
 
 const Label = styled.span`

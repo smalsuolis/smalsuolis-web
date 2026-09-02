@@ -94,6 +94,17 @@ const Card = styled.div<{ $wide?: boolean }>`
     height: 40px;
     border-radius: 100px;
     border-color: ${({ theme }) => theme.colors.grey[500]};
+    transition: border-color 0.15s ease;
+  }
+
+  /* The same two states the search fields answer with. Written out rather than
+     pulled from the shared mixin because the border belongs to a design-system
+     wrapper we can only reach through a selector. */
+  div:has(> input:not([type='checkbox'])):hover {
+    border-color: ${({ theme }) => theme.colors.grey[550]};
+  }
+  div:has(> input:not([type='checkbox'])):focus-within {
+    border-color: ${({ theme }) => theme.colors.black};
   }
 
   div:has(> input:not([type='checkbox'])) > input {
