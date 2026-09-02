@@ -22,10 +22,13 @@ export interface DefaultLayoutProps {
   // to edge and manage width internally. Non-bleed pages keep the padded,
   // centered grey content container the inner pages were built against.
   fullBleed?: boolean;
+  // The map page gives the viewport to the map: nav on top, map under it, and
+  // nothing below to scroll to. Every other page keeps the footer.
+  hideFooter?: boolean;
 }
 
 const DefaultLayout = (props: DefaultLayoutProps) => {
-  const { children, fullBleed } = props;
+  const { children, fullBleed, hideFooter } = props;
   const { pathname } = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +48,7 @@ const DefaultLayout = (props: DefaultLayoutProps) => {
       <ScrollableContainer ref={scrollRef}>
         <TopNav {...props} />
         {fullBleed ? children : <InnerContainer>{children}</InnerContainer>}
-        <Footer />
+        {!hideFooter && <Footer />}
       </ScrollableContainer>
     </Container>
   );

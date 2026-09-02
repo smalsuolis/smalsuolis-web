@@ -548,9 +548,11 @@ const SubmitButton = styled(Button)`
   border-color: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
 
+  /* Fill only — the DS button would otherwise repaint the label dark. */
   &:hover:not(:disabled) {
     background-color: ${({ theme }) => theme.colors.grey[700]};
     border-color: ${({ theme }) => theme.colors.grey[700]};
+    color: ${({ theme }) => theme.colors.white};
   }
 
   @media ${device.mobileL} {

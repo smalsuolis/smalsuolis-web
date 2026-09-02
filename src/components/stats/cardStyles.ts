@@ -26,7 +26,9 @@ export const CardHeader = styled.div`
 export const CardHeading = styled.div`
   font-size: 1.8rem;
   line-height: 2.3rem;
-  font-weight: 700;
+  /* 600, not the frame's 700: at 18px Plus Jakarta Sans reads too heavy against
+     the 14px rows under it. Carried by the card total too, which shares this. */
+  font-weight: 600;
   letter-spacing: -0.02em;
   color: ${({ theme }) => theme.colors.text.primary};
   min-width: 0;

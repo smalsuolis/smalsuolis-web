@@ -635,7 +635,7 @@ const ViewToggle = styled.button`
   }
 
   &:hover {
-    opacity: 0.92;
+    background: ${({ theme }) => theme.colors.grey[700]};
   }
 `;
 

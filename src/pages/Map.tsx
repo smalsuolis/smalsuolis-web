@@ -367,10 +367,9 @@ const MapPage = () => {
             Dar neturite paskyros? Užsiregistruokite
           </RegisterCta>
         )}
-        <ListToggle onClick={goToList}>
-          <Icon name={IconName.list} />
-          Rodyti įvykių sąrašą
-        </ListToggle>
+        {/* Above the toggle, not below it: on a phone the card is the thing you
+            dismiss, and once it is gone the single button left sits where it
+            already was, giving the map back the whole strip. */}
         {!loggedIn && registerCardOpen && (
           <RegisterCard>
             <RegisterClose type="button" aria-label="Uždaryti" onClick={dismissRegisterCard}>
@@ -383,6 +382,10 @@ const MapPage = () => {
             <RegisterButton onClick={() => openAuthModal('register')}>Registruotis</RegisterButton>
           </RegisterCard>
         )}
+        <ListToggle onClick={goToList}>
+          <Icon name={IconName.list} />
+          Rodyti įvykių sąrašą
+        </ListToggle>
       </BottomBar>
 
       <SritysFilterModal
@@ -434,7 +437,7 @@ const BottomBar = styled.div`
   @media ${device.mobileL} {
     /* Stacked on mobile the bar spans the full width, so it clears the side
        controls by sitting below them instead. */
-    /* One bottom-anchored stack: the toggle sits above the register card with
+    /* One bottom-anchored stack: the register card sits above the toggle with
        a real gap, whatever height the card's text wraps to. */
     padding: 0 16px;
     bottom: 23px;
@@ -462,8 +465,9 @@ const RegisterCta = styled.button`
   cursor: pointer;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 
+  /* Fill only — dimming the pill would take its label with it. */
   &:hover {
-    opacity: 0.92;
+    background: ${({ theme }) => theme.colors.grey[300]};
   }
 
   /* Replaced by RegisterCard on phones. */
@@ -555,7 +559,7 @@ const ListToggle = styled.button`
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 
   &:hover {
-    opacity: 0.92;
+    background: ${({ theme }) => theme.colors.grey[700]};
   }
 
   svg {

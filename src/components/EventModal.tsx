@@ -43,7 +43,7 @@ const EventModal = ({ event, onClose }: { event: Event; onClose: () => void }) =
         </Header>
 
         <MapWrap>
-          <PreviewMap value={event.geom} height={'239px'} showError={false} />
+          <PreviewMap value={event.geom} height={'350px'} showError={false} />
         </MapWrap>
 
         {event.body && (
@@ -152,7 +152,9 @@ const CloseButton = styled.button`
   }
 `;
 
-// The frame draws the map flush — no radius — at 239 tall (120 on a phone).
+// The frame draws the map flush — no radius. Taller than the frame's 239:
+// the preview is the thing readers look at first, and 350 is what it takes to
+// see the street around the point (120 on a phone).
 const MapWrap = styled.div`
   width: 100%;
   overflow: hidden;
@@ -207,8 +209,9 @@ const VisitButton = styled.button`
   cursor: pointer;
   text-align: center;
 
+  /* Fill only — dimming the pill takes the label with it. */
   &:hover {
-    opacity: 0.9;
+    background: ${({ theme }) => theme.colors.grey[700]};
   }
 
   @media ${device.mobileL} {

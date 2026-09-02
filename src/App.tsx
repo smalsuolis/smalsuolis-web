@@ -62,6 +62,7 @@ function App() {
     <DefaultLayout
       loggedIn={loggedIn}
       fullBleed={isFullBleed}
+      hideFooter={currentRoute?.slug === slugs.map}
       currentRoute={currentRoute}
       menuRoutes={menuRoutes || []}
       logo={<Icon name={IconName.sidebarLogo} />}

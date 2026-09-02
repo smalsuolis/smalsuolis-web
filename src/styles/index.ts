@@ -30,6 +30,11 @@ export const theme: Theme = {
         background: '#73DC8C',
         text: '#101010',
         border: '#73DC8C',
+        // Name the hover, or the design system paints its stock light blue over
+        // the brand green. Only the fill moves — the label keeps its colour.
+        hover: '#6ED386',
+        hoverBorder: '#6ED386',
+        hoverText: '#101010',
       },
       [ButtonVariants.SECONDARY]: {
         background: 'white',

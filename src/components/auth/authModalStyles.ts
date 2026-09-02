@@ -70,9 +70,12 @@ export const SubmitButton = styled(Button)`
   color: ${({ theme }) => theme.colors.white};
   ${font('base')};
 
+  /* Only the fill moves on hover. The DS button repaints its label from the
+     variant's own colours, which turns this black pill's white text dark. */
   &:hover:not(:disabled) {
     background-color: ${({ theme }) => theme.colors.grey[700]};
     border-color: ${({ theme }) => theme.colors.grey[700]};
+    color: ${({ theme }) => theme.colors.white};
   }
 
   @media ${device.mobileL} {

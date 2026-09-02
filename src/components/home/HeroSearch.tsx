@@ -110,6 +110,7 @@ const HeroSearch = ({
                 type="button"
                 onClick={() => setSritysOpen(true)}
                 $active={!!srities.appIds.length}
+                $open={sritysOpen}
               >
                 <SritysLabel>{sritysLabel}</SritysLabel>
                 <ChevronIcon name={IconName.dropdownArrow} />
@@ -282,6 +283,17 @@ const SearchInputWrap = styled.div`
   padding: 0 16px;
   border: 1px solid ${({ theme }) => theme.colors.grey[500]};
   border-radius: 44px;
+  transition: border-color 0.15s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.grey[550]};
+  }
+
+  /* The Figma homepage draws the field in its focused state — a black hairline,
+     the same weight as the resting one. */
+  &:focus-within {
+    border-color: ${({ theme }) => theme.colors.black};
+  }
 
   @media ${device.mobileL} {
     min-width: 0;
@@ -308,7 +320,7 @@ const SritysLabel = styled.span`
   text-overflow: ellipsis;
 `;
 
-const SritysButton = styled.button<{ $active: boolean }>`
+const SritysButton = styled.button<{ $active: boolean; $open: boolean }>`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -316,12 +328,23 @@ const SritysButton = styled.button<{ $active: boolean }>`
   width: 300px;
   min-height: 56px;
   padding: 12px 20px;
-  border: 1px solid ${({ theme }) => theme.colors.grey[500]};
+  border: 1px solid ${({ $open, theme }) => ($open ? theme.colors.black : theme.colors.grey[500])};
   border-radius: 44px;
   background: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   ${font('lg')};
   color: ${({ $active, theme }) => ($active ? theme.colors.text.primary : theme.colors.grey[500])};
+  transition: border-color 0.15s ease;
+
+  /* Same two states the address field beside it answers with: a mid-grey
+     hairline under the pointer, black while the picker is open. */
+  &:hover {
+    border-color: ${({ $open, theme }) => ($open ? theme.colors.black : theme.colors.grey[550])};
+  }
+
+  &:focus-visible {
+    border-color: ${({ theme }) => theme.colors.black};
+  }
 
   @media ${device.mobileL} {
     width: 100%;

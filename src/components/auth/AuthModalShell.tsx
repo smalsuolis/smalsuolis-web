@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from 'react';
 import styled from 'styled-components';
 import { IconName } from '../../utils';
-import { device, font } from '../../styles';
+import { checkmarkNudge, device, font } from '../../styles';
 import Icon from '../Icons';
 
 // Shared shell for the auth modals (Login / Register / Forgot / success states).
@@ -47,6 +47,7 @@ export default AuthModalShell;
 
 // The design anchors the card 305px from the top of the page rather than
 // centring it; short windows fall back to a plain top inset so it stays whole.
+// Sitting that low it read as falling off the fold, so it is lifted 150px.
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -56,10 +57,10 @@ const Overlay = styled.div`
   align-items: flex-start;
   justify-content: center;
   overflow-y: auto;
-  padding: 305px 24px 24px;
+  padding: 155px 24px 24px;
 
   @media ${device.mobileL} {
-    padding: 302px 16px 24px;
+    padding: 152px 16px 24px;
   }
 
   @media (max-height: 800px) {
@@ -127,7 +128,20 @@ const Card = styled.div<{ $wide?: boolean }>`
     background-color: #ffffff;
     box-shadow: inset 0 0 0 1px #d9d9d9;
   }
+  /* The DS paints the unchecked state on an inner 14px layer inset 2px from the
+     top left — inside a 16px box that lands flush on the right and bottom edges
+     and paints over the ring there, leaving the corner open. The box already
+     carries the white fill, so the inner layer has nothing left to draw. */
+  div:has(> input[type='checkbox']:not(:checked)) > label {
+    background-color: transparent;
+  }
+  /* The tick inside it is drawn for an 18px box; a pixel left re-centres it. */
+  ${checkmarkNudge}
+  /* The design sets the box against the consent line with 8px between them.
+     The DS reserves a 28px column for an 18px box, which leaves the two 20
+     apart and the box adrift from the text it belongs to. */
   div:has(> div > input[type='checkbox']) {
+    grid-template-columns: 16px 1fr;
     gap: 8px;
   }
 
