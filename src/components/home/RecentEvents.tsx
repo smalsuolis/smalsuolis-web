@@ -80,6 +80,19 @@ const SeeAll = styled.button`
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
   background: transparent;
+  transition: color 0.15s ease;
+
+  /* The lighter grey the black buttons take under the pointer — the same
+     #333333 token, so one hover answer across the page. The arrow is a black
+     SVG in an img element, which the CSS colour cannot reach; at 0.8 opacity it
+     lands on that same value over white. */
+  &:hover {
+    color: ${({ theme }) => theme.colors.grey[700]};
+  }
+
+  &:hover img {
+    opacity: 0.8;
+  }
 
   @media ${device.mobileL} {
     display: none;
@@ -90,6 +103,7 @@ const SeeAllArrow = styled.img`
   display: block;
   width: 24px;
   height: 24px;
+  transition: opacity 0.15s ease;
 `;
 
 const List = styled.div`
