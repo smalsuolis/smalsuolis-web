@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import styled from 'styled-components';
 import Delta from './Delta';
+import { font } from '../../styles';
 import {
   Card,
   CardHeader,
@@ -33,6 +34,7 @@ const BreakdownCard = ({
   title,
   total,
   rows,
+  dimension,
   showComparison,
   isFetching,
   initialVisible = 5,
@@ -42,6 +44,9 @@ const BreakdownCard = ({
   title: string;
   total: number;
   rows: BreakdownRow[];
+  // Named only when the rows are not the source's own types — the section is
+  // headed "by type", so a column of municipalities has to say so.
+  dimension?: string;
   showComparison?: boolean;
   isFetching?: boolean;
   initialVisible?: number;
@@ -62,6 +67,7 @@ const BreakdownCard = ({
       </CardHeader>
 
       <RowList>
+        {dimension && rows.length > 0 && <Dimension>{dimension}</Dimension>}
         {rows.length === 0 && <EmptyRow>Šiuo laikotarpiu įvykių nėra</EmptyRow>}
         {visible.map((r) => {
           const pct = r.total > 0 ? (r.count * 100) / r.total : 0;
@@ -107,6 +113,12 @@ const Row = styled(StatRow)`
 // Shown instead of the rows when a card has no data for the selected period —
 // the card still renders so the page keeps a stable shape and the zero total
 // stays visible.
+const Dimension = styled.div`
+  ${font('sm')};
+  color: ${({ theme }) => theme.colors.grey[600]};
+  padding-bottom: 8px;
+`;
+
 const EmptyRow = styled.div`
   font-size: 1.4rem;
   color: ${({ theme }) => theme.colors.grey[600]};

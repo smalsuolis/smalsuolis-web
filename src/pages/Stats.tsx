@@ -141,6 +141,27 @@ const Stats = () => {
     return orderBy(rows, (r) => r.count, 'desc');
   };
 
+  const byMunicipality = data?.byMunicipality || {};
+  const prevByMunicipality = previousData?.byMunicipality || {};
+
+  // The three sources whose integrations set no tags — izuvinimas,
+  // zemetvarkosPlanavimas, savivaldybesZemetvarka — come back with a count and
+  // nothing to break it down by, so their cards stood empty. The same response
+  // already splits every source by municipality, which is a real answer to
+  // "what is this number made of". Used only where the tag rows are empty, so a
+  // source that starts carrying tags goes back to showing them on its own.
+  const municipalityRows = (app: string, appTotal: number): BreakdownRow[] => {
+    const rows = Object.entries(byMunicipality)
+      .map(([name, v]) => ({
+        label: prettyMunicipality(name),
+        count: v.byApp?.[app] || 0,
+        previousCount: prevByMunicipality[name]?.byApp?.[app],
+        total: appTotal,
+      }))
+      .filter((r) => r.count > 0);
+    return orderBy(rows, (r) => r.count, 'desc');
+  };
+
   // One card per source, in the design's order. Only miskoKirtimai and
   // infostatyba currently carry tag breakdowns in the data; the rest still get a
   // card showing their real total with an empty-rows note, rather than
@@ -163,24 +184,27 @@ const Stats = () => {
       title: 'Žemėtvarkos planavimas',
       total: byApp?.zemetvarkosPlanavimas?.count || 0,
       rows: tagRows(byApp?.zemetvarkosPlanavimas?.byTag, prevByApp?.zemetvarkosPlanavimas?.byTag),
+      fallbackRows: () =>
+        municipalityRows('zemetvarkosPlanavimas', byApp?.zemetvarkosPlanavimas?.count || 0),
     },
     {
       app: 'izuvinimas',
       title: 'Žuvinimas',
       total: byApp?.izuvinimas?.count || 0,
       rows: tagRows(byApp?.izuvinimas?.byTag, prevByApp?.izuvinimas?.byTag),
+      fallbackRows: () => municipalityRows('izuvinimas', byApp?.izuvinimas?.count || 0),
     },
     {
       app: 'savivaldybesZemetvarka',
       title: 'Žemės paskirties keitimai',
       total: byApp?.savivaldybesZemetvarka?.count || 0,
       rows: tagRows(byApp?.savivaldybesZemetvarka?.byTag, prevByApp?.savivaldybesZemetvarka?.byTag),
+      fallbackRows: () =>
+        municipalityRows('savivaldybesZemetvarka', byApp?.savivaldybesZemetvarka?.count || 0),
     },
   ];
 
   // ---- "Akyviausi miestai" ---------------------------------------------
-  const byMunicipality = data?.byMunicipality || {};
-  const prevByMunicipality = previousData?.byMunicipality || {};
 
   const topCities = orderBy(
     Object.entries(byMunicipality).map(([name, v]) => ({ name, ...v })),
@@ -280,18 +304,23 @@ const Stats = () => {
 
           <SectionTitle>Suskirstymas pagal tipą</SectionTitle>
           <CardGrid>
-            {breakdownCards.map((c) => (
-              <BreakdownCard
-                key={c.title}
-                icon={APP_BADGE[c.app].icon}
-                iconBg={APP_BADGE[c.app].bg}
-                title={c.title}
-                total={c.total}
-                rows={c.rows}
-                showComparison={isComparisonEnabled}
-                isFetching={isPreviousFetching}
-              />
-            ))}
+            {breakdownCards.map((c) => {
+              // Tags when the source has them, municipalities when it does not.
+              const rows = c.rows.length ? c.rows : c.fallbackRows?.() ?? [];
+              return (
+                <BreakdownCard
+                  key={c.title}
+                  icon={APP_BADGE[c.app].icon}
+                  iconBg={APP_BADGE[c.app].bg}
+                  title={c.title}
+                  total={c.total}
+                  rows={rows}
+                  dimension={c.rows.length ? undefined : 'pagal savivaldybes'}
+                  showComparison={isComparisonEnabled}
+                  isFetching={isPreviousFetching}
+                />
+              );
+            })}
           </CardGrid>
 
           <Rule />
