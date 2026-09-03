@@ -1,12 +1,19 @@
+import { useContext } from 'react';
 import styled from 'styled-components';
 import { font } from '../../styles';
 import Button from '../ui/Button';
 import { useAuthModal } from '../auth/AuthModalContext';
+import { UserContext, UserContextType } from '../UserProvider';
 
 // Green CTA at the bottom of the stats page, on the exported Figma artwork
 // (public/tapk_smalsiu.png). Drives registration.
 const SubscribeBanner = () => {
   const { open } = useAuthModal();
+  const { loggedIn } = useContext<UserContextType>(UserContext);
+
+  // Same reasoning as the homepage cards: a subscriber does not need the pitch.
+  if (loggedIn) return null;
+
   return (
     <Banner>
       <Content>

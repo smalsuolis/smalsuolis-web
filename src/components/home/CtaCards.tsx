@@ -1,12 +1,21 @@
+import { useContext } from 'react';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
 import Button from '../ui/Button';
 import { useAuthModal } from '../auth/AuthModalContext';
+import { UserContext, UserContextType } from '../UserProvider';
 
 // Two side-by-side call-to-action cards: a green photo card (brand statement)
 // and a black card driving registration/subscription.
 const CtaCards = () => {
   const { open } = useAuthModal();
+  const { loggedIn } = useContext<UserContextType>(UserContext);
+
+  // Both cards sell registration, so they have nothing to say to someone who is
+  // already signed in. Decided here rather than at each of the two pages that
+  // render them, so a third page cannot bring them back by accident.
+  if (loggedIn) return null;
+
   return (
     <Grid>
       <GreenCard>
