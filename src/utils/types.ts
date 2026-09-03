@@ -241,6 +241,35 @@ export const timeRangeItems: TimeRangeItem[] = [
     name: 'Pasirinkite datą',
   },
 ];
+/** The first year with data worth offering as a whole. */
+export const firstDataYear = 2023;
+
+const currentYear = new Date().getFullYear();
+
+// Whole years, newest first, and never the current one — "Šie metai" is already
+// that window, and the same period twice in one dropdown is a puzzle, not a
+// choice.
+const yearItems: TimeRangeItem[] = Array.from({ length: currentYear - firstDataYear }, (_, i) => {
+  const year = currentYear - 1 - i;
+  return { key: String(year), query: yearQuery(year), name: String(year) };
+});
+
+/**
+ * Statistics offers the shared periods plus whole years — comparing one year
+ * with another is what this page is for, and it would only lengthen a dropdown
+ * nobody opens for that reason on a map. A year travels in the URL as itself
+ * ("?range=2025"), which the page resolves alongside the named windows.
+ */
+export const statsTimeRangeItems: TimeRangeItem[] = [
+  ...timeRangeItems.filter((i) => i.key !== TimeRanges.CUSTOM),
+  ...yearItems,
+  {
+    key: TimeRanges.CUSTOM,
+    query: timeRangeQuery[TimeRanges.CUSTOM],
+    name: 'Pasirinkite datą',
+  },
+];
+
 /**
  * What every surface opens on: the widest window still on offer.
  *
