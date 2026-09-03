@@ -321,7 +321,7 @@ const Stats = () => {
                   title={c.title}
                   total={c.total}
                   rows={rows}
-                  dimension={c.rows.length ? undefined : 'pagal savivaldybes'}
+                  dimension={c.rows.length ? undefined : 'Pagal savivaldybes'}
                   showComparison={isComparisonEnabled}
                   isFetching={isPreviousFetching}
                 />
