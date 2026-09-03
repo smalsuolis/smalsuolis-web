@@ -139,6 +139,7 @@ export enum TimeRanges {
   LAST_28_DAYS = 'LAST_28_DAYS',
   LAST_90_DAYS = 'LAST_90_DAYS',
   LAST_365_DAYS = 'LAST_365_DAYS',
+  THIS_YEAR = 'THIS_YEAR',
 }
 
 export interface TimeRangeItem {
@@ -147,7 +148,10 @@ export interface TimeRangeItem {
   name: string;
 }
 
-export const firstDataYear = 2023;
+export const yearQuery = (year: number): { $gte: string; $lt: string } => ({
+  $gte: `${year}-01-01 00:00`,
+  $lt: `${year}-12-31 23:59`,
+});
 
 export const timeRangeQuery = {
   [TimeRanges.FUTURE]: {
@@ -185,42 +189,51 @@ export const timeRangeQuery = {
     $gte: flow(formatDateFrom, subDays(365), formatDateAndTime)(new Date()),
     $lt: flow(formatDateTo, formatDateAndTime)(new Date()),
   },
+  [TimeRanges.THIS_YEAR]: yearQuery(new Date().getFullYear()),
   [TimeRanges.ALL_TIME]: {
     $gte: '2000-01-01 00:00',
     $lt: '2099-12-31 23:59',
   },
 };
 
-export const yearQuery = (year: number): { $gte: string; $lt: string } => ({
-  $gte: `${year}-01-01 00:00`,
-  $lt: `${year}-12-31 23:59`,
-});
-
+/**
+ * The periods every surface offers: rolling windows, then the calendar year,
+ * then a range of your own.
+ *
+ * They used to be calendar buckets — this day, this week, this month, upcoming,
+ * all time — which answered "when" rather than "how recently", and left the
+ * reader converting in their head. Rolling windows compare like with like: the
+ * statistics page's own comparison is the same window shifted back.
+ *
+ * Named without the "Paskutinės" they read with in prose: the map's period pill
+ * is 206px wide, and the full phrase was cut to "Paskutinės 365 die…" — a
+ * control that cannot say what it is set to.
+ */
 export const timeRangeItems: TimeRangeItem[] = [
   {
-    key: TimeRanges.DAY,
-    query: timeRangeQuery[TimeRanges.DAY],
-    name: 'Šios dienos',
+    key: TimeRanges.LAST_7_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_7_DAYS],
+    name: '7 dienos',
   },
   {
-    key: TimeRanges.WEEK,
-    query: timeRangeQuery[TimeRanges.WEEK],
-    name: 'Šios savaitės',
+    key: TimeRanges.LAST_28_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_28_DAYS],
+    name: '28 dienos',
   },
   {
-    key: TimeRanges.MONTH,
-    query: timeRangeQuery[TimeRanges.MONTH],
-    name: 'Šio mėnesio',
+    key: TimeRanges.LAST_90_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_90_DAYS],
+    name: '90 dienų',
   },
   {
-    key: TimeRanges.FUTURE,
-    query: timeRangeQuery[TimeRanges.FUTURE],
-    name: 'Būsimi',
+    key: TimeRanges.LAST_365_DAYS,
+    query: timeRangeQuery[TimeRanges.LAST_365_DAYS],
+    name: '365 dienos',
   },
   {
-    key: TimeRanges.ALL_TIME,
-    query: timeRangeQuery[TimeRanges.ALL_TIME],
-    name: 'Visi laikai',
+    key: TimeRanges.THIS_YEAR,
+    query: timeRangeQuery[TimeRanges.THIS_YEAR],
+    name: 'Šie metai',
   },
   {
     key: TimeRanges.CUSTOM,
@@ -228,46 +241,16 @@ export const timeRangeItems: TimeRangeItem[] = [
     name: 'Pasirinkite datą',
   },
 ];
-
 /**
- * What every surface opens on.
+ * What every surface opens on: the widest window still on offer.
  *
- * The map used to open on the last 28 days while the filter beside it counted
- * every event, so the same screen showed 76 pins next to a count of 12,513 and
- * nothing said why. Opening on everything and letting the reader narrow is the
- * honest way round.
+ * It was all time, back when the dropdown offered it. What matters is that the
+ * label and the events agree — the map once opened on 28 days beside a filter
+ * that counted every event, so a screen with 76 pins claimed 12,513.
  */
 export const defaultTimeRange: TimeRangeItem = timeRangeItems.find(
-  (i) => i.key === TimeRanges.ALL_TIME,
+  (i) => i.key === TimeRanges.LAST_365_DAYS,
 )!;
-
-const currentYear = new Date().getFullYear();
-const yearItems: TimeRangeItem[] = Array.from(
-  { length: currentYear - firstDataYear + 1 },
-  (_, i) => {
-    const year = currentYear - i;
-    return { key: String(year), query: yearQuery(year), name: String(year) };
-  },
-);
-
-/**
- * Statistics offers the same periods as everywhere else, plus whole years.
- *
- * The three surfaces used to offer three different sets — rolling windows here
- * and on the map, calendar periods in the feed — so the same question was asked
- * three ways. Years stay, and only here: comparing one year with another is
- * what this page is for, and it would only lengthen a dropdown nobody opens for
- * that reason on a map.
- */
-export const statsTimeRangeItems: TimeRangeItem[] = [
-  ...timeRangeItems.filter((i) => i.key !== TimeRanges.CUSTOM),
-  ...yearItems,
-  {
-    key: TimeRanges.CUSTOM,
-    query: timeRangeQuery[TimeRanges.CUSTOM],
-    name: 'Pasirinkite datą',
-  },
-];
 
 export interface Filters {
   apps?: App[];

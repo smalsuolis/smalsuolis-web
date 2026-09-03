@@ -6,7 +6,7 @@ import { orderBy } from 'lodash';
 import { CONTENT_WIDTH, device, font } from '../styles';
 import { timeRangeQuery } from '../utils';
 import { appIcon } from '../utils/appIcons';
-import { defaultTimeRange, TimeRanges, yearQuery, statsTimeRangeItems } from '../utils/types';
+import { defaultTimeRange, TimeRanges, yearQuery, timeRangeItems } from '../utils/types';
 import api from '../utils/api';
 import Loader from '../components/Loader';
 import PeriodDropdown from '../components/PeriodDropdown';
@@ -261,7 +261,7 @@ const Stats = () => {
           </ToggleContainer>
           <DatepickerWrap>
             <PeriodDropdown
-              options={statsTimeRangeItems}
+              options={timeRangeItems}
               value={dateFilter}
               selectedDates={query}
               onChange={({ key, query: date }) => {
