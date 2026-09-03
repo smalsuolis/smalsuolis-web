@@ -215,5 +215,14 @@ const StyledButton = styled(Button)`
   &:hover:not(:disabled) {
     background-color: ${({ theme }) => theme.colors.grey[700]};
     border-color: ${({ theme }) => theme.colors.grey[700]};
+    color: ${({ theme }) => theme.colors.white};
+  }
+
+  /* Disabled, it answers the pointer with nothing: the DS hover has no guard of
+     its own and would paint the variant's green over this black pill. */
+  &:hover:disabled {
+    background-color: ${({ theme }) => theme.colors.black};
+    border-color: ${({ theme }) => theme.colors.black};
+    color: ${({ theme }) => theme.colors.white};
   }
 `;

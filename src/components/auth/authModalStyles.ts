@@ -81,6 +81,16 @@ export const SubmitButton = styled(Button)`
     color: ${({ theme }) => theme.colors.white};
   }
 
+  /* And a disabled one answers the pointer with nothing. The design system's
+     own :hover carries no such guard, so it repainted the pill in the variant's
+     green — which is what "Registruotis" showed until the checklist was
+     satisfied. */
+  &:hover:disabled {
+    background-color: ${({ theme }) => theme.colors.black};
+    border-color: ${({ theme }) => theme.colors.black};
+    color: ${({ theme }) => theme.colors.white};
+  }
+
   @media ${device.mobileL} {
     width: 100%;
   }

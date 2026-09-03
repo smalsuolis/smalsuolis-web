@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import styled from 'styled-components';
-import { font } from '../../styles';
+import { device, font } from '../../styles';
 import Button from '../ui/Button';
 import { useAuthModal } from '../auth/AuthModalContext';
 import { UserContext, UserContextType } from '../UserProvider';
@@ -11,8 +11,10 @@ const SubscribeBanner = () => {
   const { open } = useAuthModal();
   const { loggedIn } = useContext<UserContextType>(UserContext);
 
-  // Same reasoning as the homepage cards: a subscriber does not need the pitch.
-  if (loggedIn) return null;
+  // Same reasoning as the homepage cards: a subscriber does not need the pitch —
+  // and the same rhythm stays behind, or the sources section ends flush against
+  // the footer. The banner carried 124 above it.
+  if (loggedIn) return <Spacer />;
 
   return (
     <Banner>
@@ -37,6 +39,14 @@ export default SubscribeBanner;
 // Flattened PNG export (4008x1137, ~3.5:1) — the white line work is already
 // baked in, so no blend-mode reinterpretation like the SVG had. Stretched to
 // the banner box so the whole sweep stays visible; flat base green backs it.
+const Spacer = styled.div`
+  height: 124px;
+
+  @media ${device.mobileL} {
+    height: 42px;
+  }
+`;
+
 const Banner = styled.div`
   position: relative;
   overflow: hidden;

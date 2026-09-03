@@ -14,7 +14,11 @@ const CtaCards = () => {
   // Both cards sell registration, so they have nothing to say to someone who is
   // already signed in. Decided here rather than at each of the two pages that
   // render them, so a third page cannot bring them back by accident.
-  if (loggedIn) return null;
+  //
+  // What stays behind is the space they held: returning nothing left the page's
+  // last section flush against the footer. One section's worth of rhythm, the
+  // 124 the frame puts between every two of them.
+  if (loggedIn) return <Spacer />;
 
   return (
     <Grid>
@@ -53,6 +57,14 @@ export default CtaCards;
 // Full-bleed row: the green card runs off the left edge of the viewport and the
 // black card off the right (matching the Figma), so only their inner corners are
 // rounded. The whole component spans full width; no Section wrapper.
+const Spacer = styled.div`
+  height: 124px;
+
+  @media ${device.mobileL} {
+    height: 42px;
+  }
+`;
+
 const Grid = styled.div`
   display: grid;
   /* Design: 836 + 24 gap + 580 in a 1440 band — the image panel is the wider

@@ -555,6 +555,14 @@ const SubmitButton = styled(Button)`
     color: ${({ theme }) => theme.colors.white};
   }
 
+  /* Disabled, it answers the pointer with nothing — the DS hover has no guard
+     of its own and would paint the variant's green over it. */
+  &:hover:disabled {
+    background-color: ${({ theme }) => theme.colors.black};
+    border-color: ${({ theme }) => theme.colors.black};
+    color: ${({ theme }) => theme.colors.white};
+  }
+
   @media ${device.mobileL} {
     width: 100%;
   }
