@@ -159,6 +159,9 @@ const CloseButton = styled.button`
 // rather than shrink the map back down.
 const MapWrap = styled.div`
   width: 100%;
+  /* The modal is a column that scrolls past 92vh; without this the map is the
+     item that gives way, and a long event squeezed it to a strip. */
+  flex-shrink: 0;
   overflow: hidden;
 
   iframe {

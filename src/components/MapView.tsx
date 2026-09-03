@@ -179,7 +179,7 @@ const StyledButton = styled.button<{ $popup: boolean }>`
   position: absolute;
   z-index: 10;
   top: ${({ $popup }) => ($popup ? 26 : 10)}px;
-  right: ${({ $popup }) => ($popup ? 26 : 10)}px;
+  left: ${({ $popup }) => ($popup ? 26 : 10)}px;
   display: flex;
   align-items: center;
   justify-content: center;

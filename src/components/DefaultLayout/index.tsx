@@ -47,7 +47,7 @@ const DefaultLayout = (props: DefaultLayoutProps) => {
     <Container>
       <ScrollableContainer ref={scrollRef}>
         <TopNav {...props} />
-        {fullBleed ? children : <InnerContainer>{children}</InnerContainer>}
+        <Main>{fullBleed ? children : <InnerContainer>{children}</InnerContainer>}</Main>
         {!hideFooter && <Footer />}
       </ScrollableContainer>
     </Container>
@@ -63,11 +63,30 @@ const Container = styled(Div100vh)`
 const ScrollableContainer = styled.div`
   width: 100%;
   min-height: 100%;
+  /* A column, so a page shorter than the window still puts its footer on the
+     floor rather than leaving a white strip under it — which is what a
+     zoomed-out window showed. Nothing here may shrink to fit: the children keep
+     their heights and the container scrolls. */
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex-shrink: 0;
+  }
+
   overflow-y: scroll;
   /* Guard: a single over-wide child shouldn't let the whole page pan sideways
      on mobile. Content that genuinely needs width scrolls within its own box. */
   overflow-x: hidden;
   background-color: white;
+`;
+
+// Takes whatever the nav and the footer leave, so the footer lands on the floor
+// of a window taller than the page.
+const Main = styled.div`
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
 `;
 
 // The design starts every inner page 37px below the nav (28 on phones) and
