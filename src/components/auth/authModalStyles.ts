@@ -29,6 +29,9 @@ export const SubmitRow = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  /* On top of the form's own 24px rhythm: the closing row reads as its own
+     block, not as one more field. */
+  padding-top: 16px;
 
   @media ${device.mobileL} {
     flex-direction: column-reverse;

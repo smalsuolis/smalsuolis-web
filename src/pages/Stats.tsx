@@ -490,9 +490,9 @@ const CardGrid = styled.div`
   /* minmax(0,1fr): grid items default to min-width:auto, so a long label
      would push the track past the viewport instead of ellipsizing. */
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  /* Cards size to their content instead of stretching to the tallest in the
-     row — an empty card was rendering as a tall box with one line in it. */
-  align-items: start;
+  /* Cards stretch to the tallest in their row. They used to size to their own
+     content, which left a row of ragged boxes — a card with one line beside two
+     with five. The empty-ish card carries the white space instead. */
   gap: 24px;
   @media ${device.tablet} {
     grid-template-columns: repeat(2, minmax(0, 1fr));

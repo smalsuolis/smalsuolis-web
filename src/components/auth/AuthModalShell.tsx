@@ -74,7 +74,10 @@ const Card = styled.div<{ $wide?: boolean }>`
   max-width: 499px;
   background: ${({ theme }) => theme.colors.white};
   border-radius: 8px;
-  padding: 24px;
+  /* 36 at the sides and the foot, 28 over the title: at an even 24 the card
+     read as cramped around its fields. The phone keeps its 16px gutters — the
+     card is already the width of the screen there. */
+  padding: 28px 36px 36px;
   display: flex;
   flex-direction: column;
   gap: 24px;

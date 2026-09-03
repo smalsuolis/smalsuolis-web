@@ -271,8 +271,13 @@ export const GlobalStyle = createGlobalStyle`
  * padding: the Figma frames are 1440 wide with 56px gutters, so the content
  * itself measures 1328. Adding 2x32 padding on top gives 1392, which keeps the
  * inner edge at x=56 on a 1440 viewport.
+ *
+ * The cap is 2500 rather than that 1392: on a wide monitor the navbar sat as an
+ * island in the middle of a full-bleed map, and the page read as a strip down
+ * the centre of the screen. Everything below 1392 is unchanged — the frames'
+ * measurements are what the design specifies at their own width.
  */
-export const CONTENT_WIDTH = '1392px';
+export const CONTENT_WIDTH = '2500px';
 
 export const device = {
   mobileS: `(max-width: 320px)`,
