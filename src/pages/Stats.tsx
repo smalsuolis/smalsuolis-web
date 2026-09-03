@@ -53,14 +53,10 @@ const APP_SHORT_LABELS: Record<string, string> = {
 // Municipality names come from the registry as e.g. "Vilniaus m. sav." /
 // "Kauno r. sav.". The design shows the plain city/place name, so strip the
 // "m. sav." / "r. sav." / "sav." administrative suffix for display.
-// Drops the "sav." and keeps the r./m. that tells two of them apart: the
-// register holds both "Vilniaus m. sav." and "Vilniaus r. sav.", and cutting
-// both markers left two rows reading "Vilniaus" with different numbers.
-const prettyMunicipality = (name: string): string =>
-  name
-    .replace(/\s*sav\.?$/i, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+// The register's own name, whole: "Vilniaus r. sav.", "Vilniaus m. sav.",
+// "Neringos sav.". Trimming it read as two rows both called "Vilniaus", and
+// even the r./m. left short of saying what they are.
+const prettyMunicipality = (name: string): string => name.replace(/\s+/g, ' ').trim();
 
 const Stats = () => {
   const [searchParams, setSearchParams] = useSearchParams();
