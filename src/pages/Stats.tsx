@@ -307,7 +307,9 @@ const Stats = () => {
           <SectionTitle>Suskirstymas pagal tipą</SectionTitle>
           <CardGrid>
             {breakdownCards.map((c) => {
-              // Tags when the source has them, municipalities when it does not.
+              // Tags when the source has them, municipalities when it does not —
+              // the rows name themselves ("Vilniaus r. sav."), so nothing has to
+              // announce which cut this is.
               const rows = c.rows.length ? c.rows : c.fallbackRows?.() ?? [];
               return (
                 <BreakdownCard
@@ -317,7 +319,6 @@ const Stats = () => {
                   title={c.title}
                   total={c.total}
                   rows={rows}
-                  dimension={c.rows.length ? undefined : 'Pagal savivaldybes'}
                   showComparison={isComparisonEnabled}
                   isFetching={isPreviousFetching}
                 />
