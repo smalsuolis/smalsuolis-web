@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import proj4 from 'proj4';
@@ -7,21 +7,21 @@ import MapView from '../components/MapView';
 import AddressAutocomplete from '../components/home/AddressAutocomplete';
 import SritysFilterModal, { SritysValue } from '../components/home/SritysFilterModal';
 import PeriodDropdown from '../components/PeriodDropdown';
-import { CONTENT_WIDTH, device, font } from '../styles';
-import { AddressSuggestion, App, Category, IconName, slugs } from '../utils';
-import { statsTimeRangeItems, TimeRanges } from '../utils/types';
+import { device, font } from '../styles';
+import {
+  AddressSuggestion,
+  App,
+  Category,
+  IconName,
+  slugs,
+  sritysFieldLabel,
+  viewHandoffParams,
+} from '../utils';
+import { defaultTimeRange, timeRangeItems, TimeRanges } from '../utils/types';
 import Icon from '../components/Icons';
 import api from '../utils/api';
 import { UserContext, UserContextType } from '../components/UserProvider';
 import { useAuthModal } from '../components/auth/AuthModalContext';
-
-// The radius (metres) of the circle drawn around a searched address — matches
-// the /events/near lookup, so the map view and the popup count agree.
-const SEARCH_RADIUS_M = 2000;
-
-// Matches the nav / footer content column, so the floating map controls line up
-// with the rest of the site instead of hugging the viewport edges.
-const CONTENT_MAX_WIDTH = CONTENT_WIDTH;
 
 // The smalsuolis map iframe draws incoming geometry with dataProjection EPSG:3346
 // (LKS94) — hardcoded in its route. Address suggestions come in EPSG:4326
@@ -33,45 +33,59 @@ proj4.defs(
     '+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
 );
 
-// Build a circle (as a Polygon) of `radiusM` around a lng/lat point, with all
-// coordinates already in EPSG:3346 so the iframe draws + zooms correctly. In
-// 3346 (metres) the circle is a simple metric offset from the projected centre.
-const circleFeatureCollection3346 = (
-  geometry: AddressSuggestion['geometry'],
-  radiusM = SEARCH_RADIUS_M,
-  steps = 64,
-) => {
+// A searched address is one place, so send one point and let the iframe pin it.
+// The extent it fits to is a small square around that point: without it the
+// frame zooms a single coordinate to its maximum level and the street
+// disappears. 400 m keeps the surrounding block in view.
+const ADDRESS_EXTENT_M = 400;
+
+const REGISTER_CARD_DISMISSED = 'smalsuolis.registerCardDismissed';
+
+// The embed draws its own locate and zoom controls hard against the right edge —
+// a ~40px column we cannot restyle from here, being cross-origin. Everything of
+// ours along the bottom stops short of it, or it covers them.
+const MAP_CONTROLS_GUTTER = '56px';
+
+// The URL carries the filters when you switch to the list and back, but coming
+// back through the navbar has no params to carry them — so the last set is kept
+// for the session too, and used only when the URL says nothing.
+const MAP_FILTERS_KEY = 'smalsuolis.mapFilters';
+
+type StoredMapFilters = {
+  address?: string;
+  point?: [number, number];
+  appIds?: number[];
+  categoriesByApp?: Record<number, number[]>;
+  periodKey?: string;
+  customRange?: { $gte: string; $lt: string };
+};
+
+const readStoredFilters = (): StoredMapFilters => {
+  try {
+    return JSON.parse(sessionStorage.getItem(MAP_FILTERS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+};
+
+const addressFeatureCollection3346 = (geometry: AddressSuggestion['geometry']) => {
   const [lng, lat] = geometry.coordinates;
   const [cx, cy] = proj4('EPSG:4326', 'EPSG:3346', [lng, lat]);
-  const ring: [number, number][] = [];
-  for (let i = 0; i <= steps; i++) {
-    const a = (i / steps) * 2 * Math.PI;
-    ring.push([cx + radiusM * Math.cos(a), cy + radiusM * Math.sin(a)]);
-  }
+  const r = ADDRESS_EXTENT_M;
   return {
     type: 'FeatureCollection',
     features: [
       { type: 'Feature', geometry: { type: 'Point', coordinates: [cx, cy] }, properties: {} },
-      {
-        type: 'Feature',
-        geometry: { type: 'Polygon', coordinates: [ring] },
-        properties: {},
-      },
     ],
+    // Some renderers fit to a bbox when one is present; harmless when ignored.
+    bbox: [cx - r, cy - r, cx + r, cy + r],
   };
 };
 
-// Period options for the map: the shared preset ranges, minus the year/custom
-// entries (kept simple for a floating dropdown).
-const PERIOD_OPTIONS = statsTimeRangeItems.filter((i) =>
-  [
-    TimeRanges.LAST_7_DAYS,
-    TimeRanges.LAST_28_DAYS,
-    TimeRanges.LAST_90_DAYS,
-    TimeRanges.LAST_365_DAYS,
-    TimeRanges.ALL_TIME,
-  ].includes(i.key as TimeRanges),
-);
+// The same periods the feed and the statistics page offer. They used to differ,
+// so a period picked on one surface could not be carried to another and had to
+// be rewritten as raw dates.
+const PERIOD_OPTIONS = timeRangeItems;
 
 // Redesigned map page: the events map (maps.biip.lt iframe) fills the viewport,
 // with three floating controls overlaid — address search, category (Sritys)
@@ -94,8 +108,40 @@ const MapPage = () => {
     appIds?: number[];
   } | null;
 
-  const [address, setAddress] = useState(navState?.address ?? searchParams.get('address') ?? '');
-  const [selected, setSelected] = useState<AddressSuggestion | null>(navState?.suggestion ?? null);
+  // Read once: later renders must not resurrect a filter the user just cleared.
+  const storedRef = useRef<StoredMapFilters>(readStoredFilters());
+  // Sources and period are one question, the address another: a link that names
+  // sources says nothing about where to look, and discarding the whole snapshot
+  // for it left the map holding an address with no point to zoom to.
+  const urlHasFilters =
+    searchParams.has('app') || searchParams.has('categories') || searchParams.has('range');
+  const urlHasAddress = searchParams.has('address') || searchParams.has('lat');
+  const stored = urlHasFilters ? {} : storedRef.current;
+  const storedAddress = urlHasAddress ? {} : storedRef.current;
+
+  const [address, setAddress] = useState(
+    navState?.address ?? searchParams.get('address') ?? storedAddress.address ?? '',
+  );
+  // The resolved point travels with the address. Re-searching the text to find
+  // it again returned the first match, not the one that was picked — "Antakalnio
+  // g. 1" led with "Antakalnio g. 17", so the map zoomed to the wrong street.
+  const pointFromUrl = ((): [number, number] | undefined => {
+    const lng = Number(searchParams.get('lng'));
+    const lat = Number(searchParams.get('lat'));
+    return lng && lat ? [lng, lat] : undefined;
+  })();
+  const point = pointFromUrl ?? storedAddress.point;
+
+  const [selected, setSelected] = useState<AddressSuggestion | null>(
+    navState?.suggestion ??
+      (point && (searchParams.get('address') ?? storedAddress.address)
+        ? {
+            code: 0,
+            label: (searchParams.get('address') ?? storedAddress.address)!,
+            geometry: { type: 'Point', coordinates: point },
+          }
+        : null),
+  );
   // Bumped when an address is cleared, to remount the map iframe back to its
   // default view (the iframe's zoomToFeatureCollection ignores empty geometry,
   // so there's no message to "unzoom" — a fresh mount is the reliable reset).
@@ -114,13 +160,53 @@ const MapPage = () => {
       navState?.appIds ??
       (searchParams.get('app')
         ? searchParams.get('app')!.split(',').map(Number).filter(Boolean)
-        : []);
-    return { appIds, categoriesByApp: {} };
+        : stored.appIds ?? []);
+    const categoryIds = (searchParams.get('categories') ?? '')
+      .split(',')
+      .map(Number)
+      .filter(Boolean);
+    if (!categoryIds.length && stored.categoriesByApp) {
+      return { appIds, categoriesByApp: stored.categoriesByApp };
+    }
+    const categoriesByApp: Record<number, number[]> = {};
+    if (categoryIds.length) appIds.forEach((id: number) => (categoriesByApp[id] = categoryIds));
+    return { appIds, categoriesByApp };
   });
   const [filterOpen, setFilterOpen] = useState(false);
-  const [periodKey, setPeriodKey] = useState<string>(
-    searchParams.get('range') ?? TimeRanges.LAST_28_DAYS,
-  );
+  // The phone frame replaces the register pill with a dismissible card over the
+  // map. Dismissing it sticks: it is a prompt, and re-covering a third of the
+  // map on every visit after the user said no is what made it feel intrusive.
+  const [registerCardOpen, setRegisterCardOpen] = useState(() => {
+    try {
+      return localStorage.getItem(REGISTER_CARD_DISMISSED) !== '1';
+    } catch {
+      return true;
+    }
+  });
+
+  const dismissRegisterCard = () => {
+    setRegisterCardOpen(false);
+    try {
+      localStorage.setItem(REGISTER_CARD_DISMISSED, '1');
+    } catch {
+      // A browser with storage blocked just shows the card again next visit.
+    }
+  };
+  const [periodKey, setPeriodKey] = useState<string>(() => {
+    const fromUrl = searchParams.get('range');
+    if (PERIOD_OPTIONS.some((p) => p.key === fromUrl)) return fromUrl!;
+    if (searchParams.get('from')) return TimeRanges.CUSTOM;
+    return stored.periodKey ?? defaultTimeRange.key;
+  });
+
+  // The feed and the map name their periods differently, so a selection travels
+  // between them as the dates themselves and lands here as a custom range.
+  const [customRange, setCustomRange] = useState<{ $gte: string; $lt: string } | undefined>(() => {
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    if (from && to) return { $gte: from, $lt: to };
+    return stored.customRange;
+  });
 
   const appIds = srities.appIds;
   const selectedCategoryIds = useMemo(
@@ -140,14 +226,16 @@ const MapPage = () => {
     staleTime: Infinity,
   });
 
-  // On reload with ?address= but no resolved point, re-run suggest once.
+  // Only for a link that carries the text without the point: match the label
+  // exactly rather than taking whatever comes back first.
   useEffect(() => {
     const urlAddress = searchParams.get('address');
     if (!selected && urlAddress && urlAddress.trim().length >= 3) {
       api
         .suggestAddresses(urlAddress)
         .then((results) => {
-          if (results[0]) setSelected(results[0]);
+          const exact = results.find((r) => r.label === urlAddress);
+          if (exact) setSelected(exact);
         })
         .catch(() => undefined);
     }
@@ -158,33 +246,69 @@ const MapPage = () => {
   useEffect(() => {
     const next: Record<string, string> = {};
     if (address) next.address = address;
+    if (selected) {
+      next.lng = String(selected.geometry.coordinates[0]);
+      next.lat = String(selected.geometry.coordinates[1]);
+    }
     if (appIds.length) next.app = appIds.join(',');
+    if (selectedCategoryIds.length) next.categories = selectedCategoryIds.join(',');
     if (periodKey) next.range = periodKey;
+    if (periodKey === TimeRanges.CUSTOM && customRange) {
+      next.from = customRange.$gte;
+      next.to = customRange.$lt;
+    }
     setSearchParams(next, { replace: true });
+    try {
+      sessionStorage.setItem(
+        MAP_FILTERS_KEY,
+        JSON.stringify({
+          address,
+          // Without the point a restored address has no place to zoom to.
+          point: selected?.geometry.coordinates,
+          appIds,
+          categoriesByApp: srities.categoriesByApp,
+          periodKey,
+          customRange,
+        }),
+      );
+    } catch {
+      // Storage blocked: the URL still carries everything between the two views.
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, appIds, periodKey]);
+  }, [address, selected, appIds, selectedCategoryIds, periodKey, customRange]);
 
   // Switch to the list view, carrying the current filters. The events page uses
   // different param names than the map (?apps= vs ?app=), and reads them via
   // its own URL-init effect, so translate here.
+  // The two views keep their own filters, so switching just switches the view.
+  // Each page restores what it was last set to, not what the other was showing.
+  // Hands the map's sources, categories and period to the feed. The two used to
+  // switch view and nothing else, so a reader who had narrowed the map arrived
+  // at an unfiltered list and had to set it all again.
   const goToList = () => {
-    const params = new URLSearchParams({ view: 'list' });
-    if (appIds.length) params.set('apps', appIds.join(','));
-    if (selectedCategoryIds.length) params.set('categories', selectedCategoryIds.join(','));
-    if (periodKey) params.set('range', periodKey);
+    const params = viewHandoffParams('list', {
+      appIds,
+      categoryIds: selectedCategoryIds,
+      rangeKey: periodKey,
+      customRange: periodKey === TimeRanges.CUSTOM ? customRange : undefined,
+    });
     navigate(`${slugs.events}?${params.toString()}`);
   };
 
-
-  // When an address is selected, draw a 3346 circle around it (correct location
-  // + a sensible zoom). When nothing is selected, geom is undefined so we don't
-  // post it (deselect handling that resets the view lives in MapView).
+  // When an address is selected, pin it (deselect handling that resets the view
+  // lives in MapView, so an unset selection posts nothing).
   const geom = useMemo(
-    () => (selected ? circleFeatureCollection3346(selected.geometry) : undefined),
+    () => (selected ? addressFeatureCollection3346(selected.geometry) : undefined),
     [selected],
   );
 
-  const period = PERIOD_OPTIONS.find((p) => p.key === periodKey);
+  const period = useMemo(
+    () =>
+      periodKey === TimeRanges.CUSTOM && customRange
+        ? { key: TimeRanges.CUSTOM, name: 'Pasirinkite datą', query: customRange }
+        : PERIOD_OPTIONS.find((p) => p.key === periodKey),
+    [periodKey, customRange],
+  );
 
   // Map filters: apps + selected categories + time range (startAt). The maps
   // iframe already understands `app`, `category`, and `startAt`.
@@ -196,21 +320,10 @@ const MapPage = () => {
     return Object.keys(f).length ? f : undefined;
   }, [appIds, selectedCategoryIds, period]);
 
-  // Category pill label: first selected category name, else first app name,
-  // else the generic "Sritys" — with a +N suffix when more are selected.
-  const categoryLabel = useMemo(() => {
-    if (selectedCategoryIds.length) {
-      const first = categories.find((c: Category) => c.id === selectedCategoryIds[0]);
-      const extra = selectedCategoryIds.length - 1;
-      return `${first?.name ?? 'Kategorija'}${extra > 0 ? ` +${extra}` : ''}`;
-    }
-    if (appIds.length) {
-      const first = apps.find((a: App) => a.id === appIds[0]);
-      const extra = appIds.length - 1;
-      return `${first?.name ?? 'Sritis'}${extra > 0 ? ` +${extra}` : ''}`;
-    }
-    return 'Sritys';
-  }, [selectedCategoryIds, appIds, apps, categories]);
+  // Named and counted the same way as on the homepage and in the feed. It used
+  // to name the selected categories instead, so one selection read differently
+  // on each surface and the +N counted categories here and sources there.
+  const categoryLabel = useMemo(() => sritysFieldLabel(apps ?? [], appIds), [apps, appIds]);
 
   const hasCategory = appIds.length > 0 || selectedCategoryIds.length > 0;
 
@@ -238,7 +351,11 @@ const MapPage = () => {
           <PeriodDropdown
             options={PERIOD_OPTIONS}
             value={periodKey}
-            onChange={(o) => setPeriodKey(o.key)}
+            selectedDates={customRange}
+            onChange={(o) => {
+              setPeriodKey(o.key);
+              setCustomRange(o.key === TimeRanges.CUSTOM ? o.query : undefined);
+            }}
           />
         </PeriodWrap>
       </Controls>
@@ -259,6 +376,21 @@ const MapPage = () => {
           <Icon name={IconName.list} />
           Rodyti įvykių sąrašą
         </ListToggle>
+        {/* Last, so it lies over the toggle rather than pushing it up the map:
+            on a phone the card covers that strip until the X is pressed, and
+            what is underneath is the button that was always there. */}
+        {!loggedIn && registerCardOpen && (
+          <RegisterCard>
+            <RegisterClose type="button" aria-label="Uždaryti" onClick={dismissRegisterCard}>
+              <Icon name={IconName.close} />
+            </RegisterClose>
+            <RegisterText>
+              <RegisterTitle>Dar neturite paskyros?</RegisterTitle>
+              <div>Užsiregistruokite ir tapkite Smalsuoliu.</div>
+            </RegisterText>
+            <RegisterButton onClick={() => openAuthModal('register')}>Registruotis</RegisterButton>
+          </RegisterCard>
+        )}
       </BottomBar>
 
       <SritysFilterModal
@@ -274,25 +406,20 @@ const MapPage = () => {
 
 export default MapPage;
 
-// The map takes most of the viewport but stops short of the bottom, so the page
-// scrolls smoothly on past it to the footer (the iframe swallows wheel events,
-// so a full-height map would trap the scroll). The bottom corners are rounded
-// and the band sits a touch inset for a sleek edge.
+// The design runs the map edge to edge and all the way down to the fold — it
+// fills everything the 80px navbar leaves. The footer sits below it; the page's
+// own scrollbar reaches it, since the iframe swallows wheel events.
 const Page = styled.div`
   position: relative;
   width: 100%;
-  height: calc(100vh - 72px - 56px);
+  /* Safari on iOS measures 100vh against the viewport its toolbars are hidden
+     in, so a page sized by it runs under the bottom bar and takes the list
+     button with it. dvh is the visible height; the vh line stays for browsers
+     that predate it (they keep today's behaviour rather than nothing). */
+  height: calc(100vh - 80px);
+  height: calc(100dvh - 80px);
   min-height: 480px;
-  margin-bottom: 24px;
-
-  @media ${device.mobileL} {
-    height: calc(100vh - 64px - 48px);
-  }
 `;
-
-
-
-
 
 // Bottom controls over the map: register CTA (left) + list-view toggle (right).
 // On mobile they stack and center (per the mobile Figma frame).
@@ -302,14 +429,10 @@ const Page = styled.div`
 // we move around them rather than restyling them.
 const BottomBar = styled.div`
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: ${CONTENT_MAX_WIDTH};
-  /* Right padding clears the map iframe's own zoom / locate controls, which the
-     embed draws hard against its right edge. */
-  padding: 0 72px 0 32px;
-  bottom: 24px;
+  left: 0;
+  right: 0;
+  padding: 0 ${MAP_CONTROLS_GUTTER} 0 36px;
+  bottom: 36px;
   z-index: 22;
   display: flex;
   align-items: center;
@@ -323,9 +446,11 @@ const BottomBar = styled.div`
 
   @media ${device.mobileL} {
     /* Stacked on mobile the bar spans the full width, so it clears the side
-       controls by sitting below them instead. */
-    padding: 0 20px;
-    bottom: 12px;
+       controls by sitting below them instead. The register card is taken out
+       of this flow and laid over the bar, so what stacks here is the toggle. */
+    padding: 0 ${MAP_CONTROLS_GUTTER} 0 16px;
+    bottom: 23px;
+    gap: 16px;
     flex-direction: column;
     align-items: stretch;
   }
@@ -336,41 +461,122 @@ const BottomBar = styled.div`
 const RegisterCta = styled.button`
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 300px;
   height: 40px;
-  padding: 0 24px;
-  border-radius: 100px;
-  background: ${({ theme }) => theme.colors.white};
+  padding: 7px 11px;
+  white-space: nowrap;
+  border-radius: 54px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[600]};
+  background: #fafafa;
   color: ${({ theme }) => theme.colors.text.primary};
-  ${font('base', 500)};
+  ${font('base')};
   cursor: pointer;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 
+  /* Fill only — dimming the pill would take its label with it. */
   &:hover {
-    opacity: 0.92;
+    background: ${({ theme }) => theme.colors.grey[300]};
   }
 
+  /* Replaced by RegisterCard on phones. */
   @media ${device.mobileL} {
-    order: 2;
-    justify-content: center;
+    display: none;
   }
+`;
+
+// The phone frame's 361x164 card: heading, one line of copy, a full-width
+// register button, and a close control in the corner.
+const RegisterCard = styled.div`
+  display: none;
+
+  @media ${device.mobileL} {
+    /* Laid over the bottom strip rather than stacked in it: in the flow the
+       card pushed the list button up the map and cost the view its own height
+       on top of the button's. Over it, the strip is spent once, and the X
+       uncovers the button that was underneath all along. */
+    position: absolute;
+    left: 16px;
+    right: ${MAP_CONTROLS_GUTTER};
+    bottom: 0;
+    margin: 0 auto;
+    align-self: center;
+    /* 361 wide — the phone frame's number, kept when the viewport is wider. */
+    width: auto;
+    max-width: 361px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    border-radius: 8px;
+    background: ${({ theme }) => theme.colors.white};
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  /* Narrower than the phone frame the copy wraps to a third line, so trade
+     padding for map rather than growing the card. */
+  @media (max-width: 360px) {
+    gap: 12px;
+    padding: 16px;
+  }
+`;
+
+const RegisterClose = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.text.primary};
+
+  svg {
+    font-size: 2.4rem;
+  }
+`;
+
+const RegisterText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const RegisterTitle = styled.div`
+  ${font('base', 700)};
+`;
+
+const RegisterButton = styled.button`
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base')};
+  cursor: pointer;
 `;
 
 const ListToggle = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
   margin-left: auto;
+  min-width: 186px;
   height: 40px;
-  padding: 0 24px;
-  border-radius: 100px;
+  padding: 8px 24px;
+  white-space: nowrap;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
-  ${font('base', 600)};
+  ${font('base')};
   cursor: pointer;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 
   &:hover {
-    opacity: 0.92;
+    background: ${({ theme }) => theme.colors.grey[700]};
   }
 
   svg {
@@ -378,26 +584,22 @@ const ListToggle = styled.button`
   }
 
   @media ${device.mobileL} {
-    order: 1;
-    margin-left: 0;
-    justify-content: center;
+    width: 100%;
+    max-width: 321px;
+    min-width: 0;
+    margin: 0 auto;
   }
 `;
 
 const MapWrap = styled.div`
   position: absolute;
   inset: 0;
-  border-radius: 0 0 24px 24px;
   overflow: hidden;
 
   iframe {
     width: 100% !important;
     height: 100% !important;
     display: block;
-  }
-
-  @media ${device.mobileL} {
-    border-radius: 0 0 16px 16px;
   }
 `;
 
@@ -407,45 +609,45 @@ const MapWrap = styled.div`
 // and the rest of the site use, rather than the viewport edges.
 const Controls = styled.div`
   position: absolute;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: ${CONTENT_MAX_WIDTH};
-  padding: 0 32px;
+  top: 32px;
+  left: 0;
+  right: 0;
+  padding: 0 36px 0 42px;
   z-index: 20;
   display: flex;
   align-items: flex-start;
   gap: 16px;
 
+  /* The phone frame stacks the address field over a two-column row of the two
+     dropdowns, so they stay readable at 174px each. */
   @media ${device.mobileL} {
-    flex-direction: column;
-    align-items: stretch;
-    top: 12px;
-    padding: 0 20px;
+    flex-wrap: wrap;
+    top: 9px;
+    padding: 0 16px;
     gap: 12px;
   }
 `;
 
 const pillShadow = '0 8px 28px rgba(0, 0, 0, 0.14)';
 
-
 const SearchPill = styled.div`
-  /* Fixed-ish width on the left; the period pill is pushed to the far right via
-     its own margin-left:auto, keeping address + category grouped left. */
-  width: 380px;
-  max-width: 100%;
+  /* Design widths: 418 for the address field, 300 for Sritys, 206 for the
+     period — the last one pinned to the right edge. */
+  width: 418px;
   min-width: 0;
   height: 40px;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 12px;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 44px;
+  border-radius: 54px;
   box-shadow: ${pillShadow};
 
   @media ${device.mobileL} {
     width: 100%;
+    box-shadow:
+      inset 0 0 0 1px rgba(83, 83, 83, 0.12),
+      ${pillShadow};
   }
 `;
 
@@ -454,25 +656,27 @@ const CategoryPill = styled.button<{ $active: boolean }>`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-width: 240px;
+  width: 300px;
   height: 40px;
-  padding: 12px 20px;
-  border-radius: 44px;
+  padding: 8px 12px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.white};
   box-shadow: ${pillShadow};
   cursor: pointer;
-  ${font('lg')};
-  color: ${({ $active, theme }) => ($active ? theme.colors.text.primary : theme.colors.grey[600])};
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
 
   svg {
-    font-size: 1.6rem;
+    font-size: 2rem;
     flex-shrink: 0;
-    color: ${({ theme }) => theme.colors.grey[600]};
+    color: ${({ theme }) => theme.colors.text.primary};
   }
 
   @media ${device.mobileL} {
-    min-width: 0;
-    width: 100%;
+    width: calc(50% - 6px);
+    box-shadow:
+      inset 0 0 0 1px rgba(83, 83, 83, 0.12),
+      ${pillShadow};
   }
 `;
 
@@ -485,13 +689,30 @@ const PillLabel = styled.span`
 const PeriodWrap = styled.div`
   /* Pushed to the far right of the controls row (address + category stay left). */
   margin-left: auto;
-  min-width: 200px;
+  width: 206px;
   box-shadow: ${pillShadow};
-  border-radius: 44px;
+  border-radius: 54px;
+
+  /* Floating over the map the pill has no outline in the design; the events
+     page keeps the #BCBCBC one. The shared field states must not draw one back
+     under the pointer either: the address and Sritys pills beside it carry no
+     hairline at all, so only this one would answer. */
+  button,
+  button:hover,
+  button:focus-within {
+    border-color: transparent;
+  }
 
   @media ${device.mobileL} {
     margin-left: 0;
+    /* Reset the desktop floor, or the two-column row cannot hold both pills. */
     min-width: 0;
-    width: 100%;
+    width: calc(50% - 6px);
+
+    button,
+    button:hover,
+    button:focus-within {
+      border-color: rgba(83, 83, 83, 0.12);
+    }
   }
 `;

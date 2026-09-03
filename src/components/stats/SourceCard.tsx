@@ -1,33 +1,35 @@
 import styled from 'styled-components';
-import Icon from '../Icons';
-import { IconName } from '../../utils';
-import { formatRelativeTime, getUpdateStatusColor } from '../../utils/functions';
+import { device, font } from '../../styles';
+import { formatRelativeTime } from '../../utils/functions';
+import { Card, CardHeading, CircleIcon, IconCircle } from './cardStyles';
 
 // One "Duomenų šaltiniai" card: an icon + source name, the last-update time
 // (relative, colored by staleness) with the absolute timestamp beneath, and — if
 // the latest sync brought new events — a "Gauti N nauji įvykiai" pill.
 const SourceCard = ({
   icon,
+  iconBg,
   title,
   lastUpdate,
   lastUpdateCount,
 }: {
-  icon: IconName;
+  icon: string;
+  iconBg: string;
   title: string;
   lastUpdate: string | null;
   lastUpdateCount: number;
 }) => (
-  <Card>
+  <Wrap>
     <Left>
       <Header>
-        <IconChip>
-          <ChipIcon name={icon} />
-        </IconChip>
-        <Title>{title}</Title>
+        <IconCircle $bg={iconBg}>
+          <CircleIcon src={icon} alt="" />
+        </IconCircle>
+        <CardHeading>{title}</CardHeading>
       </Header>
       <Meta>
-        <MetaLabel>Paskutinis atnaujinimas:</MetaLabel>
-        <MetaValue $color={getUpdateStatusColor(lastUpdate)}>
+        <span>Paskutinis atnaujinimas:</span>
+        <MetaValue>
           {formatRelativeTime(lastUpdate)}
           {lastUpdate ? ` ${new Date(lastUpdate).toLocaleString('lt-LT')}` : ''}
         </MetaValue>
@@ -36,22 +38,22 @@ const SourceCard = ({
     {lastUpdateCount > 0 && (
       <Pill>Gauti {lastUpdateCount.toLocaleString('lt-LT')} nauji įvykiai</Pill>
     )}
-  </Card>
+  </Wrap>
 );
 
 export default SourceCard;
 
-const Card = styled.div`
-  /* Shrink inside the grid track rather than widening the page. */
-  min-width: 0;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  border-radius: 16px;
-  padding: 20px 24px;
-  display: flex;
+const Wrap = styled(Card)`
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+
+  /* The phone frame stacks the pill under the source instead of squeezing it in
+     beside the name, which ellipsised the longer titles. */
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 `;
 
 const Left = styled.div`
@@ -64,68 +66,43 @@ const Left = styled.div`
 const Header = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-`;
+  gap: 8px;
+  min-width: 0;
 
-const IconChip = styled.div`
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  background: ${({ theme }) => theme.colors.primary};
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  @media ${device.mobileL} {
+    /* Room for the full name once the pill is out of the row. */
+    white-space: normal;
 
-  /* Some icons (forest, fishThin) hardcode width/height on their <svg> and
-     ignore className, so constrain any child svg to the chip's icon size. */
-  & > svg {
-    width: 18px;
-    height: 18px;
+    > div {
+      white-space: normal;
+      overflow: visible;
+    }
   }
 `;
 
-const ChipIcon = styled(Icon)`
-  width: 18px;
-  height: 18px;
-  color: ${({ theme }) => theme.colors.tertiary};
-`;
-
-const Title = styled.div`
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text?.primary};
-  /* Long source names ellipsize instead of widening the card. */
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
+// The design sets both lines in the same 14/19.6 #404040 — the staleness colour
+// coding is not part of it — and puts the timestamp itself in semibold.
 const Meta = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  ${font('sm')};
+  line-height: 1.96rem;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const MetaLabel = styled.div`
-  font-size: 1.3rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
-`;
-
-const MetaValue = styled.div<{ $color?: string }>`
-  font-size: 1.4rem;
-  font-weight: 500;
-  color: ${({ $color, theme }) => $color || theme.colors.text?.primary};
+const MetaValue = styled.span`
+  font-weight: 600;
 `;
 
 const Pill = styled.div`
   flex-shrink: 0;
-  padding: 10px 16px;
-  border-radius: 100px;
-  background: ${({ theme }) => theme.colors.background};
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text?.primary};
+  padding: 8px 12px;
+  border-radius: 128px;
+  ${font('base', 500)};
+  letter-spacing: -0.01em;
+  color: ${({ theme }) => theme.colors.text.primary};
+  /* Inset ring, not a border: the design's 40px pill is padding + line box. */
+  box-shadow: inset 0 0 0 1px rgba(83, 83, 83, 0.12);
+  background: ${({ theme }) => theme.colors.white};
   white-space: nowrap;
 `;

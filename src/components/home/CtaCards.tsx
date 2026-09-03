@@ -1,35 +1,52 @@
+import { useContext } from 'react';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
 import Button from '../ui/Button';
 import { useAuthModal } from '../auth/AuthModalContext';
+import { UserContext, UserContextType } from '../UserProvider';
 
 // Two side-by-side call-to-action cards: a green photo card (brand statement)
 // and a black card driving registration/subscription.
 const CtaCards = () => {
   const { open } = useAuthModal();
+  const { loggedIn } = useContext<UserContextType>(UserContext);
+
+  // Both cards sell registration, so they have nothing to say to someone who is
+  // already signed in. Decided here rather than at each of the two pages that
+  // render them, so a third page cannot bring them back by accident.
+  //
+  // What stays behind is the space they held: returning nothing left the page's
+  // last section flush against the footer. One section's worth of rhythm, the
+  // 124 the frame puts between every two of them.
+  if (loggedIn) return <Spacer />;
+
   return (
     <Grid>
       <GreenCard>
+        {/* The trailing space survives the break, so the headline still reads
+            as a sentence at widths where the break is dropped. */}
         <GreenText>
-          Darome tą, nes esame
-          <br />
+          Darome tą, nes esame <br />
           smalsūs. Kaip ir tu!
         </GreenText>
       </GreenCard>
 
       <BlackCard>
-        <BlackTitle>
-          Tapk Smalsuolio
-          <br />
-          prenumeratoriumi
-        </BlackTitle>
-        <BlackCopy>
-          Užsiregistruok. Pažymėk tave dominančias įvykių kategorijas. Gauk elektroniniu paštu
-          naujausią informaciją apie tai, kas įvyko.
-        </BlackCopy>
-        <Button variant="light" size="lg" onClick={() => open('register')}>
-          Tapk Smalsiu
-        </Button>
+        <BlackText>
+          <BlackTitle>
+            Tapk Smalsuolio <br />
+            prenumeratoriumi
+          </BlackTitle>
+          <BlackCopy>
+            Užsiregistruok. Pažymėk tave dominančias įvykių kategorijas. Gauk elektroniniu paštu
+            naujausią informaciją apie tai, kas įvyko.
+          </BlackCopy>
+        </BlackText>
+        <CtaButtonWrap>
+          <Button variant="light" onClick={() => open('register')}>
+            Tapk Smalsiu
+          </Button>
+        </CtaButtonWrap>
       </BlackCard>
     </Grid>
   );
@@ -40,6 +57,14 @@ export default CtaCards;
 // Full-bleed row: the green card runs off the left edge of the viewport and the
 // black card off the right (matching the Figma), so only their inner corners are
 // rounded. The whole component spans full width; no Section wrapper.
+const Spacer = styled.div`
+  height: 124px;
+
+  @media ${device.mobileL} {
+    height: 42px;
+  }
+`;
+
 const Grid = styled.div`
   display: grid;
   /* Design: 836 + 24 gap + 580 in a 1440 band — the image panel is the wider
@@ -47,75 +72,147 @@ const Grid = styled.div`
   grid-template-columns: 836fr 580fr;
   gap: 24px;
   width: 100%;
-  margin-top: 80px;
+
+  /* Between the phone and the 1440 frame the 836/580 split leaves the black
+     card too narrow for its copy — even the two halves. */
+  @media ${device.tablet} {
+    grid-template-columns: 1fr 1fr;
+  }
+  margin-top: 54px;
+  /* The footer keeps a 42px lead-in of its own; the design leaves 114 below
+     this band, so the remainder lives here. */
+  margin-bottom: 72px;
 
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
-    padding: 0 20px;
-    margin-top: 48px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 `;
 
-// Inner content aligns to the page's centered content column (max-width 1216 +
-// 32px gutter), even though the card background bleeds to the screen edge. On
-// screens narrower than the column, falls back to the card's own 48px padding.
-const contentGutter = `max(48px, calc((100vw - ${CONTENT_WIDTH}) / 2 + 32px))`;
-
 const Card = styled.div`
-  border-radius: 32px;
-  padding: 48px;
+  border-radius: 20px;
   /* Design frame height for the band. */
   min-height: 538px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+
+  @media ${device.tablet} {
+    min-height: 420px;
+  }
 
   @media ${device.mobileL} {
-    padding: 32px;
-    min-height: 260px;
+    min-height: 0;
   }
 `;
 
 const GreenCard = styled(Card)`
   position: relative;
   overflow: hidden;
-  border-radius: 0 32px 32px 0;
-  padding-left: ${contentGutter};
+  border-radius: 0 20px 20px 0;
+  /* Heading sits 141 from the card's left edge and 179 from its top. */
+  padding: 179px 48px 215px 141px;
+  justify-content: flex-start;
   background:
-    linear-gradient(180deg, rgba(27, 94, 52, 0.35) 0%, rgba(20, 66, 36, 0.88) 100%),
+    linear-gradient(180deg, rgba(126, 236, 155, 0.3) 0%, #20853b 100%),
     url('/home/cta_city.png') center / cover no-repeat;
 
+  @media ${device.tablet} {
+    padding: 56px 40px;
+    justify-content: center;
+  }
+
+  /* No counterpart on the 393 frame. */
   @media ${device.mobileL} {
-    border-radius: 20px;
-    padding-left: 32px;
+    display: none;
   }
 `;
 
 const GreenText = styled.div`
-  ${font('3xl')};
+  ${font('5xl')};
   color: ${({ theme }) => theme.colors.white};
   position: relative;
+
+  /* The line breaks are set for the 1440 frame's column width; below it they
+     leave one word per line, so let the headline flow instead. */
+  @media ${device.tablet} {
+    ${font('3xl')};
+
+    br {
+      display: none;
+    }
+  }
 `;
 
 const BlackCard = styled(Card)`
   background: ${({ theme }) => theme.colors.black};
-  justify-content: flex-start;
-  gap: 16px;
-  border-radius: 32px 0 0 32px;
+  justify-content: center;
+  gap: 40px;
+  padding: 0 80px;
+  border-radius: 20px 0 0 20px;
+
+  @media ${device.tablet} {
+    gap: 24px;
+    padding: 0 40px;
+  }
 
   @media ${device.mobileL} {
-    border-radius: 20px;
+    /* The phone frame carries only this card, full-bleed and square, with its
+       313px content block centred in it. */
+    border-radius: 0;
+    padding: 77px 40px;
+    gap: 40px;
+    align-items: center;
+
+    > * {
+      width: 100%;
+      max-width: 313px;
+    }
   }
 `;
 
+const CtaButtonWrap = styled.div`
+  button {
+    width: 420px;
+    max-width: 100%;
+  }
+
+  @media ${device.tablet} {
+    button {
+      width: 100%;
+    }
+  }
+
+  @media ${device.mobileL} {
+    button {
+      width: 100%;
+      max-width: 313px;
+    }
+  }
+`;
+
+const BlackText = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+`;
+
 const BlackTitle = styled.div`
-  ${font('2xl')};
+  ${font('3xl')};
   color: ${({ theme }) => theme.colors.white};
+
+  @media ${device.tablet} {
+    ${font('2xl')};
+
+    br {
+      display: none;
+    }
+  }
 `;
 
 const BlackCopy = styled.p`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[400]};
+  ${font('lg')};
+  color: ${({ theme }) => theme.colors.white};
   margin: 0;
   max-width: 420px;
 `;

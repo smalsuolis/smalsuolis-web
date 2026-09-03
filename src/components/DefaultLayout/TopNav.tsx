@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
+import { Menu, MenuItem } from '../ui/Menu';
 import Icon from '../Icons';
 import { IconName, slugs } from '../../utils';
 import MobileMenu from './MobileMenu';
@@ -46,10 +47,15 @@ const TopNav = (props: DefaultLayoutProps) => {
     };
   }, [accountOpen]);
 
+  // These two pull the hero up underneath the bar, so it has to stay see-through.
+  const overHero = currentRoute?.slug === slugs.home || currentRoute?.slug === slugs.about;
+
   return (
-    <Bar>
+    <Bar $overHero={overHero} $overMap={currentRoute?.slug === slugs.map}>
       <Inner>
-        <LogoContainer onClick={onGoHome}>{logo}</LogoContainer>
+        <LogoContainer $overHero={overHero} onClick={onGoHome}>
+          {logo}
+        </LogoContainer>
 
         <Links>
           {menuRoutes.map((route: any, index: number) => (
@@ -127,17 +133,35 @@ const TopNav = (props: DefaultLayoutProps) => {
         </Right>
       </Inner>
 
-      <MobileMenu visible={showMenu} onClose={() => setShowMenu(false)} {...props} />
+      <MobileMenu
+        visible={showMenu}
+        onClose={() => setShowMenu(false)}
+        overHero={overHero}
+        {...props}
+      />
     </Bar>
   );
 };
 
 export default TopNav;
 
-const Bar = styled.header`
+const Bar = styled.header<{ $overHero: boolean; $overMap: boolean }>`
   position: relative;
   width: 100%;
-  background: transparent;
+  background: ${({ $overHero, theme }) => ($overHero ? 'transparent' : theme.colors.white)};
+  /* Inset rule, not a border: the design's navbar is 80px tall including its
+     hairline, and a border would make the bar 81 and shift every page down.
+     The map frames draw no rule — the bar sits straight on the map. */
+  ${({ $overHero, $overMap, theme }) =>
+    !$overHero && !$overMap && `box-shadow: inset 0 -1px 0 ${theme.colors.grey[300]};`}
+
+  /* The phone frames tint the bar instead of painting it solid white. */
+  @media ${device.mobileL} {
+    ${({ $overHero }) =>
+      !$overHero &&
+      `background: rgba(250, 250, 250, 0.9);
+       box-shadow: inset 0 -1px 0 #E8E8E8;`}
+  }
   /* Must sit above the homepage hero, which is pulled up underneath it with a
      negative margin. The hero establishes its own stacking context, so the nav
      needs an explicit z-index on a positioned box to paint over it. */
@@ -147,7 +171,7 @@ const Bar = styled.header`
 const Inner = styled.nav`
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  height: 72px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -155,42 +179,46 @@ const Inner = styled.nav`
   gap: 24px;
 
   @media ${device.mobileL} {
-    padding: 0 20px;
-    height: 64px;
+    padding: 0 16px;
   }
 `;
 
-const LogoContainer = styled.div`
+// The mark is green wherever the bar is white, and black only while the bar is
+// transparent over the green hero — the wordmark stays black either way.
+const LogoContainer = styled.div<{ $overHero: boolean }>`
   cursor: pointer;
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  color: ${({ $overHero }) => ($overHero ? '#000000' : '#53ba6d')};
+
+  /* Design: a 136x18 mark on desktop, 160x21 on the phone. */
+  svg {
+    width: 136px;
+    height: auto;
+  }
+
+  @media ${device.mobileL} {
+    svg {
+      width: 160px;
+    }
+  }
 `;
 
 const Links = styled.div`
   display: flex;
   align-items: center;
-  gap: 36px; /* DS Navbar item gap */
+  gap: 36px;
 
   @media ${device.mobileL} {
     display: none;
   }
 `;
 
-// Matches the design-system Navbar: 16px black links, letter-spacing -0.02em,
-// the active item in Bold (700) and the rest in Regular (400) — weight, not
-// color, signals the active route. Inactive links carry a slight opacity so the
-// active one still reads first (mirrors the DS's de-emphasized nav treatment).
 const NavLink = styled.div<{ $isActive: boolean }>`
   cursor: pointer;
   color: ${({ theme }) => theme.colors.text.primary};
   ${({ $isActive }) => font('base', $isActive ? 700 : 400)};
-  opacity: ${({ $isActive }) => ($isActive ? 1 : 0.64)};
-  transition: opacity 0.15s ease;
-
-  &:hover {
-    opacity: 1;
-  }
 `;
 
 const Right = styled.div`
@@ -213,7 +241,7 @@ const AccountWrapper = styled.div`
 const AccountTrigger = styled.button`
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: none;
   border: none;
   padding: 0;
@@ -221,21 +249,20 @@ const AccountTrigger = styled.button`
 `;
 
 const Avatar = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 48px;
   background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  font-size: 2.4rem;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Chevron = styled(Icon)<{ $open: boolean }>`
   font-size: 1.6rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  color: #0f172a;
   transform: ${({ $open }) => ($open ? 'rotate(180deg)' : 'rotate(0deg)')};
   transition: transform 0.15s ease;
 `;
@@ -247,43 +274,29 @@ const AccountMenu = styled.div`
   top: 100%;
   right: 0;
   padding-top: 10px;
-  min-width: 232px;
+  width: 281px;
   z-index: 30;
 `;
 
-// Square-cornered white panel on a soft, wide-spread shadow — the card reads as
-// a flat sheet rather than a rounded popover.
-const AccountCard = styled.div`
-  background: ${({ theme }) => theme.colors.white};
+const AccountCard = styled(Menu)`
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
 `;
 
-// Full-bleed rows separated by hairlines that run the whole panel width.
-// `$muted` marks the terminal action (Atsijungti), which sits on a faint grey
-// to set it apart from the navigation entries above it.
-const AccountItem = styled.div<{ $muted?: boolean }>`
-  ${font('base', 400)};
-  padding: 18px 24px;
-  cursor: pointer;
+// `$muted` marks the terminal action (Atsijungti), which sits on a faint grey to
+// set it apart from the navigation entries above it.
+const AccountItem = styled(MenuItem)<{ $muted?: boolean }>`
   white-space: nowrap;
-  color: ${({ theme }) => theme.colors.text.primary};
-  background: ${({ $muted }) => ($muted ? '#f7f7f7' : 'transparent')};
-
-  & + & {
-    border-top: 1px solid #eeeeee;
-  }
-
-  &:hover {
-    background: ${({ $muted }) => ($muted ? '#f0f0f0' : '#fafafa')};
-  }
+  background: ${({ $muted }) => ($muted ? '#fafafa' : 'transparent')};
 `;
 
 const LoginButton = styled.div<{ $isActive: boolean }>`
+  display: flex;
+  align-items: center;
+  height: 40px;
   cursor: pointer;
-  ${font('base', 500)};
-  padding: 10px 20px;
-  border-radius: 100px;
+  ${font('base')};
+  padding: 8px 24px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
   transition: background 0.15s ease;
@@ -298,6 +311,7 @@ const LoginButton = styled.div<{ $isActive: boolean }>`
 `;
 
 const Burger = styled.button`
+  padding: 0;
   display: none;
   font-size: 2.4rem;
   color: ${({ theme }) => theme.colors.text.primary};

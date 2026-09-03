@@ -29,7 +29,7 @@ import {
 import api from '../utils/api';
 
 const Subscriptions = () => {
-  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev.maps.biip.lt';
+  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev-maps.biip.lt';
   const currentRoute = useGetCurrentRoute();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -259,6 +259,7 @@ const Subscriptions = () => {
       <Popup
         visible={showDelete}
         onClose={() => setShowDelete(false)}
+        image="/warning_triangle.png"
         title="Ar tikrai norite ištrinti šią prenumeratą?"
         subTitle="Šio veiksmo nebus galima atšaukti ar redaguoti"
         allow

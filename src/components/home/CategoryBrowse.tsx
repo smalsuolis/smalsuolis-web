@@ -4,12 +4,9 @@ import styled from 'styled-components';
 import { device, font } from '../../styles';
 import api from '../../utils/api';
 import { slugs } from '../../utils';
-import { timeRangeQuery, TimeRanges } from '../../utils/types';
+import { appIcon } from '../../utils/appIcons';
+import { App, timeRangeQuery, TimeRanges } from '../../utils/types';
 
-// "Naršyk pagal paskirtį" — a horizontal strip of category pills, each with a
-// colored icon, name, and an approximate count. Presentational browse entry
-// point; clicking routes into the events feed (filter wiring lands with the
-// events-page redesign).
 // Shares the canonical ALL_TIME window (same object → same server cache key)
 // with StatRow and the Stats page.
 const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
@@ -22,6 +19,12 @@ const compact = (n?: number) => {
 
 const CategoryBrowse = () => {
   const navigate = useNavigate();
+  const { data: apps = [] } = useQuery({
+    queryKey: ['apps', 'all'],
+    queryFn: () => api.getAllApps(),
+    staleTime: Infinity,
+  });
+
   const { data } = useQuery({
     queryKey: ['home-stats', ALL_TIME],
     queryFn: () => api.getStats(ALL_TIME),
@@ -31,55 +34,70 @@ const CategoryBrowse = () => {
 
   const chips = [
     {
-      key: 'fish',
+      key: 'izuvinimas',
       label: 'Žuvinimas',
-      icon: '/home/cat_fish.svg',
+      icon: appIcon.izuvinimas,
       count: data?.byApp?.izuvinimas?.count,
-      bg: '#E8F1FF',
+      bg: '#9CDEFF',
     },
     {
-      key: 'map',
+      key: 'zemetvarkosPlanavimas',
       label: 'Žemėtvarkos planavimas',
-      icon: '/home/cat_map.svg',
+      icon: appIcon.zemetvarkosPlanavimas,
       count: data?.byApp?.zemetvarkosPlanavimas?.count,
-      bg: '#EDE9FE',
+      bg: '#DACDFF',
     },
     {
-      key: 'building',
+      key: 'infostatyba',
       label: 'Statiniai',
-      icon: '/home/cat_building.svg',
+      icon: appIcon.infostatyba,
       count: data?.byApp?.infostatyba?.count,
-      bg: '#FDE8E8',
+      bg: '#F9BEBF',
     },
     {
-      key: 'autorenew',
+      key: 'savivaldybesZemetvarka',
       label: 'Žemės paskirties keitimas',
-      icon: '/home/cat_autorenew.svg',
+      icon: appIcon.savivaldybesZemetvarka,
       count: data?.byApp?.savivaldybesZemetvarka?.count,
-      bg: '#DFF7E6',
+      bg: '#E3E3E3',
     },
     {
-      key: 'forest',
+      key: 'miskoKirtimai',
       label: 'Miško kirtimai',
-      icon: '/home/cat_forest.svg',
+      icon: appIcon.miskoKirtimai,
       count: data?.byApp?.miskoKirtimai?.count,
-      bg: '#DFF7E6',
+      bg: '#CEFFAF',
     },
   ];
+
+  // Browsing by purpose lands on the map with that source already filtered —
+  // the same place the hero search goes.
+  //
+  // Matched by prefix, not by an exact key: "Statiniai" is one chip over the
+  // four Infostatyba sources (…-naujas, -remontas, -griovimas,
+  // -paskirties-keitimas). The statistics count them under the single key the
+  // chip carries, the app registry keeps them apart — so an exact `find` came
+  // back empty and that chip, the largest of the five, opened the map with no
+  // filter at all.
+  const browse = (key: string) => {
+    const ids = apps
+      .filter((a: App) => a.key === key || a.key?.startsWith(`${key}-`))
+      .map((a: App) => a.id);
+    navigate(ids.length ? `${slugs.map}?app=${ids.join(',')}` : slugs.map);
+  };
 
   return (
     <Wrap>
       <Title>Naršyk pagal paskirtį</Title>
       <Chips>
         {chips.map((chip) => (
-          <Chip key={chip.key} onClick={() => navigate(slugs.events)}>
-            <IconCircle $bg={chip.bg}>
-              {/* Height-constrained, auto width: the icons aren't all square
-                  (the žuvinimas one is 10×13), so forcing 16×16 would stretch
-                  them. */}
-              <ChipIcon src={chip.icon} alt="" />
-            </IconCircle>
-            <ChipLabel>{chip.label}</ChipLabel>
+          <Chip key={chip.key} onClick={() => browse(chip.key)}>
+            <ChipMain>
+              <IconCircle $bg={chip.bg}>
+                <ChipIcon src={chip.icon} alt="" />
+              </IconCircle>
+              <ChipLabel>{chip.label}</ChipLabel>
+            </ChipMain>
             {chip.count !== undefined && <Count>{compact(chip.count)}</Count>}
           </Chip>
         ))}
@@ -94,43 +112,73 @@ const Wrap = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 36px;
+
+  /* The phone frame left-aligns the heading and lets each chip hug its label,
+     rather than centring a column of equal-width pills. */
+  @media ${device.mobileL} {
+    align-items: stretch;
+    gap: 24px;
+  }
 `;
 
-// DS section heading: Medium 30px, tight tracking. Node 116:1907.
 const Title = styled.h2`
   ${font('3xl')};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   text-align: center;
+
+  @media ${device.mobileL} {
+    ${font('2xl')};
+    text-align: left;
+  }
 `;
 
 const Chips = styled.div`
   display: flex;
   flex-wrap: wrap;
+  /* Centred under a centred heading — left-aligned they read as a stray column
+     off to one side of it. The phone frame keeps them left, where each pill
+     hugs its label in a single column. */
   justify-content: center;
-  gap: 12px;
+  align-self: stretch;
+  gap: 16px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
 `;
 
 const Chip = styled.button`
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 16px 8px 8px;
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  border-radius: 100px;
+  gap: 14px;
+  padding: 8px 12px;
+  /* Inset ring, not a border: the design's 43px pill is padding + content, and
+     a border would add its width on top. */
+  box-shadow: inset 0 0 0 1px ${({ theme }) => theme.colors.grey[300]};
+  border: none;
+  border-radius: 39px;
   background: ${({ theme }) => theme.colors.white};
   cursor: pointer;
-  transition: border-color 0.15s ease;
+  transition: box-shadow 0.15s ease;
 
   &:hover {
-    border-color: ${({ theme }) => theme.colors.grey[500]};
+    box-shadow: inset 0 0 0 1px ${({ theme }) => theme.colors.grey[500]};
   }
 `;
 
+const ChipMain = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+`;
+
 const IconCircle = styled.span<{ $bg: string }>`
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: ${({ $bg }) => $bg};
   display: flex;
@@ -140,14 +188,11 @@ const IconCircle = styled.span<{ $bg: string }>`
 `;
 
 const ChipIcon = styled.img`
+  width: 16px;
   height: 16px;
-  width: auto;
-  max-width: 16px;
   display: block;
 `;
 
-// DS category chip: label Regular 18px black, count Regular 18px grey-600
-// (#707070). Figma nodes 116:2779 / 116:2780.
 const ChipLabel = styled.span`
   ${font('lg')};
   color: ${({ theme }) => theme.colors.text.primary};

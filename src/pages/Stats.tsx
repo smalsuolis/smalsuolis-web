@@ -4,13 +4,14 @@ import styled from 'styled-components';
 import { useQuery } from '@tanstack/react-query';
 import { orderBy } from 'lodash';
 import { CONTENT_WIDTH, device, font } from '../styles';
-import { IconName, timeRangeQuery } from '../utils';
-import { TimeRanges, yearQuery } from '../utils/types';
+import { timeRangeQuery } from '../utils';
+import { appIcon } from '../utils/appIcons';
+import { defaultTimeRange, TimeRanges, yearQuery, statsTimeRangeItems } from '../utils/types';
 import api from '../utils/api';
 import Loader from '../components/Loader';
-import Datepicker from '../components/Datepicker';
+import PeriodDropdown from '../components/PeriodDropdown';
 import { calculatePreviousPeriod } from '../utils/functions';
-import Delta from '../components/stats/Delta';
+import Delta, { DeltaPercent } from '../components/stats/Delta';
 import BreakdownCard, { BreakdownRow } from '../components/stats/BreakdownCard';
 import CityCard, { CityRow } from '../components/stats/CityCard';
 import SourceCard from '../components/stats/SourceCard';
@@ -18,17 +19,27 @@ import SubscribeBanner from '../components/stats/SubscribeBanner';
 
 const resolveQueryFromKey = (key: string): { $gte: string; $lt: string } => {
   if (/^\d{4}$/.test(key)) return yearQuery(Number(key));
-  const q = timeRangeQuery[key as TimeRanges] ?? timeRangeQuery[TimeRanges.LAST_7_DAYS];
+  const q = timeRangeQuery[key as TimeRanges] ?? defaultTimeRange.query;
   return q as { $gte: string; $lt: string };
 };
 
-// Per-appType colors for the city breakdown dots. appType → color.
+// Icon glyph and circle colour per source, straight from the design.
+const APP_BADGE: Record<string, { icon: string; bg: string }> = {
+  miskoKirtimai: { icon: appIcon.miskoKirtimai, bg: '#CEFFAF' },
+  infostatyba: { icon: appIcon.infostatyba, bg: '#F9BEBF' },
+  zemetvarkosPlanavimas: { icon: appIcon.zemetvarkosPlanavimas, bg: '#DACDFF' },
+  izuvinimas: { icon: appIcon.izuvinimas, bg: '#9CDEFF' },
+  savivaldybesZemetvarka: { icon: appIcon.savivaldybesZemetvarka, bg: '#DDDDDD' },
+};
+
+// The city breakdown dots reuse the same circle palette the source badges do,
+// not a saturated set of their own.
 const APP_COLORS: Record<string, string> = {
-  infostatyba: '#E5484D',
-  miskoKirtimai: '#1F9D57',
-  zemetvarkosPlanavimas: '#8A33FE',
-  izuvinimas: '#1121DA',
-  savivaldybesZemetvarka: '#FFB400',
+  infostatyba: '#F9BEBF',
+  miskoKirtimai: '#CEFFAF',
+  zemetvarkosPlanavimas: '#DACDFF',
+  izuvinimas: '#9CDEFF',
+  savivaldybesZemetvarka: '#DDDDDD',
 };
 
 const APP_SHORT_LABELS: Record<string, string> = {
@@ -42,25 +53,15 @@ const APP_SHORT_LABELS: Record<string, string> = {
 // Municipality names come from the registry as e.g. "Vilniaus m. sav." /
 // "Kauno r. sav.". The design shows the plain city/place name, so strip the
 // "m. sav." / "r. sav." / "sav." administrative suffix for display.
-const prettyMunicipality = (name: string): string =>
-  name.replace(/\s+(m\.|r\.)?\s*sav\.?$/i, '').trim();
-
-// Widening ladder for the adaptive default: if the default window has no
-// events (e.g. a source feed went stale), step out to the next wider range so
-// the page opens with data rather than looking empty. Only applied when the
-// user hasn't explicitly picked a range.
-const RANGE_LADDER: TimeRanges[] = [
-  TimeRanges.LAST_7_DAYS,
-  TimeRanges.LAST_28_DAYS,
-  TimeRanges.LAST_90_DAYS,
-  TimeRanges.LAST_365_DAYS,
-  TimeRanges.ALL_TIME,
-];
+// The register's own name, whole: "Vilniaus r. sav.", "Vilniaus m. sav.",
+// "Neringos sav.". Trimming it read as two rows both called "Vilniaus", and
+// even the r./m. left short of saying what they are.
+const prettyMunicipality = (name: string): string => name.replace(/\s+/g, ' ').trim();
 
 const Stats = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const initialRange = searchParams.get('range') ?? TimeRanges.LAST_7_DAYS;
+  const initialRange = searchParams.get('range') ?? defaultTimeRange.key;
   const initialQuery: { $gte: string; $lt: string } =
     initialRange === TimeRanges.CUSTOM && searchParams.get('from') && searchParams.get('to')
       ? { $gte: searchParams.get('from')!, $lt: searchParams.get('to')! }
@@ -80,30 +81,13 @@ const Stats = () => {
       ? { ...query, $gte: lastUpdateData.firstGlobalEvent.slice(0, 16) }
       : query;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ['stats', effectiveQuery],
     queryFn: () => api.getStats(effectiveQuery),
     refetchOnWindowFocus: false,
-  });
-
-  // Adaptive default range: when the user hasn't explicitly chosen a range and
-  // the current window returned zero events, step out to the next wider range.
-  // Runs at most once per rung and stops at ALL_TIME, so it can't loop.
-  const userPickedRange = !!searchParams.get('range');
-  useEffect(() => {
-    if (userPickedRange || isLoading || !data) return;
-    if (data.count > 0) return;
-    const idx = RANGE_LADDER.indexOf(dateFilter as TimeRanges);
-    if (idx === -1 || idx >= RANGE_LADDER.length - 1) return; // unknown or already widest
-    const next = RANGE_LADDER[idx + 1];
-    setDateFilter(next);
-    setQuery(resolveQueryFromKey(next));
-  }, [data, isLoading, dateFilter, userPickedRange]);
-
-  const { data: infostatybaCategories } = useQuery({
-    queryKey: ['categories', 'all', 'infostatyba'],
-    queryFn: () => api.getAllCategories('infostatyba'),
-    staleTime: Infinity,
+    // Changing the range used to blank the whole page behind one big spinner.
+    // Keep the numbers on screen and let the title say a new set is coming.
+    placeholderData: (previous) => previous,
   });
 
   const previousQuery = calculatePreviousPeriod(effectiveQuery);
@@ -143,14 +127,6 @@ const Stats = () => {
   ];
 
   // ---- "Suskirstymas pagal tipą" cards ---------------------------------
-  const categoryNameByCode = (infostatybaCategories ?? []).reduce<Record<string, string>>(
-    (acc, c) => {
-      acc[c.code] = c.name;
-      return acc;
-    },
-    {},
-  );
-
   // Build sorted rows from a byTag map, attaching previous counts for deltas.
   const tagRows = (
     tagMap?: Record<string, { count: number }>,
@@ -167,76 +143,70 @@ const Stats = () => {
     return orderBy(rows, (r) => r.count, 'desc');
   };
 
-  const categoryRows = (
-    catMap?: Record<string, { count: number }>,
-    prevMap?: Record<string, { count: number }>,
-  ): BreakdownRow[] => {
-    if (!catMap) return [];
-    const total = Object.values(catMap).reduce((s, v) => s + (v.count || 0), 0);
-    const rows = Object.entries(catMap).map(([code, v]) => ({
-      label: categoryNameByCode[code] || code,
-      count: v.count || 0,
-      previousCount: prevMap?.[code]?.count,
-      total,
-    }));
+  const byMunicipality = data?.byMunicipality || {};
+  const prevByMunicipality = previousData?.byMunicipality || {};
+
+  // The three sources whose integrations set no tags — izuvinimas,
+  // zemetvarkosPlanavimas, savivaldybesZemetvarka — come back with a count and
+  // nothing to break it down by, so their cards stood empty. The same response
+  // already splits every source by municipality, which is a real answer to
+  // "what is this number made of". Used only where the tag rows are empty, so a
+  // source that starts carrying tags goes back to showing them on its own.
+  const municipalityRows = (app: string, appTotal: number): BreakdownRow[] => {
+    const rows = Object.entries(byMunicipality)
+      .map(([name, v]) => ({
+        label: prettyMunicipality(name),
+        count: v.byApp?.[app] || 0,
+        previousCount: prevByMunicipality[name]?.byApp?.[app],
+        total: appTotal,
+      }))
+      .filter((r) => r.count > 0);
     return orderBy(rows, (r) => r.count, 'desc');
   };
 
-  // One card per app type, matching the design. Only miskoKirtimai and
-  // infostatyba currently carry tag/category breakdowns in the data; the rest
-  // still get a card showing their real total with an empty-rows note, rather
-  // than disappearing, so the page shape stays stable and a zero reads as a
-  // zero. They gain rows automatically if those feeds start emitting tags.
+  // One card per source, in the design's order. Only miskoKirtimai and
+  // infostatyba currently carry tag breakdowns in the data; the rest still get a
+  // card showing their real total with an empty-rows note, rather than
+  // disappearing, so the page shape stays stable and a zero reads as a zero.
   const breakdownCards = [
     {
-      icon: IconName.forest,
+      app: 'miskoKirtimai',
       title: 'Kirtimų leidimai',
       total: byApp?.miskoKirtimai?.count || 0,
       rows: tagRows(byApp?.miskoKirtimai?.byTag, prevByApp?.miskoKirtimai?.byTag),
     },
     {
-      icon: IconName.house,
+      app: 'infostatyba',
       title: 'Statybų leidimai',
       total: byApp?.infostatyba?.count || 0,
       rows: tagRows(byApp?.infostatyba?.byTag, prevByApp?.infostatyba?.byTag),
     },
     {
-      icon: IconName.buildings,
-      title: 'Statybų leidimai pagal kategoriją',
-      total: byApp?.infostatyba?.count || 0,
-      rows: categoryRows(byApp?.infostatyba?.byCategory, prevByApp?.infostatyba?.byCategory),
-    },
-    {
-      icon: IconName.map,
+      app: 'zemetvarkosPlanavimas',
       title: 'Žemėtvarkos planavimas',
       total: byApp?.zemetvarkosPlanavimas?.count || 0,
-      rows: tagRows(
-        byApp?.zemetvarkosPlanavimas?.byTag,
-        prevByApp?.zemetvarkosPlanavimas?.byTag,
-      ),
+      rows: tagRows(byApp?.zemetvarkosPlanavimas?.byTag, prevByApp?.zemetvarkosPlanavimas?.byTag),
+      fallbackRows: () =>
+        municipalityRows('zemetvarkosPlanavimas', byApp?.zemetvarkosPlanavimas?.count || 0),
     },
     {
-      icon: IconName.fish,
+      app: 'izuvinimas',
       title: 'Žuvinimas',
       total: byApp?.izuvinimas?.count || 0,
       rows: tagRows(byApp?.izuvinimas?.byTag, prevByApp?.izuvinimas?.byTag),
+      fallbackRows: () => municipalityRows('izuvinimas', byApp?.izuvinimas?.count || 0),
     },
     {
-      // Not mapLocation: that name exists in the enum but has no case in the
-      // Icons switch, so it renders as an empty chip.
-      icon: IconName.scales,
+      app: 'savivaldybesZemetvarka',
       title: 'Žemės paskirties keitimai',
       total: byApp?.savivaldybesZemetvarka?.count || 0,
-      rows: tagRows(
-        byApp?.savivaldybesZemetvarka?.byTag,
-        prevByApp?.savivaldybesZemetvarka?.byTag,
-      ),
+      rows: tagRows(byApp?.savivaldybesZemetvarka?.byTag, prevByApp?.savivaldybesZemetvarka?.byTag),
+      fallbackRows: () =>
+        municipalityRows('savivaldybesZemetvarka', byApp?.savivaldybesZemetvarka?.count || 0),
     },
   ];
 
   // ---- "Akyviausi miestai" ---------------------------------------------
-  const byMunicipality = data?.byMunicipality || {};
-  const prevByMunicipality = previousData?.byMunicipality || {};
 
   const topCities = orderBy(
     Object.entries(byMunicipality).map(([name, v]) => ({ name, ...v })),
@@ -250,7 +220,7 @@ const Stats = () => {
     return orderBy(
       Object.entries(byAppMap).map(([appType, count]) => ({
         label: APP_SHORT_LABELS[appType] || appType,
-        color: APP_COLORS[appType] || '#707070',
+        color: APP_COLORS[appType] || '#DDDDDD',
         count,
         previousCount: prevCity[appType],
         total: cityTotal,
@@ -264,25 +234,24 @@ const Stats = () => {
   const getUpd = (appType: string) => lastUpdateData?.byAppType?.find((i) => i.appType === appType);
 
   const sourceItems = [
-    { label: 'Miško kirtimai', icon: IconName.forest, upd: getUpd('miskoKirtimai') },
-    { label: 'Žuvų įveisimas', icon: IconName.fishThin, upd: getUpd('izuvinimas') },
-    { label: 'Statybos leidimai', icon: IconName.house, upd: getUpd('infostatyba') },
-    {
-      label: 'Žemėtvarkos planavimas',
-      icon: IconName.map,
-      upd: getUpd('zemetvarkosPlanavimas'),
-    },
-    {
-      label: 'Žemės paskirties keitimas (Vilnius)',
-      icon: IconName.buildings,
-      upd: getUpd('savivaldybesZemetvarka'),
-    },
-  ];
+    { label: 'Miško kirtimai', app: 'miskoKirtimai' },
+    { label: 'Žuvų įveisimas', app: 'izuvinimas' },
+    { label: 'Statybos leidimai', app: 'infostatyba' },
+    { label: 'Žemėtvarkos planavimas', app: 'zemetvarkosPlanavimas' },
+    { label: 'Žemės paskirties keitimas', app: 'savivaldybesZemetvarka' },
+  ].map((s) => ({ ...s, upd: getUpd(s.app) }));
 
   return (
     <Page>
       <Header>
-        <PageTitle>Statistika</PageTitle>
+        <PageTitle>
+          Statistika
+          {/* Changing the range refetches every number on the page. Without this
+              the old ones sit there looking settled for the second it takes. */}
+          <TitleSpinner $visible={isFetching && !isLoading}>
+            <Loader size="20px" color="#7c7c7c" />
+          </TitleSpinner>
+        </PageTitle>
         <Controls>
           <ToggleContainer onClick={() => setIsComparisonEnabled((v) => !v)}>
             <ToggleLabel>Lyginti su ankstesniu periodu</ToggleLabel>
@@ -290,19 +259,22 @@ const Stats = () => {
               <ToggleCircle $isActive={isComparisonEnabled} />
             </ToggleSwitch>
           </ToggleContainer>
-          <Datepicker
-            onChange={(filterValue, date) => {
-              setDateFilter(filterValue);
-              setQuery(date);
-              if (filterValue === TimeRanges.CUSTOM) {
-                setSearchParams({ range: filterValue, from: date.$gte, to: date.$lt });
-              } else {
-                setSearchParams({ range: filterValue });
-              }
-            }}
-            value={dateFilter}
-            selectedDates={query}
-          />
+          <DatepickerWrap>
+            <PeriodDropdown
+              options={statsTimeRangeItems}
+              value={dateFilter}
+              selectedDates={query}
+              onChange={({ key, query: date }) => {
+                setDateFilter(key);
+                setQuery(date);
+                if (key === TimeRanges.CUSTOM) {
+                  setSearchParams({ range: key, from: date.$gte, to: date.$lt });
+                } else {
+                  setSearchParams({ range: key });
+                }
+              }}
+            />
+          </DatepickerWrap>
         </Controls>
       </Header>
 
@@ -320,26 +292,41 @@ const Stats = () => {
                   <KpiValue>{(k.count ?? 0).toLocaleString('lt-LT')}</KpiValue>
                 </KpiValueRow>
                 {isComparisonEnabled && (
-                  <Delta current={k.count} previous={k.previous} isFetching={isPreviousFetching} />
+                  <DeltaPercent
+                    current={k.count}
+                    previous={k.previous}
+                    isFetching={isPreviousFetching}
+                  />
                 )}
               </Kpi>
             ))}
           </KpiStrip>
 
+          <Rule />
+
           <SectionTitle>Suskirstymas pagal tipą</SectionTitle>
           <CardGrid>
-            {breakdownCards.map((c) => (
-              <BreakdownCard
-                key={c.title}
-                icon={c.icon}
-                title={c.title}
-                total={c.total}
-                rows={c.rows}
-                showComparison={isComparisonEnabled}
-                isFetching={isPreviousFetching}
-              />
-            ))}
+            {breakdownCards.map((c) => {
+              // Tags when the source has them, municipalities when it does not —
+              // the rows name themselves ("Vilniaus r. sav."), so nothing has to
+              // announce which cut this is.
+              const rows = c.rows.length ? c.rows : c.fallbackRows?.() ?? [];
+              return (
+                <BreakdownCard
+                  key={c.title}
+                  icon={APP_BADGE[c.app].icon}
+                  iconBg={APP_BADGE[c.app].bg}
+                  title={c.title}
+                  total={c.total}
+                  rows={rows}
+                  showComparison={isComparisonEnabled}
+                  isFetching={isPreviousFetching}
+                />
+              );
+            })}
           </CardGrid>
+
+          <Rule />
 
           {/* Section always renders so the page keeps a stable shape across
               periods; short windows just have fewer (or no) municipalities. */}
@@ -362,12 +349,15 @@ const Stats = () => {
 
           {!isLoadingLastUpdate && lastUpdateData && (
             <>
+              <Rule />
+
               <SectionTitle>Duomenų šaltiniai</SectionTitle>
               <SourceGrid>
                 {sourceItems.map((s) => (
                   <SourceCard
                     key={s.label}
-                    icon={s.icon}
+                    icon={APP_BADGE[s.app].icon}
+                    iconBg={APP_BADGE[s.app].bg}
                     title={s.label}
                     lastUpdate={s.upd?.lastUpdate || null}
                     lastUpdateCount={s.upd?.lastUpdateCount || 0}
@@ -388,14 +378,14 @@ export default Stats;
 
 const Page = styled.div`
   width: 100%;
+  max-width: ${CONTENT_WIDTH};
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  padding: 40px 0;
-  @media ${device.desktop} {
-    max-width: ${CONTENT_WIDTH};
-  }
-  @media ${device.tablet} {
-    padding: 32px 20px;
+  padding: 0 32px;
+
+  @media ${device.mobileL} {
+    padding: 0 16px;
   }
 `;
 
@@ -405,13 +395,25 @@ const Header = styled.div`
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  margin-bottom: 32px;
+  margin-bottom: 48px;
 
   @media ${device.mobileL} {
     flex-direction: column;
     align-items: stretch;
-    gap: 20px;
-    margin-bottom: 24px;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+`;
+
+// The design separates every block on this page with a hairline, 48px clear on
+// both sides.
+const Rule = styled.div`
+  height: 1px;
+  background: ${({ theme }) => theme.colors.grey[300]};
+  margin: 48px 0;
+
+  @media ${device.mobileL} {
+    margin: 36px 0;
   }
 `;
 
@@ -425,41 +427,66 @@ const PageTitle = styled.h1`
 const Controls = styled.div`
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 36px;
   flex-wrap: wrap;
 
+  /* The phone frame reverses them — the period picker on top, both full width. */
   @media ${device.mobileL} {
     width: 100%;
-    flex-direction: column;
+    flex-direction: column-reverse;
     align-items: stretch;
-    gap: 16px;
+    gap: 24px;
   }
 `;
 
+const DatepickerWrap = styled.div`
+  @media ${device.mobileL} {
+    > div > div {
+      width: 100%;
+    }
+  }
+`;
+
+// Design: five 230px tiles spread across the content width, not five equal
+// fractions of it.
 const KpiStrip = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 24px;
-  padding-bottom: 32px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  grid-template-columns: repeat(5, 230px);
+  justify-content: space-between;
 
-  /* Two per row on mobile (2/2/2 rather than the design's 3+2) — five tiles
-     leave the last one alone on its row, which is intended. */
+  /* Five 230px tiles need ~1214px; narrower than that they must share the row
+     instead of running past its right edge. */
+  @media ${device.tablet} {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  /* Equal columns would clip the longer labels well before the tiles stop
+     fitting, so below the grid they hug their number and wrap — still spread
+     across the row, as the desktop frame spreads them. */
   @media ${device.mobileL} {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  /* The phone frame centres each wrapped row. */
+  @media ${device.mobileM} {
+    justify-content: center;
   }
 `;
 
 const Kpi = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 `;
 
+// Flattened #000 at the 70% the design applies to the caption.
 const KpiLabel = styled.div`
-  font-size: 1.4rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  ${font('lg')};
+  color: #4d4d4d;
 `;
 
 const KpiValueRow = styled.div`
@@ -469,16 +496,25 @@ const KpiValueRow = styled.div`
 `;
 
 const KpiValue = styled.div`
-  font-size: 3.2rem;
-  font-weight: 700;
+  font-size: 3.6rem;
+  line-height: 4.7rem;
+  font-weight: 400;
+  letter-spacing: -0.05em;
   color: ${({ theme }) => theme.colors.text?.primary};
-  line-height: 1.1;
+
+  @media ${device.mobileL} {
+    font-size: 3rem;
+    line-height: 3.9rem;
+  }
 `;
 
 const SectionTitle = styled.h2`
-  ${font('xl')};
-  font-weight: 600;
-  margin: 48px 0 20px;
+  ${font('xl', 500)};
+  margin: 0 0 24px;
+
+  @media ${device.mobileL} {
+    margin-bottom: 16px;
+  }
 `;
 
 const CardGrid = styled.div`
@@ -486,9 +522,9 @@ const CardGrid = styled.div`
   /* minmax(0,1fr): grid items default to min-width:auto, so a long label
      would push the track past the viewport instead of ellipsizing. */
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  /* Cards size to their content instead of stretching to the tallest in the
-     row — an empty card was rendering as a tall box with one line in it. */
-  align-items: start;
+  /* Cards stretch to the tallest in their row. They used to size to their own
+     content, which left a row of ragged boxes — a card with one line beside two
+     with five. The empty-ish card carries the white space instead. */
   gap: 24px;
   @media ${device.tablet} {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -527,37 +563,53 @@ const SourceGrid = styled.div`
      would push the track past the viewport instead of ellipsizing. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
+
+  /* The frame gives the odd card out the whole row. */
+  > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
   @media ${device.mobileL} {
     grid-template-columns: minmax(0, 1fr);
   }
 `;
 
+// The slot is always rendered, so the title never shifts when it appears.
+const TitleSpinner = styled.span<{ $visible: boolean }>`
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  margin-left: 12px;
+  vertical-align: middle;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 0.15s ease;
+`;
+
 const LoaderContainer = styled.div`
   display: flex;
   width: 100%;
-  margin-top: 40px;
+  margin-top: 48px;
   justify-content: center;
 `;
 
 const ToggleContainer = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   cursor: pointer;
 `;
 
 const ToggleLabel = styled.span`
-  font-size: 1.4rem;
-  font-weight: 500;
+  ${font('base')};
   color: ${({ theme }) => theme.colors.text?.primary};
 `;
 
 const ToggleSwitch = styled.div<{ $isActive: boolean }>`
   width: 44px;
   height: 24px;
-  border-radius: 12px;
-  background-color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.primary : theme.colors.grey[400]};
+  border-radius: 100px;
+  flex-shrink: 0;
+  background-color: ${({ $isActive, theme }) => ($isActive ? '#1FC84C' : theme.colors.grey[400])};
   position: relative;
   transition: background-color 0.3s ease;
 `;

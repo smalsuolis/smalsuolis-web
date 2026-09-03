@@ -1,7 +1,8 @@
-import { CheckBox, Switch } from '@aplinkosministerija/design-system';
+import { Switch } from '@aplinkosministerija/design-system';
 import { useMemo, useState } from 'react';
 import styled from 'styled-components';
-import { checkmarkNudge, device } from '../styles';
+import { css } from 'styled-components';
+import { device, font, rowHoverTint } from '../styles';
 import { App, Frequency, Subscription } from '../utils';
 import Loader from './Loader';
 
@@ -16,7 +17,7 @@ const COLLAPSED_CHIP_COUNT = 5;
 
 const AutoIcon = () => (
   <AutoBadge aria-hidden="true">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+    <svg width="21" height="21" viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="8" fill="currentColor" />
       <path
         d="M5.2 11.2 8 4.8l2.8 6.4M6.2 9.4h3.6"
@@ -30,7 +31,7 @@ const AutoIcon = () => (
 );
 
 const ChevronRight = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path
       d="m9 6 6 6-6 6"
       stroke="currentColor"
@@ -43,8 +44,8 @@ const ChevronRight = () => (
 
 const ChevronDown = ({ $up }: { $up?: boolean }) => (
   <svg
-    width="16"
-    height="16"
+    width="24"
+    height="24"
     viewBox="0 0 24 24"
     fill="none"
     aria-hidden="true"
@@ -64,15 +65,11 @@ const SubscriptionRow = ({
   subscription,
   onClick,
   onToggleActive,
-  selected,
-  onSelect,
   apps = [],
 }: {
   subscription: Subscription<App>;
   onClick: () => void;
   onToggleActive?: (active: boolean) => void;
-  selected?: boolean;
-  onSelect?: (checked: boolean) => void;
   apps?: App[];
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -97,14 +94,9 @@ const SubscriptionRow = ({
     '';
 
   return (
-    <Row $inactive={!isActive} $selected={!!selected}>
+    <Row $inactive={!isActive}>
       <TopRow>
         <LeftSide>
-          {onSelect && (
-            <CheckboxWrapper onClick={(e) => e.stopPropagation()}>
-              <CheckBox value={!!selected} onChange={(value) => onSelect(value)} />
-            </CheckboxWrapper>
-          )}
           {onToggleActive && (
             <SwitchWrapper
               onClick={(e) => e.stopPropagation()}
@@ -132,10 +124,7 @@ const SubscriptionRow = ({
             {eventsCount === null ? (
               <Loader size="24px" />
             ) : (
-              <>
-                <CountAllTime>{eventsCount?.allTime?.toLocaleString('lt-LT')}</CountAllTime>
-                {!!eventsCount?.new && <CountNew>{`+ ${eventsCount.new}`}</CountNew>}
-              </>
+              <CountAllTime>{eventsCount?.allTime?.toLocaleString('lt-LT')}</CountAllTime>
             )}
           </Count>
           <ChevronButton type="button" aria-label={`Atidaryti ${name}`}>
@@ -162,18 +151,29 @@ const SubscriptionRow = ({
 
 export default SubscriptionRow;
 
-const Row = styled.div<{ $inactive?: boolean; $selected?: boolean }>`
+const Row = styled.div<{ $inactive?: boolean }>`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px 0;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border || '#e5e5e5'};
-  background: ${({ $selected }) => ($selected ? '#f2f8f4' : 'transparent')};
-  transition: background 0.2s;
+  gap: 24px;
+  padding: 0 0 24px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.grey[400]};
 
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  ${rowHoverTint('8px')};
+
+  /* The phone frame turns the row into a full-bleed card: it escapes the page
+     gutter and gains 16px of padding, but it is still divided by a single rule
+     rather than boxed in on every side. */
   @media ${device.mobileL} {
-    gap: 12px;
-    padding: 20px 0;
+    margin: 0 -16px;
+    padding: 16px;
+
+    &::before {
+      content: none;
+    }
   }
 `;
 
@@ -181,13 +181,19 @@ const TopRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 22px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+  }
 `;
 
 const LeftSide = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   min-width: 0;
 `;
 
@@ -197,16 +203,6 @@ const RightSide = styled.div`
   gap: 16px;
   cursor: pointer;
   flex-shrink: 0;
-
-  @media ${device.mobileL} {
-    gap: 8px;
-  }
-`;
-
-const CheckboxWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  ${checkmarkNudge};
 `;
 
 const SwitchWrapper = styled.div`
@@ -215,67 +211,46 @@ const SwitchWrapper = styled.div`
   flex-shrink: 0;
 `;
 
+// The design draws an inactive subscription at full strength — only its toggle
+// goes grey.
 const Name = styled.div<{ $inactive?: boolean }>`
-  font-size: 2.4rem;
-  font-weight: 500;
+  ${font('2xl')};
+  color: ${({ theme }) => theme.colors.grey[700]};
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
-  transition: opacity 0.2s;
-
-  @media ${device.mobileL} {
-    font-size: 2rem;
-  }
 `;
 
 const AutoBadge = styled.span`
   display: inline-flex;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.grey[600]};
   flex-shrink: 0;
 `;
 
 const AutoLabel = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: ${({ theme }) => theme.colors.text.secondary};
-
-  @media ${device.mobileL} {
-    gap: 4px;
-  }
+  gap: 2px;
+  margin-right: -8px;
+  color: ${({ theme }) => theme.colors.grey[600]};
 `;
 
 const AutoText = styled.span`
-  font-size: 1.3rem;
-
-  @media ${device.mobileL} {
-    font-size: 1.1rem;
-  }
+  ${font('sm')};
 `;
 
 const Count = styled.div<{ $inactive?: boolean }>`
   display: flex;
   align-items: baseline;
-  gap: 6px;
-  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
-  transition: opacity 0.2s;
+  margin-left: auto;
 `;
 
 const CountAllTime = styled.div`
   font-size: 1.8rem;
+  line-height: 2.3rem;
   font-weight: 700;
-  white-space: nowrap;
-
-  @media ${device.mobileL} {
-    font-size: 1.6rem;
-  }
-`;
-
-const CountNew = styled.div`
-  font-size: 1.3rem;
-  color: #1b4c28;
+  letter-spacing: -0.02em;
   white-space: nowrap;
 `;
 
@@ -297,40 +272,34 @@ const ChevronButton = styled.button`
 const ChipRow = styled.div<{ $inactive?: boolean }>`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  opacity: ${({ $inactive }) => ($inactive ? 0.5 : 1)};
-  transition: opacity 0.2s;
+  gap: 16px;
+
+  @media ${device.mobileL} {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+`;
+
+const chipStyle = css`
+  padding: 8px 12px;
+  border-radius: 128px;
+  /* Inset ring, not a border: the design's 37px pill is padding + line box. */
+  box-shadow: inset 0 0 0 1px ${({ theme }) => theme.colors.grey[300]};
+  background: ${({ theme }) => theme.colors.white};
+  ${font('sm')};
+  color: ${({ theme }) => theme.colors.grey[700]};
+  white-space: nowrap;
 `;
 
 const Chip = styled.div`
-  border: 1px solid #d4d5de;
-  border-radius: 17px;
-  padding: 6px 14px;
-  font-size: 1.4rem;
-  color: ${({ theme }) => theme.colors.text.primary};
-  white-space: nowrap;
-
-  @media ${device.mobileL} {
-    font-size: 1.3rem;
-    padding: 5px 12px;
-  }
+  ${chipStyle};
 `;
 
 const ExpandChip = styled.button`
   display: flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid #d4d5de;
-  border-radius: 17px;
-  padding: 6px 14px;
-  font-size: 1.4rem;
-  background: none;
+  gap: 4px;
+  ${chipStyle};
   cursor: pointer;
-  color: ${({ theme }) => theme.colors.text.primary};
-  white-space: nowrap;
-
-  @media ${device.mobileL} {
-    font-size: 1.3rem;
-    padding: 5px 12px;
-  }
 `;

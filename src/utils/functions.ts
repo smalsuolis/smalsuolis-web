@@ -16,24 +16,25 @@ import { Event } from './types';
 export const getErrorMessage = (error?: string) =>
   validationTexts[error as keyof typeof validationTexts] || validationTexts.error;
 
+// One set of options for every toast; the look itself lives in GlobalStyle.
+const TOAST_OPTIONS = {
+  position: 'top-center',
+  autoClose: 5000,
+  hideProgressBar: true,
+  closeOnClick: true,
+  pauseOnHover: true,
+} as const;
+
 export const handleAlert = (responseError?: string) => {
-  toast.error(getErrorMessage(responseError), {
-    position: 'top-center',
-    autoClose: 5000,
-    hideProgressBar: true,
-    closeOnClick: true,
-    pauseOnHover: true,
-  });
+  toast.error(getErrorMessage(responseError), TOAST_OPTIONS);
+};
+
+export const handleToastError = (message: string) => {
+  toast.error(message, TOAST_OPTIONS);
 };
 
 export const handleToastSuccess = (message: string) => {
-  toast.success(message, {
-    position: 'top-center',
-    autoClose: 5000,
-    hideProgressBar: true,
-    closeOnClick: true,
-    pauseOnHover: true,
-  });
+  toast.success(message, TOAST_OPTIONS);
 };
 
 export const formatDate = (date?: Date | string) =>
@@ -166,4 +167,63 @@ export const getUpdateStatusColor = (dateString: string | null): string => {
   } else {
     return '#EF4444'; // red
   }
+};
+
+/**
+ * The filters one surface hands to the other when the reader switches view.
+ *
+ * The map and the feed name the same things differently — `app` against `apps`
+ * — and used to speak different period vocabularies too, so a selection could
+ * not survive the trip. The periods are one list now, so only the names need
+ * translating.
+ *
+ * Address is deliberately left behind: the feed has nowhere to show it, and the
+ * map keeps its own.
+ */
+export const viewHandoffParams = (
+  target: 'map' | 'list',
+  filters: {
+    appIds?: number[];
+    categoryIds?: number[];
+    rangeKey?: string;
+    customRange?: { $gte: string; $lt: string };
+  },
+): URLSearchParams => {
+  const params = new URLSearchParams();
+  const { appIds = [], categoryIds = [], rangeKey, customRange } = filters;
+
+  if (appIds.length) params.set(target === 'map' ? 'app' : 'apps', appIds.join(','));
+  if (categoryIds.length) params.set('categories', categoryIds.join(','));
+  if (rangeKey) params.set('range', rangeKey);
+  // A custom range travels as the dates themselves; the key alone means nothing
+  // on the other side.
+  if (customRange?.$gte && customRange?.$lt) {
+    params.set('from', customRange.$gte);
+    params.set('to', customRange.$lt);
+  }
+  if (target === 'list') params.set('view', 'list');
+  return params;
+};
+
+/**
+ * What the "Sritys" field shows for a selection.
+ *
+ * Three surfaces built this themselves and disagreed: the homepage and the feed
+ * named the selected sources, while the map named the selected *categories*
+ * instead — so one selection read as "Statinio remontas/rekonstravim…" in the
+ * feed and "Asmeninio poilsio (sodybos) +54" on the map, and the +N counted
+ * different things in each.
+ *
+ * The field is called Sritys, so it names sources and counts sources. Selecting
+ * everything is a choice rather than an empty field, so it says so.
+ */
+export const sritysFieldLabel = (
+  allApps: { id: number; name: string }[],
+  selectedAppIds: number[],
+): string => {
+  const picked = allApps.filter((a) => selectedAppIds.includes(a.id));
+  if (allApps.length && picked.length >= allApps.length) return 'Visos sritys';
+  if (!picked.length) return 'Sritys';
+  if (picked.length === 1) return picked[0].name;
+  return `${picked[0].name} +${picked.length - 1}`;
 };

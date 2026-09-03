@@ -5,7 +5,7 @@ import TokenSuccessCard from '../components/auth/TokenSuccessCard';
 import { PasswordForm } from '../utils';
 import { useSetPassword, useVerifyUser } from '../utils/hooks';
 import { slugs } from '../utils/routes';
-import { buttonsTitles, descriptions } from '../utils/texts';
+import { buttonsTitles, descriptions, titles } from '../utils/texts';
 
 // Set-password flow from a registration email link ("Užbaikite registraciją").
 const CreatePassword = () => {
@@ -31,7 +31,8 @@ const CreatePassword = () => {
     />
   ) : (
     <TokenSuccessCard
-      message={descriptions.passwordChanged}
+      title={titles.passwordCreated}
+      message={descriptions.passwordSet}
       actionLabel={buttonsTitles.login}
       onAction={() => navigate(slugs.login)}
     />

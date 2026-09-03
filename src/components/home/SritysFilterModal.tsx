@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Modal } from '@aplinkosministerija/design-system';
 import styled, { keyframes } from 'styled-components';
@@ -8,6 +8,7 @@ import { timeRangeQuery, TimeRanges } from '../../utils/types';
 import api from '../../utils/api';
 import Icon from '../Icons';
 import SritysCheckList from '../SritysCheckList';
+import Loader from '../Loader';
 import { useCategoryLeafIds } from '../../utils/sritys';
 
 const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
@@ -82,7 +83,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
   // row already loaded (api.getStats(ALL_TIME).count). Because it's shared cache,
   // the number is already in memory before the modal opens — it shows instantly,
   // no modal-specific request, no loading state.
-  const { data: statsData } = useQuery({
+  const { data: statsData, isFetching: statsFetching } = useQuery({
     queryKey: ['home-stats', ALL_TIME],
     queryFn: () => api.getStats(ALL_TIME),
     staleTime: 5 * 60 * 1000,
@@ -91,7 +92,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
   // Filtered count: fetched fresh for the current filter query. No placeholder —
   // `data` is only ever the real result for the current query key (undefined
   // while a new query loads).
-  const { data: filteredCount } = useQuery({
+  const { data: filteredCount, isFetching: filteredFetching } = useQuery({
     queryKey: ['events', 'count', query],
     queryFn: () => api.getEventsCount({ query }),
     enabled: hasFilters,
@@ -99,6 +100,9 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
   });
 
   const freshCount = hasFilters ? filteredCount : statsData?.count;
+  // Ticking a row refetches the count, and the button kept showing the previous
+  // number until it landed. Say it is working instead of looking already done.
+  const countLoading = hasFilters ? filteredFetching : statsFetching;
 
   // Hold the last real count so the button never blanks while a new one loads;
   // it updates (and the label fades once) only when fresh data arrives.
@@ -107,21 +111,38 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
     if (freshCount !== undefined) setSettledCount(freshCount);
   }, [freshCount]);
 
+  // Toggling an expandable row reports its app id AND its categories in the same
+  // tick. Both handlers derive from `value`, which is still the pre-click one for
+  // the second of them — so they compose through this ref instead, or the second
+  // update would undo the first and the row would never tick.
+  const latest = useRef(value);
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+
+  const apply = (patch: Partial<SritysValue>) => {
+    latest.current = { ...latest.current, ...patch };
+    onChange(latest.current);
+  };
+
   // This app's own selected category ids (independent per app).
   const catsFor = (appId: number): number[] => value.categoriesByApp[appId] ?? [];
 
   const setCatsFor = (appId: number, ids: number[]) => {
-    const next = { ...value.categoriesByApp };
+    const next = { ...latest.current.categoriesByApp };
     if (ids.length) next[appId] = ids;
     else delete next[appId];
-    onChange({ ...value, categoriesByApp: next });
+    apply({ categoriesByApp: next });
   };
 
-  const clearAll = () => onChange({ appIds: [], categoriesByApp: {} });
+  const clearAll = () => {
+    latest.current = { appIds: [], categoriesByApp: {} };
+    onChange(latest.current);
+  };
 
   return (
     <Modal visible={visible} onClose={onClose}>
-      <Panel>
+      <Panel data-modal-card>
         <Header>
           <Title>{filterModalTitle}</Title>
           <CloseButton onClick={onClose} aria-label={buttonsTitles.close}>
@@ -136,7 +157,7 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
             apps={apps}
             categories={categories}
             appIds={value.appIds}
-            onAppIdsChange={(ids) => onChange({ ...value, appIds: ids })}
+            onAppIdsChange={(ids) => apply({ appIds: ids })}
             catsFor={catsFor}
             onCatsChange={setCatsFor}
           />
@@ -153,6 +174,11 @@ const SritysFilterModal = ({ visible, value, onChange, onApply, onClose }: Props
                 ? 'Rodyti rezultatus'
                 : buttonsTitles.showResults(settledCount)}
             </FadeText>
+            {/* The slot is always there, so showing the spinner cannot shift the
+                label under the pointer. */}
+            <Spinner $visible={countLoading} aria-hidden={!countLoading}>
+              <Loader size="16px" color="#ffffff" />
+            </Spinner>
           </ApplyButton>
         </Footer>
       </Panel>
@@ -164,19 +190,21 @@ export default SritysFilterModal;
 
 const Panel = styled.div`
   background: ${({ theme }) => theme.colors.white};
-  width: 100%;
-  height: 100%;
+  /* Keeps its 16px gutters on a viewport narrower than the 361 phone frame,
+     rather than running flush to both edges with rounded corners cut off. */
+  width: calc(100% - 32px);
+  max-width: 361px;
+  max-height: 84vh;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 24px 16px;
+  border-radius: 8px;
   overflow-y: auto;
 
   @media ${device.desktop} {
-    max-width: 640px;
-    height: auto;
+    max-width: 841px;
     max-height: 80vh;
-    border-radius: 20px;
-    padding: 32px;
+    padding: 24px;
   }
 `;
 
@@ -184,15 +212,16 @@ const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 `;
 
 const Title = styled.div`
-  ${font('2xl', 700)};
+  ${font('2xl')};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const CloseButton = styled.button`
+  padding: 0;
   display: flex;
   font-size: 2.4rem;
   color: ${({ theme }) => theme.colors.text.primary};
@@ -200,9 +229,9 @@ const CloseButton = styled.button`
 `;
 
 const SectionLabel = styled.div`
-  ${font('base', 700)};
+  ${font('base', 600)};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 `;
 
 const AppList = styled.div`
@@ -220,32 +249,59 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
   transition: transform 0.15s ease;
 `;
 
+// Full-bleed bar across the panel's foot, per the design: it escapes the
+// panel's padding so its rule reaches both edges.
+// The phone frame stacks and centres the pair; the wide one keeps them apart.
 const Footer = styled.div`
   display: flex;
+  /* The phone frame puts the action first and "Išvalyti viską" under it; the
+     source order stays link-then-button for the desktop row. */
+  flex-direction: column-reverse;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-top: 24px;
-  padding-top: 20px;
+  gap: 24px;
+  margin: 24px -16px -24px;
+  padding: 24px 16px;
   border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+
+  @media ${device.desktop} {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 24px -24px -24px;
+    padding: 24px;
+  }
 `;
 
 const ClearLink = styled.button`
-  ${font('base', 500)};
-  color: ${({ theme }) => theme.colors.tertiary};
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: underline;
   cursor: pointer;
   background: transparent;
 `;
 
 const ApplyButton = styled.button`
-  ${font('base', 500)};
-  padding: 14px 28px;
-  border-radius: 100px;
+  ${font('base')};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 205px;
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
   background: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
   cursor: pointer;
   white-space: nowrap;
+`;
+
+const Spinner = styled.span<{ $visible: boolean }>`
+  display: flex;
+  width: 16px;
+  height: 16px;
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transition: opacity 0.15s ease;
 `;
 
 const fadeIn = keyframes`

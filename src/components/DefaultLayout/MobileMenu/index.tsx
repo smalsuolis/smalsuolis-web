@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import Div100vh from 'react-div-100vh';
 import styled from 'styled-components';
 import { DefaultLayoutProps, Modal } from '@aplinkosministerija/design-system';
 import { device, font } from '../../../styles';
@@ -9,13 +8,16 @@ import { IconName, slugs } from '../../../utils';
 interface Props extends DefaultLayoutProps {
   visible: boolean;
   onClose: () => void;
+  // The bar is see-through over the hero, so the panel that replaces it takes
+  // the hero's green; everywhere else the bar is white and so is the panel.
+  overHero?: boolean;
 }
 
-// Mobile menu: a clean white full-screen panel matching the top nav. Nav links
-// use the DS treatment (black text, active in Bold). When signed in, the
-// account entries from the desktop avatar dropdown collapse under a "Profilis"
-// group in the same list; signed out, a single Prisijungti button sits at the
-// bottom.
+// Mobile menu: a full-screen panel that carries on from the bar it replaces —
+// the hero's green where the bar is see-through, white where the bar is white.
+// One centred column on a 48px pitch; when signed in, the account entries from
+// the desktop avatar dropdown collapse under a "Profilis" group in the same
+// column, and signed out a single Prisijungti button sits at the bottom.
 const MobileMenu = ({
   visible = true,
   loggedIn,
@@ -26,6 +28,7 @@ const MobileMenu = ({
   onLogout,
   onRouteSelected,
   onClose,
+  overHero = false,
 }: Props) => {
   const [accountOpen, setAccountOpen] = useState(false);
 
@@ -39,9 +42,11 @@ const MobileMenu = ({
 
   return (
     <Modal visible={visible} onClose={onClose}>
-      <Panel>
+      <Panel $green={overHero}>
         <Header>
-          <div onClick={onClose}>{logo}</div>
+          <LogoContainer $green={overHero} onClick={onClose}>
+            {logo}
+          </LogoContainer>
           <CloseButton onClick={onClose} aria-label="Uždaryti">
             <Icon name={IconName.close} />
           </CloseButton>
@@ -65,7 +70,7 @@ const MobileMenu = ({
               the nav list rather than sitting in a separate footer block. */}
           {loggedIn && (
             <>
-              <NavLink
+              <ProfileLink
                 as="button"
                 type="button"
                 $isActive={accountOpen}
@@ -74,7 +79,7 @@ const MobileMenu = ({
               >
                 Profilis
                 <Chevron name={IconName.dropdownArrow} $open={accountOpen} />
-              </NavLink>
+              </ProfileLink>
               {accountOpen && (
                 <SubLinks>
                   {accountItems.map((item) => (
@@ -122,27 +127,50 @@ const MobileMenu = ({
 
 export default MobileMenu;
 
-const Panel = styled(Div100vh)`
-  width: 100%;
-  background: ${({ theme }) => theme.colors.white};
+// The hero's own green, so opening the menu over it reads as the bar growing
+// rather than a separate sheet dropping in.
+const HERO_GREEN = '#94EFAD';
+
+// It drops from the bar and ends 20px under the last entry — the frame gives it
+// 558 of the phone's 800, not the whole screen.
+const Panel = styled.div<{ $green: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  background: ${({ $green, theme }) => ($green ? HERO_GREEN : theme.colors.white)};
   display: flex;
   flex-direction: column;
-  padding: 0 20px 32px;
+  padding-bottom: 20px;
 
   @media ${device.desktop} {
-    max-width: 480px;
-    min-height: fit-content;
-    border-radius: 16px;
-    padding: 24px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: 480px;
+    border-radius: 0 0 16px 16px;
   }
 `;
 
+// Same 82px as the bar it replaces, with the logo and close on the bar's own
+// 16px gutters.
 const Header = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: 82px;
+  padding: 0 16px;
   flex-shrink: 0;
+`;
+
+// Same rule as the bar: the mark is black on the green panel and green on the
+// white one, so it never disappears into its own background.
+const LogoContainer = styled.div<{ $green: boolean }>`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: ${({ $green }) => ($green ? '#000000' : '#53ba6d')};
 `;
 
 const CloseButton = styled.button`
@@ -154,31 +182,30 @@ const CloseButton = styled.button`
   cursor: pointer;
 `;
 
+// One centred column: items are 24 tall on a 48 pitch, so the gap is 24.
 const Links = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: 24px;
+  align-items: center;
+  gap: 24px;
 `;
 
 const NavLink = styled.div<{ $isActive: boolean }>`
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  width: 100%;
-  text-align: left;
+  height: 24px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 14px 8px;
-  border-radius: 12px;
-  color: ${({ theme }) => theme.colors.text.primary};
-  ${({ $isActive }) => font('2xl', $isActive ? 700 : 400)};
-  opacity: ${({ $isActive }) => ($isActive ? 1 : 0.7)};
+  color: ${({ theme }) => theme.colors.black};
+  ${({ $isActive }) => font('base', $isActive ? 700 : 400)};
+`;
 
-  &:active {
-    background: ${({ theme }) => theme.colors.grey[300]};
-  }
+// The design sets the group heading a weight above the routes under it.
+const ProfileLink = styled(NavLink)`
+  ${font('base', 500)};
 `;
 
 const Chevron = styled(Icon)<{ $open: boolean }>`
@@ -187,28 +214,20 @@ const Chevron = styled(Icon)<{ $open: boolean }>`
   transition: transform 0.15s ease;
 `;
 
-// Indented, smaller entries under the Profilis group — subordinate to the
-// top-level routes without introducing a separate panel.
+// The account entries continue the same column on the same pitch — the design
+// gives them no indent or rule of their own.
 const SubLinks = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin: 2px 0 6px;
-  padding-left: 12px;
-  border-left: 2px solid ${({ theme }) => theme.colors.grey[300]};
+  align-items: center;
+  gap: 24px;
 `;
 
 const SubLink = styled.div<{ $isActive?: boolean }>`
+  height: 24px;
   cursor: pointer;
-  padding: 12px 8px;
-  border-radius: 10px;
-  color: ${({ theme }) => theme.colors.text.primary};
-  ${({ $isActive }) => font('lg', $isActive ? 700 : 400)};
-  opacity: ${({ $isActive }) => ($isActive ? 1 : 0.7)};
-
-  &:active {
-    background: ${({ theme }) => theme.colors.grey[300]};
-  }
+  color: ${({ theme }) => theme.colors.black};
+  ${({ $isActive }) => font('base', $isActive ? 700 : 400)};
 `;
 
 const Footer = styled.div`
@@ -216,7 +235,7 @@ const Footer = styled.div`
   flex-direction: column;
   gap: 12px;
   margin-top: auto;
-  padding-top: 32px;
+  padding: 32px 20px;
 `;
 
 const LoginButton = styled.button`

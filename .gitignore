@@ -134,3 +134,6 @@ dist
 .idea
 
 eslint-results.sarif
+
+# Figma design reference (large JSON tree + exports) — not for the repo
+figma-reference/

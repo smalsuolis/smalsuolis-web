@@ -1,6 +1,7 @@
 import { Frequency, ServerErrors } from './constants';
 
 export const validationTexts = {
+  agreeRequired: 'Turite sutikti su sąlygomis',
   requireText: 'Privalote įvesti',
   tooFrequentRequest: 'Nepavyko, per dažna užklausa prašome pabandyti veliau ',
   error: 'Įvyko nenumatyta klaida, prašome pabandyti vėliau',
@@ -41,13 +42,19 @@ export const inputLabels = {
   searchEvents: 'Ieškoti įvykių...',
 };
 
+export const inputPlaceholders = {
+  email: 'El. paštas',
+  password: 'Slaptažodis',
+  enterPassword: 'Įvesti slaptažodį',
+};
+
 export const titles = {
   home: 'Pagrindinis',
   map: 'Žemėlapis',
   about: 'Apie mus',
   stats: 'Statistika',
   myEvents: 'Mano įvykiai',
-  allEvents: 'Visi įvykiai',
+  allEvents: 'Naujausi įvykiai',
   login: 'Prisijungimas',
   profile: 'Profilis',
   subscriptions: 'Prenumeratos',
@@ -58,7 +65,7 @@ export const titles = {
   passwordChanged: 'Slaptažodis pakeistas',
   createAccount: 'Sukurti paskyrą',
   resetPassword: 'Atkurti slaptažodį',
-  passwordCreated: 'Slaptažodis sukurtas',
+  passwordCreated: 'Slaptažodis nustatytas',
   newPassword: 'Nustatyti naują slaptažodį',
   myEventsEmptyState: 'Jūsų naujienų srautas yra tuščias',
   eventsEmptyState: 'Naujienų srautas yra tuščias',
@@ -75,6 +82,7 @@ export const descriptions = {
   resetPassword: 'Naujas slaptažodis neturi sutapti su senuoju slaptažodžiu',
   instructionSent: 'Jūsų nurodytu el. paštu išsiuntėme prisijungimo instrukciją',
   passwordChanged: 'Jūsų slaptažodis sėkmingai pakeistas. Galite prisijungti prie paskyros',
+  passwordSet: 'Jūsų slaptažodis sėkmingai nustatytas. Galite prisijungti prie paskyros',
   updateUserInfo: 'Atnaujinti darbuotojo informaciją',
   myProfile: 'Mano profilis',
   login: 'Greitosios pagalbos pavežėjimo aplikacija vairuotojams',
@@ -105,6 +113,8 @@ export const buttonsTitles = {
   beCurious: 'Tapk smalsiu',
   ourTeam: 'Mūsų komanda',
   clearAll: 'Išvalyti viską',
+  selectAll: 'Žymėti viską',
+  deselectAll: 'Atžymėti viską',
   showResults: (n: number) => `Rodyti ${n.toLocaleString('lt-LT')} rezultatus`,
 };
 

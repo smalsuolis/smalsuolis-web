@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { device, font } from '../../styles';
 import api from '../../utils/api';
 import { timeRangeQuery, TimeRanges } from '../../utils/types';
@@ -8,8 +8,7 @@ import { timeRangeQuery, TimeRanges } from '../../utils/types';
 // We query the canonical ALL_TIME window (identical object, so it shares the
 // server's stats cache key with the Stats page — whichever page loads first
 // warms it for both). The query is also prefetched at app startup (UserProvider)
-// so it's usually cached before this renders; on a cold direct-load the number
-// fades in softly rather than popping from a placeholder.
+// so it's usually cached before this renders.
 const ALL_TIME = timeRangeQuery[TimeRanges.ALL_TIME];
 
 const StatRow = () => {
@@ -31,15 +30,9 @@ const StatRow = () => {
     <Grid>
       {items.map((item) => (
         <Item key={item.label}>
-          {/* Reserve the number's height (nbsp) until it arrives, then fade it in
-              once — no em-dash placeholder, no layout shift. */}
-          <Number>
-            {item.count === undefined ? (
-              ' '
-            ) : (
-              <FadeNumber>{item.count.toLocaleString('lt-LT')}</FadeNumber>
-            )}
-          </Number>
+          {/* Reserve the number's height (nbsp) until it arrives — no em-dash
+              placeholder, no layout shift. */}
+          <Number>{item.count === undefined ? ' ' : item.count.toLocaleString('lt-LT')}</Number>
           <Label>{item.label}</Label>
         </Item>
       ))}
@@ -50,20 +43,31 @@ const StatRow = () => {
 export default StatRow;
 
 const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  display: flex;
+  /* The 1440 frame's 112px gap only fits at that width; narrower viewports
+     close it up and, failing that, wrap — the row used to run past both edges
+     and clip the outer numbers. */
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 24px 112px;
+
+  @media ${device.tablet} {
+    gap: 24px 48px;
+  }
 
   @media ${device.mobileL} {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 32px 16px;
+    flex-direction: column;
+    gap: 24px;
   }
 `;
 
 const Item = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+
+  @media ${device.mobileL} {
+    gap: 12px;
+  }
 `;
 
 const Number = styled.div`
@@ -72,22 +76,20 @@ const Number = styled.div`
   min-height: 1.2em;
 
   @media ${device.mobileL} {
-    ${font('3xl')};
+    font-size: 3.6rem;
+    line-height: 4.7rem;
     font-weight: 400;
+    letter-spacing: -0.05em;
   }
 `;
 
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-const FadeNumber = styled.span`
-  display: inline-block;
-  animation: ${fadeIn} 0.25s ease-out;
-`;
-
+// Flattened #000 at the 70% the design applies to the caption.
 const Label = styled.div`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.grey[600]};
+  ${font('xl')};
+  color: #4e4e4e;
+
+  @media ${device.mobileL} {
+    ${font('lg')};
+    line-height: 2.7rem;
+  }
 `;

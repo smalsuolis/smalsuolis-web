@@ -1,4 +1,6 @@
+import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserContext, UserContextType } from '../UserProvider';
 import { useAuthModal } from '../auth/AuthModalContext';
 import styled from 'styled-components';
 import { CONTENT_WIDTH, device, font } from '../../styles';
@@ -10,6 +12,7 @@ import Icon from '../Icons';
 const Footer = () => {
   const navigate = useNavigate();
   const { open: openAuthModal } = useAuthModal();
+  const { loggedIn } = useContext<UserContextType>(UserContext);
 
   return (
     <Wrap>
@@ -22,50 +25,61 @@ const Footer = () => {
           <Column>
             <ColTitle>Smalsuolio komanda</ColTitle>
             <ColText>Valstybės tarnautojai, kurie daro daugiau, nei kad prašoma</ColText>
+            <ColLink as="a" href="https://govstartup.lt" target="_blank" rel="noreferrer">
+              Mūsų komanda
+            </ColLink>
           </Column>
 
           <Column>
             <ColTitle>Pastabos</ColTitle>
-            <ColText>Jei turi komentarų ar pastabų Visuomet jų laukiame</ColText>
-            <ColLink $strong as="a" href="mailto:esu@smalsuolis.lt">
+            <ColText>
+              Jei turi komentarų ar pastabų
+              <br />
+              Visuomet jų laukiame
+            </ColText>
+            <ColLink as="a" href="mailto:esu@smalsuolis.lt">
               esu@smalsuolis.lt
             </ColLink>
           </Column>
 
           <Column>
             <ColTitle>Duomenų šaltiniai</ColTitle>
-            <ColLink
-              as="a"
-              href="https://get.data.gov.lt/datasets/gov/ssva/infostatyba/Statinys"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Infostatyba
-            </ColLink>
-            <ColLink
-              as="a"
-              href="https://lkmp.alisas.lt/static/lkmp-data.geojson.zip"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Miško kirtimų leidimai
-            </ColLink>
-            <ColLink
-              as="a"
-              href="https://zuvinimas.biip.lt/api/public/fishStockings"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Įžuvinimai
-            </ColLink>
+            <ColLinks>
+              <ColLink
+                as="a"
+                href="https://get.data.gov.lt/datasets/gov/ssva/infostatyba/Statinys"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Infostatyba
+              </ColLink>
+              <ColLink
+                as="a"
+                href="https://lkmp.alisas.lt/static/lkmp-data.geojson.zip"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Miško kirtimų leidimai
+              </ColLink>
+              <ColLink
+                as="a"
+                href="https://zuvinimas.biip.lt/api/public/fishStockings"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Įžuvinimai
+              </ColLink>
+            </ColLinks>
           </Column>
 
           <Column>
             <ColTitle>Navigacija</ColTitle>
-            <ColLink onClick={() => navigate(slugs.map)}>Žemėlapis</ColLink>
-            <ColLink onClick={() => navigate(slugs.stats)}>Statistika</ColLink>
-            <ColLink onClick={() => navigate(slugs.about)}>Apie mus</ColLink>
-            <ColLink onClick={() => openAuthModal('login')}>Prisijungti</ColLink>
+            <ColLinks>
+              <ColLink onClick={() => navigate(slugs.map)}>Žemėlapis</ColLink>
+              <ColLink onClick={() => navigate(slugs.stats)}>Statistika</ColLink>
+              <ColLink onClick={() => navigate(slugs.about)}>Apie mus</ColLink>
+              {!loggedIn && <ColLink onClick={() => openAuthModal('login')}>Prisijungti</ColLink>}
+            </ColLinks>
           </Column>
         </Columns>
       </Inner>
@@ -85,16 +99,21 @@ const Wrap = styled.footer`
 const Inner = styled.div`
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  padding: 80px 32px 0;
+  padding: 42px 32px 0;
   display: grid;
   /* Logo occupies its own first column, top-aligned with the headings. */
   grid-template-columns: 220px 1fr;
   gap: 32px;
 
+  @media ${device.tablet} {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
     gap: 32px;
-    padding: 56px 20px 0;
+    padding: 42px 16px 0;
   }
 `;
 
@@ -112,62 +131,66 @@ const Brand = styled.div`
 const Columns = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+  gap: 36px;
+
+  /* Four columns need ~1000px to hold the longest headings; below that they
+     break mid-word. */
+  @media ${device.tablet} {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
   /* Single stacked column on phones — the 2-up grid cramped the longer
      link labels. */
   @media ${device.mobileL} {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 24px;
   }
 `;
 
 const Column = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 `;
 
-// Headings sit at regular weight, only a step up in size from the links —
-// hierarchy comes from colour (near-black vs. grey), not weight.
-const ColTitle = styled.div`
-  ${font('base', 400)};
+const ColLink = styled.div`
+  ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: 2px;
-`;
-
-const ColText = styled.div`
-  ${font('base', 400)};
-  font-size: 1.4rem;
-  line-height: 1.45;
-  color: ${({ theme }) => theme.colors.grey[600]};
-`;
-
-// `$strong` marks the actionable link that closes a text column (Mūsų komanda,
-// the contact address) — near-black against the grey body copy above it.
-const ColLink = styled.div<{ $strong?: boolean }>`
-  ${font('base', 400)};
-  font-size: 1.4rem;
-  line-height: 1.45;
-  color: ${({ theme, $strong }) => ($strong ? theme.colors.text.primary : theme.colors.grey[600])};
   cursor: pointer;
   width: fit-content;
   text-decoration: none;
+`;
 
-  &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
+// The design keeps the column headings and the two contact links at full
+// black, and drops every navigational/source link to 64%.
+const ColLinks = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  ${ColLink} {
+    color: ${({ theme }) => theme.colors.grey[650]};
   }
+`;
+
+const ColTitle = styled.div`
+  ${font('xl')};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const ColText = styled.div`
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.grey[650]};
 `;
 
 const Copyright = styled.div`
   max-width: ${CONTENT_WIDTH};
   margin: 0 auto;
-  padding: 48px 32px 32px;
-  ${font('base', 400)};
-  font-size: 1.3rem;
+  padding: 62px 32px 32px;
+  ${font('base')};
   color: ${({ theme }) => theme.colors.text.primary};
 
   @media ${device.mobileL} {
-    padding: 32px 20px 24px;
+    padding: 42px 16px 24px;
   }
 `;

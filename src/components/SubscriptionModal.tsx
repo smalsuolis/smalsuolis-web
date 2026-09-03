@@ -2,9 +2,15 @@ import { MapField, Modal, Switch, TextField } from '@aplinkosministerija/design-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Form, Formik } from 'formik';
 import { useState } from 'react';
-import styled from 'styled-components';
-import { device } from '../styles';
-import { App, Frequency, SubscriptionForm, validateSubscriptionForm } from '../utils';
+import styled, { css } from 'styled-components';
+import { device, font } from '../styles';
+import {
+  App,
+  buttonsTitles,
+  Frequency,
+  SubscriptionForm,
+  validateSubscriptionForm,
+} from '../utils';
 import api from '../utils/api';
 import FrequencyPills from './FrequencyPills';
 import SritysCheckList from './SritysCheckList';
@@ -23,7 +29,7 @@ interface Props {
 }
 
 const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
-  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev.maps.biip.lt';
+  const mapHost = import.meta.env.VITE_MAPS_HOST || 'https://dev-maps.biip.lt';
   const queryClient = useQueryClient();
   const [showDelete, setShowDelete] = useState(false);
 
@@ -88,13 +94,37 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
   const initialValues: SubscriptionForm = {
     id: subscription?.id ?? 0,
     name: subscription?.name ?? '',
-    apps: noSubscription || futureApps ? allApps : subscription?.apps || [],
+    // The design opens a NEW subscription with nothing ticked and the automatic
+    // toggle on — that pair already means "every source, including future ones".
+    // An existing automatic one is stored as an empty list but means every
+    // source, so the form holds them and handleSubmit writes the empty list back.
+    apps: noSubscription ? [] : futureApps ? allApps : subscription?.apps || [],
     categories: subscription?.categories ?? [],
     geom: subscription?.geom,
     // WEEK is the first selectable pill; DAY is legacy-only (see FrequencyPills).
     frequency: subscription?.frequency || Frequency.WEEK,
-    futureApps: subscription?.id ? (subscription?.apps || []).length === 0 : true,
+    // Off to start with: a new subscription asks for an explicit choice (the
+    // validation requires one area), and the switch is opt-in rather than
+    // something to notice and undo. An existing one still reports what it holds.
+    futureApps: subscription?.id ? (subscription?.apps || []).length === 0 : false,
     textFilter: subscription?.textFilter ?? '',
+  };
+
+  // Every source is on either because each one is ticked or because the
+  // automatic toggle stands in for the whole set.
+  const allSelected = (values: SubscriptionForm) =>
+    (isExisting && values.futureApps) ||
+    (allApps.length > 0 && values.apps.length >= allApps.length);
+
+  const toggleAll = (
+    values: SubscriptionForm,
+    setFieldValue: (field: string, value: unknown) => void,
+  ) => {
+    const clearing = allSelected(values);
+    setFieldValue('apps', clearing ? [] : allApps);
+    if (clearing) setFieldValue('categories', []);
+    // Either way this is an explicit choice, so it supersedes the automatic set.
+    setFieldValue('futureApps', false);
   };
 
   const handleSubmit = (values: SubscriptionForm) => {
@@ -114,7 +144,7 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
   return (
     <>
       <Modal visible={visible} onClose={onClose}>
-        <Shell>
+        <Shell data-modal-card>
           <Header>
             <div>
               <Title>{isExisting ? 'Prenumeratos valdymas' : 'Pridėti prenumeratą'}</Title>
@@ -143,26 +173,26 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
               {({ values, setFieldValue, errors }) => (
                 <StyledForm>
                   <Body>
-                    <Section>
-                      <Label>Prenumeratos pavadinimas</Label>
-                      <TextField
-                        value={values.name}
-                        type="text"
-                        name="name"
-                        placeholder="Įveskite pavadinimą"
-                        error={errors.name}
-                        onChange={(value) => setFieldValue('name', value)}
-                      />
-                    </Section>
+                    <TextField
+                      label="Prenumeratos pavadinimas"
+                      value={values.name}
+                      type="text"
+                      name="name"
+                      placeholder="Įveskite pavadinimą"
+                      error={errors.name}
+                      onChange={(value) => setFieldValue('name', value)}
+                    />
 
                     <Section>
                       <HeadingRow>
                         <Label>Pasirinkite dominančias sritis</Label>
                         <SelectAllButton
                           type="button"
-                          onClick={() => setFieldValue('apps', allApps)}
+                          onClick={() => toggleAll(values, setFieldValue)}
                         >
-                          Žymėti viską
+                          {allSelected(values)
+                            ? buttonsTitles.deselectAll
+                            : buttonsTitles.selectAll}
                         </SelectAllButton>
                       </HeadingRow>
                       <SritysCheckList
@@ -177,6 +207,7 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                         // shared by the infostatyba apps (the API filters by
                         // categoryGroup, not per app), so every app row reads
                         // and writes the same `categories` value.
+                        sharedCategories
                         catsFor={() => values.categories}
                         onCatsChange={(appId, ids) => {
                           setFieldValue('categories', ids);
@@ -189,12 +220,14 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
                       />
                       <FutureAppsCard>
                         <FutureAppsHeader>
-                          <Label>Automatinis naujų dominančių sričių pridėjimas</Label>
+                          <CardLabel>Automatinis naujų dominančių sričių pridėjimas</CardLabel>
                           <Switch
                             value={values.futureApps}
                             onChange={(e) => {
                               setFieldValue('futureApps', e.target.checked);
-                              setFieldValue('apps', allApps);
+                              // Turning it on means every source, so show every
+                              // source — it used to wipe the ticks instead.
+                              if (e.target.checked) setFieldValue('apps', allApps);
                             }}
                           />
                         </FutureAppsHeader>
@@ -282,16 +315,16 @@ const SubscriptionModal = ({ visible, id, onClose, onSaved }: Props) => {
         allow
       >
         <PopupActions>
-          <PopupButton variant={ButtonVariants.SECONDARY} onClick={() => setShowDelete(false)}>
+          <CancelButton type="button" onClick={() => setShowDelete(false)}>
             Atšaukti
-          </PopupButton>
-          <PopupButton
-            variant={ButtonVariants.DANGER}
+          </CancelButton>
+          <ConfirmButton
+            type="button"
             disabled={deleting}
             onClick={() => (subscription?.id ? deleteSubscription(subscription.id) : undefined)}
           >
             Ištrinti
-          </PopupButton>
+          </ConfirmButton>
         </PopupActions>
       </Popup>
     </>
@@ -305,15 +338,41 @@ const Shell = styled.div`
   flex-direction: column;
   background: white;
   width: 100%;
-  height: 100%;
+  max-width: 361px;
+  max-height: 88vh;
+  border-radius: 8px;
   overflow: hidden;
 
   @media ${device.desktop} {
     width: 660px;
     max-width: 90vw;
     max-height: 86vh;
-    height: auto;
-    border-radius: 16px;
+  }
+
+  label {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+    /* Design: 8px between a field's label and its box (the DS ships 4). */
+    margin-bottom: 4px;
+  }
+
+  div:has(> input:not([type='checkbox'])) {
+    height: 40px;
+    border-radius: 100px;
+    border-color: ${({ theme }) => theme.colors.grey[500]};
+  }
+
+  div:has(> input:not([type='checkbox'])) > input {
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  /* The design paints a field's message and its hairline red when it fails. */
+  div:has(> input:not([type='checkbox'])) + label {
+    color: ${({ theme }) => theme.colors.text.error};
+  }
+  div:has(> input:not([type='checkbox'])):has(+ label) {
+    border-color: ${({ theme }) => theme.colors.text.error};
   }
 `;
 
@@ -322,24 +381,23 @@ const Header = styled.div`
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 32px 32px 16px 32px;
+  padding: 24px 24px 0;
   flex-shrink: 0;
 
   @media ${device.mobileL} {
-    padding: 20px 20px 12px 20px;
+    padding: 24px 16px 0;
   }
 `;
 
 const Title = styled.h2`
   margin: 0 0 8px 0;
-  font-size: 2.4rem;
-  font-weight: 500;
+  ${font('2xl')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Subtitle = styled.div`
-  font-size: 1.4rem;
-  line-height: 20px;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const CloseButton = styled.button`
@@ -363,32 +421,38 @@ const StyledForm = styled(Form)`
 const Body = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 8px 32px 24px 32px;
+  gap: 36px;
+  padding: 24px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
 
   @media ${device.mobileL} {
-    padding: 8px 20px 20px 20px;
+    padding: 24px 16px;
   }
 `;
 
 const Section = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const Label = styled.label`
-  font-weight: 500;
-  font-size: 1.5rem;
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+// The frame sets the automatic-adding heading a size up.
+const CardLabel = styled.div`
+  ${font('lg', 500)};
+  line-height: 2.34rem;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Description = styled.div`
-  font-size: 1.3rem;
-  line-height: 18px;
-  color: ${({ theme }) => theme.colors.text.secondary};
+  ${font('sm')};
+  color: ${({ theme }) => theme.colors.grey[700]};
 `;
 
 const HeadingRow = styled.div`
@@ -414,13 +478,14 @@ const SelectAllButton = styled.button`
   font-size: 1.4rem;
 `;
 
+// Design: an 8px-radius #FAFAFA card with 16/24 padding and a 10px gap.
 const FutureAppsCard = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: #f7f7f7;
-  border-radius: 12px;
-  padding: 16px;
+  gap: 10px;
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px 24px;
 `;
 
 const FutureAppsHeader = styled.div`
@@ -440,14 +505,14 @@ const Footer = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 32px;
-  border-top: 1px solid #e5e5e5;
+  padding: 24px;
+  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
   background: white;
   flex-shrink: 0;
 
   @media ${device.mobileL} {
     flex-direction: column-reverse;
-    padding: 16px 20px;
+    padding: 16px;
   }
 `;
 
@@ -458,7 +523,7 @@ const DeleteLink = styled.button`
   color: #e11d48;
   text-decoration: underline;
   cursor: pointer;
-  font-size: 1.4rem;
+  ${font('base')};
 `;
 
 const ClearLink = styled.button`
@@ -468,21 +533,34 @@ const ClearLink = styled.button`
   color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: underline;
   cursor: pointer;
-  font-size: 1.4rem;
+  ${font('base')};
 `;
 
 // Black pill, per the design — the DS Button defaults to the green primary,
 // which is used for map/list actions rather than modal confirmation.
 const SubmitButton = styled(Button)`
-  min-width: 140px;
-  height: 44px;
+  min-width: 130px;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
   background-color: ${({ theme }) => theme.colors.black};
   border-color: ${({ theme }) => theme.colors.black};
   color: ${({ theme }) => theme.colors.white};
 
+  /* Fill only — the DS button would otherwise repaint the label dark. */
   &:hover:not(:disabled) {
     background-color: ${({ theme }) => theme.colors.grey[700]};
     border-color: ${({ theme }) => theme.colors.grey[700]};
+    color: ${({ theme }) => theme.colors.white};
+  }
+
+  /* Disabled, it answers the pointer with nothing — the DS hover has no guard
+     of its own and would paint the variant's green over it. */
+  &:hover:disabled {
+    background-color: ${({ theme }) => theme.colors.black};
+    border-color: ${({ theme }) => theme.colors.black};
+    color: ${({ theme }) => theme.colors.white};
   }
 
   @media ${device.mobileL} {
@@ -494,17 +572,49 @@ const LoaderWrapper = styled.div`
   padding: 48px;
 `;
 
+// Design: the pair is centred on the 499 frame and stacked full width on the
+// 361 one — an outlined Atšaukti above a black Ištrinti, not a red pill.
 const PopupActions = styled.div`
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
 
   @media ${device.mobileL} {
-    padding: 0 16px;
+    flex-direction: column;
   }
 `;
 
-const PopupButton = styled(Button)`
+const popupButton = css`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 126px;
   height: 40px;
+  border-radius: 54px;
+  ${font('base')};
+  cursor: pointer;
+
+  @media ${device.mobileL} {
+    width: 100%;
+  }
+`;
+
+const CancelButton = styled.button`
+  ${popupButton};
+  padding: 7px 11px;
+  border: 1px solid ${({ theme }) => theme.colors.grey[600]};
+  background: #fafafa;
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const ConfirmButton = styled.button`
+  ${popupButton};
+  padding: 8px 24px;
+  background: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
 `;
