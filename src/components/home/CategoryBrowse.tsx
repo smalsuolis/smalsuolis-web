@@ -137,7 +137,10 @@ const Title = styled.h2`
 const Chips = styled.div`
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
+  /* Centred under a centred heading — left-aligned they read as a stray column
+     off to one side of it. The phone frame keeps them left, where each pill
+     hugs its label in a single column. */
+  justify-content: center;
   align-self: stretch;
   gap: 16px;
 
