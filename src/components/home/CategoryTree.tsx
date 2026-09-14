@@ -163,36 +163,34 @@ const Children = styled.div`
   flex-direction: column;
 `;
 
+// A child node draws the same box as the app row above it (SritysCheckList).
 const CheckBox = styled.span<{ $state: 'none' | 'partial' | 'all' }>`
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 1.5rem;
-  color: ${({ theme }) => theme.colors.text.primary};
-  border: 1px solid
-    ${({ $state, theme }) => ($state === 'none' ? theme.colors.grey[500] : theme.colors.primary)};
-  background: ${({ $state, theme }) => ($state === 'none' ? 'transparent' : theme.colors.primary)};
+  border: 1px solid ${({ $state }) => ($state === 'none' ? '#d9d9d9' : '#1fc84c')};
+  background: ${({ $state, theme }) => ($state === 'none' ? theme.colors.white : '#1fc84c')};
 `;
 
 // Indeterminate mark for partially-selected nodes.
 const Dash = styled.span`
-  width: 10px;
+  width: 8px;
   height: 2px;
   border-radius: 2px;
-  background: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 // CSS-drawn checkmark with a 2px stroke to match the Dash weight.
 const Check = styled.span`
-  width: 6px;
-  height: 11px;
+  width: 4px;
+  height: 8px;
   margin-top: -2px;
-  border: solid ${({ theme }) => theme.colors.text.primary};
+  border: solid ${({ theme }) => theme.colors.white};
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 `;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import styled from 'styled-components';
+import { Menu, MenuItem } from '../ui/Menu';
 import { font } from '../../styles';
 import { AddressSuggestion, IconName, useRecentAddresses } from '../../utils';
 import api from '../../utils/api';
@@ -166,9 +167,12 @@ const InputRow = styled.div`
   gap: 8px;
 `;
 
+// Design: a 16px black glyph, not a 24px grey one.
 const SearchIcon = styled(Icon)`
-  font-size: 2.4rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
+  width: 16px;
+  height: 16px;
+  font-size: 1.6rem;
+  color: ${({ theme }) => theme.colors.text.primary};
   flex-shrink: 0;
 `;
 
@@ -185,40 +189,26 @@ const Input = styled.input`
   }
 `;
 
-const Dropdown = styled.div`
+const Dropdown = styled(Menu)`
   position: absolute;
   top: calc(100% + 12px);
   left: 0;
   right: 0;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  border-radius: 16px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
-  padding: 8px;
   z-index: 50;
   max-height: 320px;
-  overflow-y: auto;
 `;
 
-const Option = styled.div<{ $active: boolean }>`
-  ${font('base')};
-  padding: 12px 14px;
-  border-radius: 10px;
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.text.primary};
-  background: ${({ $active, theme }) => ($active ? theme.colors.grey[300] : 'transparent')};
-`;
+const Option = MenuItem;
 
 const Empty = styled.div`
   ${font('base')};
-  padding: 12px 14px;
+  padding: 12px 16px;
   color: ${({ theme }) => theme.colors.grey[600]};
 `;
 
 const RecentsHeader = styled.div`
-  ${font('base', 600)};
-  font-size: 1.3rem;
-  padding: 8px 14px 4px;
+  ${font('sm')};
+  padding: 12px 16px 4px;
   color: ${({ theme }) => theme.colors.grey[600]};
 `;
 
@@ -231,10 +221,13 @@ const RecentsList = styled.div`
 const RecentRow = styled.div`
   display: flex;
   align-items: center;
-  border-radius: 10px;
+
+  & + & {
+    border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  }
 
   &:hover {
-    background: ${({ theme }) => theme.colors.background};
+    background: #fafafa;
   }
 `;
 
@@ -245,7 +238,7 @@ const RecentLabel = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 4px 11px 14px;
+  padding: 12px 4px 12px 16px;
   cursor: pointer;
   color: ${({ theme }) => theme.colors.text.primary};
 

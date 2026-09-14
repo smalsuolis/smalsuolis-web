@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../styles';
 import { App, Category, IconName } from '../utils';
@@ -23,6 +23,10 @@ interface Props {
   // Selected category leaf ids for a given infostatyba app.
   catsFor: (appId: number) => number[];
   onCatsChange: (appId: number, ids: number[]) => void;
+  // The subscription form stores one flat category list for every infostatyba
+  // app, because that is all the API can hold. Rows there must not read their
+  // own tick from it, or ticking one would tick all four.
+  sharedCategories?: boolean;
 }
 
 const SritysCheckList = ({
@@ -32,6 +36,7 @@ const SritysCheckList = ({
   onAppIdsChange,
   catsFor,
   onCatsChange,
+  sharedCategories = false,
 }: Props) => {
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const categoryLeafIds = useCategoryLeafIds(categories);
@@ -43,29 +48,37 @@ const SritysCheckList = ({
       return next;
     });
 
+  // The list comes back from the API in no particular order, which reshuffled
+  // the rows between openings; id order also keeps the four infostatyba rows
+  // together.
+  const ordered = useMemo(() => [...apps].sort((a, b) => a.id - b.id), [apps]);
+
+  const hasCategories = (app: App) => isInfostatyba(app) && categories.length > 0;
+
+  // An expandable row reads from its own categories when it has any — so a leaf
+  // ticked inside it shows as "partial" on the parent — and from the app
+  // selection otherwise.
   const appState = (app: App): NodeState => {
-    if (!isInfostatyba(app)) return appIds.includes(app.id) ? 'all' : 'none';
-    const selected = catsFor(app.id).length;
-    if (selected === 0) return 'none';
-    if (selected >= categoryLeafIds.length) return 'all';
-    return 'partial';
+    if (hasCategories(app) && !sharedCategories) {
+      const selected = catsFor(app.id).length;
+      if (selected > 0) return selected >= categoryLeafIds.length ? 'all' : 'partial';
+    }
+    return appIds.includes(app.id) ? 'all' : 'none';
   };
 
   const toggleAppNode = (app: App) => {
-    if (!isInfostatyba(app)) {
-      onAppIdsChange(
-        appIds.includes(app.id) ? appIds.filter((v) => v !== app.id) : [...appIds, app.id],
-      );
-      return;
-    }
-    // Fully selected → clear its categories; otherwise select every leaf.
-    onCatsChange(app.id, appState(app) === 'all' ? [] : [...categoryLeafIds]);
+    const on = appIds.includes(app.id);
+    onAppIdsChange(on ? appIds.filter((v) => v !== app.id) : [...appIds, app.id]);
+    // Selecting an expandable row takes every leaf under it; clearing drops
+    // them. Skipped where the list is shared, since it is not this row's to set.
+    if (hasCategories(app) && !sharedCategories)
+      onCatsChange(app.id, on ? [] : [...categoryLeafIds]);
   };
 
   return (
     <List>
-      {apps.map((app) => {
-        const hasChildren = isInfostatyba(app) && categories.length > 0;
+      {ordered.map((app) => {
+        const hasChildren = hasCategories(app);
         const state = appState(app);
         const isOpen = expanded.has(app.id);
 
@@ -120,18 +133,19 @@ const List = styled.div`
 const Row = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 4px;
+  gap: 10px;
+  padding: 16px 0;
   border-bottom: 1px solid ${({ theme }) => theme.colors.grey[300]};
 `;
 
+// Design: a 16px box with a 4px radius — white with a #D9D9D9 ring when empty,
+// filled #1FC84C once chosen. The glyph inside is white, not black.
 const Checkbox = styled.span<{ $state: NodeState }>`
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  border: 1px solid
-    ${({ $state, theme }) => ($state === 'none' ? theme.colors.grey[500] : theme.colors.primary)};
-  background: ${({ $state, theme }) => ($state === 'none' ? 'transparent' : theme.colors.primary)};
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid ${({ $state }) => ($state === 'none' ? '#d9d9d9' : '#1fc84c')};
+  background: ${({ $state, theme }) => ($state === 'none' ? theme.colors.white : '#1fc84c')};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,25 +154,25 @@ const Checkbox = styled.span<{ $state: NodeState }>`
 `;
 
 const Dash = styled.span`
-  width: 10px;
+  width: 8px;
   height: 2px;
   border-radius: 2px;
-  background: ${({ theme }) => theme.colors.text.primary};
+  background: ${({ theme }) => theme.colors.white};
 `;
 
 // CSS-drawn checkmark with a 2px stroke to match the Dash weight (the icon-font
 // check rendered too heavy next to the thin dash).
 const Check = styled.span`
-  width: 6px;
-  height: 11px;
+  width: 4px;
+  height: 8px;
   margin-top: -2px;
-  border: solid ${({ theme }) => theme.colors.text.primary};
+  border: solid ${({ theme }) => theme.colors.white};
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 `;
 
 const Name = styled.span`
-  ${font('base', 500)};
+  ${font('sm', 500)};
   color: ${({ theme }) => theme.colors.text.primary};
   cursor: pointer;
   flex: 1;

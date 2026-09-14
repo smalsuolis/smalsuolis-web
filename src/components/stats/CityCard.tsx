@@ -1,5 +1,15 @@
 import styled from 'styled-components';
 import Delta from './Delta';
+import {
+  Card,
+  CardHeader,
+  CardHeading,
+  RowCount,
+  RowLabel,
+  RowList,
+  RowValues,
+  StatRow,
+} from './cardStyles';
 
 export interface CityRow {
   label: string;
@@ -23,60 +33,41 @@ const CityCard = ({
   isFetching?: boolean;
 }) => (
   <Card>
-    <CityName>{city}</CityName>
-    <Rows>
+    <CardHeader>
+      <CardHeading>{city}</CardHeading>
+    </CardHeader>
+    <RowList>
       {rows.map((r) => {
         const pct = r.total > 0 ? (r.count * 100) / r.total : 0;
         return (
           <Row key={r.label}>
             <Dot $color={r.color} />
-            <Label>{r.label}</Label>
-            <Percent>{pct.toFixed(1)}%</Percent>
-            <Count>{r.count.toLocaleString('lt-LT')}</Count>
-            <DeltaCell>
-              {showComparison && (
-                <Delta current={r.count} previous={r.previousCount} isFetching={isFetching} />
-              )}
-            </DeltaCell>
+            <RowLabel>{r.label}</RowLabel>
+            <RowValues>
+              <Percent>{pct.toFixed(1)}%</Percent>
+              <RowCount>
+                {r.count.toLocaleString('lt-LT')}
+                {showComparison && (
+                  <Delta current={r.count} previous={r.previousCount} isFetching={isFetching} />
+                )}
+              </RowCount>
+            </RowValues>
           </Row>
         );
       })}
-    </Rows>
+    </RowList>
   </Card>
 );
 
 export default CityCard;
 
-const Card = styled.div`
-  /* Shrink inside the grid track rather than widening the page. */
-  min-width: 0;
-  background: ${({ theme }) => theme.colors.white};
-  border: 1px solid ${({ theme }) => theme.colors.grey[300]};
-  border-radius: 16px;
-  padding: 24px;
-`;
+// The frame leaves 4px between the dot and its label, not the row's 12.
+const Row = styled(StatRow)`
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 4px;
 
-const CityName = styled.div`
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text?.primary};
-  margin-bottom: 12px;
-`;
-
-const Rows = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const Row = styled.div`
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 0;
-
-  & + & {
-    border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
+  ${RowValues} {
+    margin-left: 8px;
   }
 `;
 
@@ -88,32 +79,7 @@ const Dot = styled.span<{ $color: string }>`
   flex-shrink: 0;
 `;
 
-const Label = styled.div`
-  font-size: 1.4rem;
-  color: ${({ theme }) => theme.colors.text?.primary};
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-`;
-
-const Percent = styled.div`
-  font-size: 1.3rem;
-  color: ${({ theme }) => theme.colors.grey[600]};
-  white-space: nowrap;
-  text-align: right;
-`;
-
-const Count = styled.div`
-  font-size: 1.4rem;
-  font-weight: 600;
-  color: ${({ theme }) => theme.colors.text?.primary};
-  white-space: nowrap;
-  text-align: right;
-  min-width: 44px;
-`;
-
-const DeltaCell = styled.div`
-  min-width: 38px;
+const Percent = styled.span`
+  color: ${({ theme }) => theme.colors.grey[500]};
   text-align: right;
 `;

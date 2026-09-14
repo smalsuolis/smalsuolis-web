@@ -1,8 +1,10 @@
 import styled from 'styled-components';
 import { device, font } from '../styles';
 import { Section } from '../components/ui/Section';
+import HeroSearch from '../components/home/HeroSearch';
 import StatRow from '../components/home/StatRow';
 import CtaCards from '../components/home/CtaCards';
+import IntroCopy from '../components/home/IntroCopy';
 
 // Apie mus (About) page, redesigned per Figma (node 157:21728). Shares the hero
 // band, stat row, CTA cards, and footer with the homepage; adds the "Domina, kas
@@ -29,21 +31,20 @@ const steps = [
 const About = () => {
   return (
     <Page>
-      <Hero>
-        <Heading>
-          Smalsuolis visiems
-          <br />
-          smalsiems žmonėms
-        </Heading>
-      </Hero>
+      <HeroSearch
+        heading={
+          <>
+            Smalsuolis visiems
+            <br />
+            smalsiems žmonėms
+          </>
+        }
+        supportCopy={null}
+        showSearch={false}
+      />
 
       <Section>
-        <Intro>
-          <IntroStrong>Mūsų valstybėje vyksta daug įvykių</IntroStrong>, tačiau apie juos nežinome
-          arba sužinome per vėlai. Nusprendėme tą pakeisti –{' '}
-          <IntroStrong>suteikti galimybę visiems piliečiams</IntroStrong> sekti kas vyksta šalyje
-          realiu laiku.
-        </Intro>
+        <IntroCopy />
       </Section>
 
       <Section>
@@ -51,7 +52,7 @@ const About = () => {
       </Section>
 
       <GreyBand>
-        <Section>
+        <BandInner>
           <DominaRow>
             <DominaText>
               <DominaTitle>Domina, kas vyksta aplinkui tave?</DominaTitle>
@@ -69,7 +70,7 @@ const About = () => {
             </DominaText>
             <DominaMap src="/home/about_map.png" alt="" />
           </DominaRow>
-        </Section>
+        </BandInner>
       </GreyBand>
 
       <Section>
@@ -101,88 +102,56 @@ const Page = styled.div`
   flex-direction: column;
 
   /* Pull the hero up under the transparent top nav (see Home). */
-  margin-top: -72px;
+  margin-top: -80px;
   @media ${device.mobileL} {
-    margin-top: -64px;
+    margin-top: -80px;
   }
 
+  /* Same 124px rhythm as the homepage; without the search card overhanging it,
+     the first section clears the hero by the plain rhythm value. */
   & > section {
-    margin-top: 80px;
+    margin-top: 124px;
   }
-  & > section:first-of-type {
-    margin-top: 96px;
+
+  /* The design leaves 169px above the CTA band here, against the 54 the
+     homepage uses. The band is this page's last block. */
+  & > div:last-of-type {
+    margin-top: 169px;
   }
 
   @media ${device.mobileL} {
     & > section {
-      margin-top: 48px;
+      margin-top: 42px;
     }
-    & > section:first-of-type {
-      margin-top: 48px;
+    /* The mobile frame groups the intro copy and the stat column into one
+       block, as on the homepage. */
+    & > section:nth-of-type(2) {
+      margin-top: 24px;
+    }
+    & > div:last-of-type {
+      margin-top: 42px;
     }
   }
-`;
-
-// Hero: the same 1440x436 green band as the homepage, artwork included — the
-// Figma About frame carries an identical texture layer, not flat green.
-const Hero = styled.div`
-  width: 100%;
-  background:
-    url('/hero_bg.png') center / 100% 100% no-repeat,
-    #7eec9b;
-  min-height: 436px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 96px 32px 64px;
-
-  @media ${device.mobileL} {
-    min-height: 0;
-    padding: 96px 20px 56px;
-  }
-`;
-
-const Heading = styled.h1`
-  ${font('6xl')};
-  color: ${({ theme }) => theme.colors.text.primary};
-  text-align: center;
-  margin: 0;
-
-  @media ${device.mobileL} {
-    ${font('3xl')};
-    font-weight: 700;
-  }
-`;
-
-const Intro = styled.p`
-  ${font('3xl')};
-  font-weight: 400;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.grey[500]};
-  max-width: 876px;
-  margin: 0 auto;
-`;
-
-const IntroStrong = styled.span`
-  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 // Grey band behind the "Domina" section.
 const GreyBand = styled.div`
   width: 100%;
   background: #fafafa;
-  padding: 72px 0;
-  margin-top: 80px;
+  padding: 52px 0 67px;
+  margin-top: 124px;
 
   @media ${device.mobileL} {
-    padding: 48px 0;
-    margin-top: 48px;
+    padding: 24px 0 36px;
+    margin-top: 42px;
   }
+`;
 
-  /* The Section inside doesn't need the page-level top margin. */
-  & > section {
-    margin-top: 0;
-  }
+// The frame insets this band's content 174px, not the page's 56.
+const BandInner = styled.div`
+  max-width: 1092px;
+  margin: 0 auto;
+  padding: 0 16px;
 `;
 
 const DominaRow = styled.div`
@@ -191,24 +160,35 @@ const DominaRow = styled.div`
   justify-content: space-between;
   gap: 48px;
 
+  /* The phone frame stacks the illustration ABOVE the copy, so the column runs
+     in reverse of the reading order used on desktop. Both fill the column, as
+     the 358px-wide illustration does on the 393 frame. */
   @media ${device.tablet} {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 32px;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 16px;
   }
 `;
 
 const DominaText = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 460px;
+  gap: 24px;
+  max-width: 416px;
+
+  @media ${device.tablet} {
+    max-width: none;
+  }
 `;
 
 const DominaTitle = styled.h2`
   ${font('2xl', 700)};
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
+
+  @media ${device.mobileL} {
+    ${font('xl', 700)};
+  }
 `;
 
 const DominaBody = styled.p`
@@ -222,13 +202,24 @@ const DominaMap = styled.img`
   max-width: 100%;
   height: auto;
   flex-shrink: 0;
+
+  @media ${device.tablet} {
+    width: 100%;
+  }
 `;
 
+// The frame insets the step cards 197px and caps their row at 1045.
 const Steps = styled.div`
+  max-width: 1045px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 42px;
+
+  @media ${device.mobileL} {
+    gap: 24px;
+  }
 `;
 
 const StepsTitle = styled.h2`
@@ -236,6 +227,10 @@ const StepsTitle = styled.h2`
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   text-align: center;
+
+  @media ${device.mobileL} {
+    ${font('xl', 700)};
+  }
 `;
 
 const StepsRow = styled.div`

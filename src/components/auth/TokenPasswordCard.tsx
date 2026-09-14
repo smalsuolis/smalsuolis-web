@@ -1,10 +1,11 @@
-import { Button, PasswordField, TextField } from '@aplinkosministerija/design-system';
+import { PasswordField, TextField } from '@aplinkosministerija/design-system';
 import { useFormik } from 'formik';
 import { useState } from 'react';
 import styled from 'styled-components';
 import { PasswordForm, User, inputLabels } from '../../utils';
 import PasswordCheckListContainer from '../PasswordCheckListContainer';
 import { device, font } from '../../styles';
+import { SubmitButton } from './authModalStyles';
 
 // Set-password card for the token flows reached from an email link — "Užbaikite
 // registraciją" (create) and "Atkurti slaptažodį" (reset). Matches the auth
@@ -60,9 +61,11 @@ const TokenPasswordCard = ({
           password={values.password}
           repeatPassword={values.repeatPassword}
         />
-        <SubmitButton loading={isLoading} disabled={disabled} type="submit">
-          {submitLabel}
-        </SubmitButton>
+        <Footer>
+          <SubmitButton loading={isLoading} disabled={disabled} type="submit">
+            {submitLabel}
+          </SubmitButton>
+        </Footer>
       </Card>
     </Backdrop>
   );
@@ -71,7 +74,11 @@ const TokenPasswordCard = ({
 export default TokenPasswordCard;
 
 const Backdrop = styled.div`
+  /* The layout centres its children, which makes them shrink to fit — without
+     this the card never reaches its 499px. */
+  width: 100%;
   min-height: calc(100vh - 72px);
+  min-height: calc(100dvh - 72px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -84,22 +91,60 @@ const Backdrop = styled.div`
 
 const Card = styled.form`
   width: 100%;
-  max-width: 480px;
+  max-width: 499px;
   background: ${({ theme }) => theme.colors.white};
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+
+  @media ${device.mobileL} {
+    padding: 24px 16px;
+  }
+
+  label {
+    ${font('base')};
+    color: ${({ theme }) => theme.colors.text.primary};
+    /* Design: 8px between a field's label and its box (the DS ships 4). */
+    margin-bottom: 4px;
+  }
+
+  div:has(> input:not([type='checkbox'])) {
+    height: 40px;
+    border-radius: 100px;
+    border-color: ${({ theme }) => theme.colors.grey[500]};
+  }
+
+  div:has(> input:not([type='checkbox'])) > input {
+    height: 38px;
+    padding: 0 12px;
+  }
+
+  /* The design paints a field's message and its hairline red when it fails. */
+  div:has(> input:not([type='checkbox'])) + label {
+    color: ${({ theme }) => theme.colors.text.error};
+  }
+  div:has(> input:not([type='checkbox'])):has(+ label) {
+    border-color: ${({ theme }) => theme.colors.text.error};
+  }
 `;
 
 const Title = styled.h2`
-  ${font('2xl', 600)};
-  margin: 0 0 4px;
+  ${font('2xl')};
+  margin: 0;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const SubmitButton = styled(Button)`
-  margin-top: 8px;
+// Right-aligned on the 499 frame, full width on the 361 one.
+const Footer = styled.div`
+  display: flex;
+  justify-content: flex-end;
+
+  @media ${device.mobileL} {
+    div:has(> button) {
+      width: 100%;
+    }
+  }
 `;

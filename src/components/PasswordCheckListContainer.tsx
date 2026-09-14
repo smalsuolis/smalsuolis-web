@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import Icon from './Icons';
+import { font } from '../styles';
 interface PasswordCheckListContainerProps {
   password: string;
   repeatPassword: string;
@@ -63,36 +64,36 @@ const PasswordCheckListContainer = ({
 
 const Container = styled.div`
   display: grid;
-  grid-template-columns: 138px 1fr;
-  gap: 0;
-  line-height: 16px;
+  grid-template-columns: 117px 1fr;
+  gap: 24px;
 `;
 
 const Row = styled.div`
-  display: grid;
-  grid-template-columns: 24px 1fr;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 `;
 
 const InnerContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
 `;
 
 const StyledIcon = styled(Icon)<{ checked: boolean }>`
-  background-color: ${({ theme, checked }) => (checked ? theme.colors.success : 'white')};
-
-  width: 18px;
-  height: 18px;
+  background-color: ${({ checked }) => (checked ? '#1b7b35' : 'white')};
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-
+  flex-shrink: 0;
   color: ${({ theme, checked }) => (checked ? 'white' : theme.colors.disable)};
   border: ${({ checked }) => (checked ? 'none' : '1px solid #cdd5df')};
 `;
 
+// Only the tick turns green; the label stays black either way.
 const Text = styled.div<{ checked: boolean }>`
-  font-size: 1.4rem;
-  color: ${({ theme, checked }) => (checked ? theme.colors.success : theme.colors.disable)};
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 export default PasswordCheckListContainer;

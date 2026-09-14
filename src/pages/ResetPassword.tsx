@@ -31,6 +31,7 @@ const ResetPassword = () => {
     />
   ) : (
     <TokenSuccessCard
+      title={titles.passwordChanged}
       message={descriptions.passwordChanged}
       actionLabel={buttonsTitles.login}
       onAction={() => navigate(slugs.login)}

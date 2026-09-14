@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { device } from '../styles';
+import { device, font } from '../styles';
 import Icon from './Icons';
 import { Modal } from '@aplinkosministerija/design-system';
 
@@ -9,7 +9,7 @@ import { Modal } from '@aplinkosministerija/design-system';
 const Popup = ({ title, subTitle, onClose, visible = false, image, children }: any) => {
   return (
     <Modal visible={visible} onClose={onClose}>
-      <Container>
+      <Container data-modal-card>
         {image ? (
           <Illustration src={image} alt="" aria-hidden="true" />
         ) : (
@@ -34,17 +34,19 @@ const Illustration = styled.img`
   display: block;
   width: 48px;
   height: 48px;
-  margin: 8px auto 0;
+  margin: 0 auto;
 `;
 
+// Design: a 499/361 card with 36px above its content and 24 around the rest —
+// it stays a card on phones rather than filling the screen.
 const Container = styled.div<{ width?: string; $backgroundImg?: boolean }>`
   background-color: white;
   position: relative;
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
+  max-width: 361px;
   margin: auto;
-  padding: 16px;
+  padding: 36px 16px 24px;
+  border-radius: 8px;
   ${({ $backgroundImg }) =>
     $backgroundImg
       ? ` background-image: url('/empty-bg.svg');
@@ -54,13 +56,8 @@ const Container = styled.div<{ width?: string; $backgroundImg?: boolean }>`
       : ''}
 
   @media ${device.desktop} {
-    max-width: 500px;
-    height: auto;
-    overflow: initial;
-    min-height: auto;
-    padding: 40px;
-    flex-basis: auto;
-    border-radius: 16px;
+    max-width: 499px;
+    padding: 36px 24px 24px;
   }
 `;
 
@@ -79,14 +76,20 @@ const IconContainer = styled.div`
 
 const Title = styled.div`
   text-align: center;
-  margin: 16px 0 8px 0;
-  font-size: 2rem;
-  font-weight: bold;
+  margin: 24px 0 4px;
+  ${font('2xl')};
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Subtitle = styled.div`
-  padding: 4px 0 32px 0;
   text-align: center;
+  margin-bottom: 48px;
+  ${font('base')};
+  color: ${({ theme }) => theme.colors.text.primary};
+
+  @media ${device.mobileL} {
+    margin-bottom: 24px;
+  }
 `;
 
 export default Popup;

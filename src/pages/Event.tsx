@@ -172,7 +172,7 @@ const VisitButton = styled.button`
   cursor: pointer;
 
   &:hover {
-    opacity: 0.9;
+    background: ${({ theme }) => theme.colors.grey[700]};
   }
 
   @media ${device.mobileL} {

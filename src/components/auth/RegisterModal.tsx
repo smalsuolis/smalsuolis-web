@@ -1,16 +1,30 @@
-import { Button, CheckBox, TextField } from '@aplinkosministerija/design-system';
+import { CheckBox, TextField } from '@aplinkosministerija/design-system';
 import { useMutation } from '@tanstack/react-query';
 import { useFormik } from 'formik';
-import styled from 'styled-components';
 import api from '../../utils/api';
 import { getErrorMessage } from '../../utils/functions';
-import { buttonsTitles, inputLabels, subtitle, titles, validationTexts } from '../../utils/texts';
+import {
+  buttonsTitles,
+  inputLabels,
+  inputPlaceholders,
+  subtitle,
+  titles,
+  validationTexts,
+} from '../../utils/texts';
 import { ReactQueryError } from '../../utils/types';
 import { forgotPasswordSchema } from '../../utils/validations';
-import { font } from '../../styles';
 import AuthModalShell from './AuthModalShell';
 import { useAuthModal } from './AuthModalContext';
 import AuthSuccess from './AuthSuccess';
+import {
+  Error as FieldError,
+  FootNote,
+  Form,
+  Link,
+  SubmitButton,
+  SubmitRow,
+} from './authModalStyles';
+import styled from 'styled-components';
 
 const AGREE_TEXT =
   'Registruojantis sutinku, kad man būtų siunčiama aktuali informacija apie tai, kas įdomaus vyksta valstybėje';
@@ -69,20 +83,23 @@ const RegisterModal = () => {
   return (
     <AuthModalShell title={titles.registration} onClose={close}>
       <Form noValidate onSubmit={handleSubmit}>
-        <TextField
-          value={values.email}
-          type="email"
-          name="email"
-          error={errors.email as string}
-          onChange={(v: string) => handleType('email', v)}
-          label={inputLabels.email}
-        />
-        <CheckBox
-          label={AGREE_TEXT}
-          value={values.agree}
-          error={!!errors?.agree}
-          onChange={(v: boolean) => handleType('agree', v)}
-        />
+        <FieldGroup>
+          <TextField
+            value={values.email}
+            type="email"
+            name="email"
+            placeholder={inputPlaceholders.email}
+            error={errors.email as string}
+            onChange={(v: string) => handleType('email', v)}
+            label={inputLabels.email}
+          />
+          <CheckBox
+            label={AGREE_TEXT}
+            value={values.agree}
+            onChange={(v: boolean) => handleType('agree', v)}
+          />
+          {!!errors?.agree && <FieldError>{errors.agree as string}</FieldError>}
+        </FieldGroup>
         <SubmitRow>
           <FootNote>
             {subtitle.hasRegistered}{' '}
@@ -99,31 +116,10 @@ const RegisterModal = () => {
 
 export default RegisterModal;
 
-const Form = styled.form`
+// The design keeps the email field and its consent line as one 16px-gapped
+// block, against the 24 between the modal's blocks.
+const FieldGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
-`;
-
-const SubmitRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 4px;
-`;
-
-const FootNote = styled.div`
-  ${font('base')};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Link = styled.span`
-  text-decoration: underline;
-  cursor: pointer;
-`;
-
-const SubmitButton = styled(Button)`
-  flex-shrink: 0;
 `;

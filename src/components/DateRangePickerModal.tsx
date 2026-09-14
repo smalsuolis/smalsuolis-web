@@ -3,6 +3,7 @@ import Datepicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import styled from 'styled-components';
 import { device, useWindowSize } from '@aplinkosministerija/design-system';
+import { font } from '../styles';
 import Icon from './Icons';
 import { IconName } from '../utils';
 
@@ -31,15 +32,6 @@ const DateRangePickerModal = ({
   return (
     <Container tabIndex={1} onBlur={handleBlur}>
       <DateContainer>
-        {isMobile && (
-          <div
-            onClick={() => {
-              setOpen(false);
-            }}
-          >
-            <CloseIcon name={IconName.close} />
-          </div>
-        )}
         <Datepicker
           locale="lt"
           selected={startDate}
@@ -71,6 +63,11 @@ const DateRangePickerModal = ({
               <YearNavButton onClick={increaseYear} title="Kiti metai">
                 ››
               </YearNavButton>
+              {isMobile && (
+                <CloseButton type="button" aria-label="Uždaryti" onClick={() => setOpen(false)}>
+                  <CloseIcon name={IconName.close} />
+                </CloseButton>
+              )}
             </CustomHeader>
           )}
         >
@@ -94,22 +91,28 @@ const DateContainer = styled.div`
     left: 0px;
     top: 0px;
     width: 100vw;
+    /* Sized to what iOS Safari actually shows, or the picker's own buttons end
+       up beneath its toolbar. */
     height: 100vh;
+    height: 100dvh;
     overflow: auto;
     justify-content: center;
     align-items: center;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgba(11, 11, 11, 0.4);
   }
 `;
 
-const CloseIcon = styled(Icon)`
-  color: white;
-  font-size: 2.8rem;
-  align-self: center;
-  position: absolute;
-  right: 10px;
-  top: 10px;
+const CloseButton = styled.button`
+  display: flex;
+  margin-left: 8px;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
+`;
+
+const CloseIcon = styled(Icon)`
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 2.4rem;
 `;
 
 const Container = styled.div`
@@ -125,82 +128,81 @@ const Container = styled.div`
     color: #151229;
     opacity: 0.6;
   }
+  /* The library floats the month and lets it size to its content, which spilled
+     past a card narrower than the phone frame. */
+  .react-datepicker__month-container {
+    float: none;
+    width: 100%;
+  }
+  .react-datepicker__month {
+    margin: 0;
+  }
+
+  /* Seven equal columns rather than seven fixed cells: the grid then fits any
+     card width, and the cells abut so the range track has no seams. */
+  .react-datepicker__day-names,
+  .react-datepicker__week {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
   .react-datepicker__day {
-    width: 44px;
+    position: relative;
+    z-index: 0;
+    width: auto;
     height: 44px;
     line-height: 44px;
     padding: 0;
-    margin: auto;
+    margin: 0;
     font-size: 1.5rem;
     display: inline-flex;
     justify-content: center;
     align-items: center;
     border-radius: 50%;
     &:hover {
-      background-color: ${({ theme }) => theme.colors.tertiary} !important;
-      color: white;
+      background-color: #fafafa !important;
     }
     @media ${device.mobileL} {
-      width: 40px;
       height: 40px;
       line-height: 40px;
     }
   }
   .react-datepicker {
     position: absolute;
-    top: 5px;
+    top: 4px;
+    /* The trigger sits at the right edge of the toolbar, so the panel hangs
+       leftwards from it instead of running off the viewport. */
+    right: 0;
     z-index: 8;
     background-color: #ffffff;
-    box-shadow: 0px 2px 16px #121a5529;
-    border-radius: 10px;
-    padding: 0px 26px 20px 26px;
-    border: none;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    padding: 0 24px 24px;
+    border: 1px solid #ededed;
+
+    /* On a phone it is a centred card, sized to the viewport rather than to a
+       fixed 375 that overflowed the narrower ones. */
     @media ${device.mobileL} {
-      padding: 0px 16px 20px 16px;
-      width: 375px;
+      width: calc(100vw - 32px);
+      max-width: 361px;
+      padding: 0 16px 24px;
+      right: auto;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
     }
   }
-  .react-datepicker__day--selected {
-    position: relative;
-    text-align: center;
-    z-index: 1;
-    font-size: 1.5rem;
-    background-color: ${({ theme }) => theme.colors.tertiary} !important;
-    color: white;
-    border-radius: 50%;
-  }
-  .react-datepicker__day--keyboard-selected {
-    background-color: ${({ theme }) => theme.colors.tertiary};
-    color: white;
-    text-align: center;
-    font-size: 1.5rem;
-    border-radius: 50%;
-    &:focus {
-      outline: none;
-    }
-    &::before {
-      content: '';
-      position: absolute;
-      background-color: ${({ theme }) => theme.colors.tertiary};
-      text-align: center;
-      z-index: -1;
-    }
+  .react-datepicker__day--keyboard-selected:focus {
+    outline: none;
   }
   .react-datepicker__day-name {
-    font-size: 1.5rem;
-    color: ${({ theme }) => theme.colors.tertiary};
-    width: 44px;
+    font-size: 1.4rem;
+    color: ${({ theme }) => theme.colors.grey[600]};
+    width: auto;
     padding: 0;
     margin: 0;
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    @media ${device.mobileL} {
-      width: 40px;
-    }
   }
   .react-datepicker__navigation {
     display: none;
@@ -208,48 +210,106 @@ const Container = styled.div`
   .react-datepicker__current-month {
     display: none;
   }
-  .react-datepicker__day--in-range {
-    background-color: ${({ theme }) => theme.colors.tertiary} !important;
-    color: #101828 !important;
-    border-radius: 0px !important;
-    z-index: 5 !important;
-    margin: 0 !important;
-    color: white !important;
-  }
+  /* The range is drawn as one 36px track behind the numbers, with the two ends
+     as knobs sitting on it — a full-height filled cell read as stray grey
+     blocks with square corners where a week wrapped. */
+  .react-datepicker__day--in-range,
+  .react-datepicker__day--in-selecting-range,
+  .react-datepicker__day--selected,
   .react-datepicker__day--range-start,
   .react-datepicker__day--range-end {
-    background-color: ${({ theme }) => theme.colors.tertiary} !important;
-    color: white !important;
-    position: relative !important;
-    z-index: 1 !important;
+    background-color: transparent !important;
+    color: ${({ theme }) => theme.colors.text.primary};
+    border-radius: 0;
   }
-  .react-datepicker__day--range-start {
-    border-top-left-radius: 50% !important;
-    border-bottom-left-radius: 50% !important;
-  }
-  .react-datepicker__day--range-end {
-    border-top-right-radius: 50% !important;
-    border-bottom-right-radius: 50% !important;
-  }
-  .react-datepicker__day--range-start::before,
-  .react-datepicker__day--range-end::before {
+  .react-datepicker__day--in-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected)::before,
+  .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected)::before {
     content: '';
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
     position: absolute;
-    top: 50%;
-    left: 0px;
+    inset: 4px 0;
+    background-color: #f3f3f3;
     z-index: -1;
   }
-  .react-datepicker__day--range-end::before {
-    margin-left: 13px;
-    transform: translate(-10px, -50%);
+  /* A wrapped week ends the track at Monday and Sunday, so round it there. */
+  .react-datepicker__day--in-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):first-child::before,
+  .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):first-child::before {
+    border-radius: 18px 0 0 18px;
   }
-  .react-datepicker__day--in-selecting-range {
-    background-color: #dff9e5 !important;
-    color: #101828;
-    border-radius: 50% !important;
+  .react-datepicker__day--in-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):last-child::before,
+  .react-datepicker__day--in-selecting-range:not(.react-datepicker__day--range-start):not(
+      .react-datepicker__day--range-end
+    ):not(.react-datepicker__day--selected):last-child::before {
+    border-radius: 0 18px 18px 0;
+  }
+  .react-datepicker__day--selected::after,
+  .react-datepicker__day--range-start::after,
+  .react-datepicker__day--range-end::after,
+  .react-datepicker__day--selecting-range-start::after,
+  .react-datepicker__day--selecting-range-end::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 36px;
+    height: 36px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background-color: ${({ theme }) => theme.colors.black};
+    z-index: -1;
+    @media ${device.mobileL} {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  /* The track runs into each knob from the inside of the range, so the two do
+     not sit apart with the cell's own gap showing between them. */
+  .react-datepicker__day--range-start:not(.react-datepicker__day--range-end)::before,
+  .react-datepicker__day--range-end:not(.react-datepicker__day--range-start)::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    width: 50%;
+    background-color: #f3f3f3;
+    z-index: -2;
+  }
+  .react-datepicker__day--range-start:not(.react-datepicker__day--range-end)::before {
+    right: 0;
+  }
+  .react-datepicker__day--range-end:not(.react-datepicker__day--range-start)::before {
+    left: 0;
+  }
+  /* A knob at the row's own edge has nothing to connect to. */
+  .react-datepicker__day--range-start:last-child::before,
+  .react-datepicker__day--range-end:first-child::before {
+    content: none;
+  }
+  .react-datepicker__day--selected,
+  .react-datepicker__day--range-start,
+  .react-datepicker__day--range-end,
+  .react-datepicker__day--selecting-range-start,
+  .react-datepicker__day--selecting-range-end,
+  .react-datepicker__day--selected:hover,
+  .react-datepicker__day--range-start:hover,
+  .react-datepicker__day--range-end:hover {
+    background-color: transparent !important;
+    color: ${({ theme }) => theme.colors.white} !important;
+  }
+  .react-datepicker__children-container {
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 `;
 
@@ -261,8 +321,8 @@ const CustomHeader = styled.div`
 `;
 
 const MonthLabel = styled.span`
-  font-size: 1.5rem;
-  font-weight: 600;
+  ${font('base', 500)};
+  white-space: nowrap;
   color: black;
   text-transform: capitalize;
   flex: 1;
@@ -281,10 +341,10 @@ const NavButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  color: ${({ theme }) => theme.colors.tertiary};
+  color: ${({ theme }) => theme.colors.text.primary};
   transition: background-color 0.15s ease;
   &:hover {
-    background-color: ${({ theme }) => theme.colors.primary}40;
+    background-color: #fafafa;
   }
 `;
 
@@ -297,29 +357,30 @@ const YearNavButton = styled(NavButton)`
 
 const OkButtonContainer = styled.div`
   display: flex;
-  justify-content: flex-start;
-  padding: 16px 0 0 0;
-  border-top: 1px solid #e5e7eb;
+  justify-content: flex-end;
+  padding-top: 24px;
+  border-top: 1px solid ${({ theme }) => theme.colors.grey[300]};
   margin-top: 16px;
-  width: 320px;
-  @media ${device.mobileL} {
-    width: 100%;
-  }
+  width: 100%;
 `;
 
+// The same black pill every other primary action uses.
 const OkButton = styled.button`
-  background-color: ${({ theme }) => theme.colors.primary};
-  color: ${({ theme }) => theme.colors.tertiary};
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 1.4rem;
-  font-weight: 600;
+  height: 40px;
+  padding: 8px 24px;
+  border-radius: 54px;
+  background-color: ${({ theme }) => theme.colors.black};
+  color: ${({ theme }) => theme.colors.white};
+  ${font('base')};
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: background 0.2s;
 
   &:hover {
-    opacity: 0.8;
+    background-color: ${({ theme }) => theme.colors.grey[700]};
+  }
+
+  @media ${device.mobileL} {
+    width: 100%;
   }
 `;
 

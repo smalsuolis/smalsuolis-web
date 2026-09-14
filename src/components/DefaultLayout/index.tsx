@@ -22,10 +22,13 @@ export interface DefaultLayoutProps {
   // to edge and manage width internally. Non-bleed pages keep the padded,
   // centered grey content container the inner pages were built against.
   fullBleed?: boolean;
+  // The map page gives the viewport to the map: nav on top, map under it, and
+  // nothing below to scroll to. Every other page keeps the footer.
+  hideFooter?: boolean;
 }
 
 const DefaultLayout = (props: DefaultLayoutProps) => {
-  const { children, fullBleed } = props;
+  const { children, fullBleed, hideFooter } = props;
   const { pathname } = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -44,8 +47,8 @@ const DefaultLayout = (props: DefaultLayoutProps) => {
     <Container>
       <ScrollableContainer ref={scrollRef}>
         <TopNav {...props} />
-        {fullBleed ? children : <InnerContainer>{children}</InnerContainer>}
-        <Footer />
+        <Main>{fullBleed ? children : <InnerContainer>{children}</InnerContainer>}</Main>
+        {!hideFooter && <Footer />}
       </ScrollableContainer>
     </Container>
   );
@@ -60,6 +63,17 @@ const Container = styled(Div100vh)`
 const ScrollableContainer = styled.div`
   width: 100%;
   min-height: 100%;
+  /* A column, so a page shorter than the window still puts its footer on the
+     floor rather than leaving a white strip under it — which is what a
+     zoomed-out window showed. Nothing here may shrink to fit: the children keep
+     their heights and the container scrolls. */
+  display: flex;
+  flex-direction: column;
+
+  > * {
+    flex-shrink: 0;
+  }
+
   overflow-y: scroll;
   /* Guard: a single over-wide child shouldn't let the whole page pan sideways
      on mobile. Content that genuinely needs width scrolls within its own box. */
@@ -67,15 +81,26 @@ const ScrollableContainer = styled.div`
   background-color: white;
 `;
 
+// Takes whatever the nav and the footer leave, so the footer lands on the floor
+// of a window taller than the page.
+const Main = styled.div`
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+`;
+
+// The design starts every inner page 37px below the nav (28 on phones) and
+// lets the page itself own the horizontal gutter, so the two never stack.
 const InnerContainer = styled.div`
   display: flex;
   width: 100%;
   min-height: 100%;
   flex-direction: column;
   align-items: center;
+  padding-top: 28px;
+
   @media ${device.desktop} {
-    padding: 40px 16px;
+    padding-top: 37px;
     height: fit-content;
-    background-color: #f7f7f7;
   }
 `;
