@@ -1,13 +1,13 @@
 import { useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import proj4 from 'proj4';
 import styled from 'styled-components';
 import MapView from '../components/MapView';
 import AddressAutocomplete from '../components/home/AddressAutocomplete';
 import SritysFilterModal, { SritysValue } from '../components/home/SritysFilterModal';
 import PeriodDropdown from '../components/PeriodDropdown';
 import { device, font } from '../styles';
+import { toLks94 } from '../utils/coordinates';
 import {
   AddressSuggestion,
   App,
@@ -22,16 +22,6 @@ import Icon from '../components/Icons';
 import api from '../utils/api';
 import { UserContext, UserContextType } from '../components/UserProvider';
 import { useAuthModal } from '../components/auth/AuthModalContext';
-
-// The smalsuolis map iframe draws incoming geometry with dataProjection EPSG:3346
-// (LKS94) — hardcoded in its route. Address suggestions come in EPSG:4326
-// (lng/lat), so we must convert to 3346 before sending, or the point lands far
-// off-map and the view goes grey. Register the LKS94 definition for proj4.
-proj4.defs(
-  'EPSG:3346',
-  '+proj=tmerc +lat_0=0 +lon_0=24 +k=0.9998 +x_0=500000 +y_0=0 ' +
-    '+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs',
-);
 
 // A searched address is one place, so send one point and let the iframe pin it.
 // The extent it fits to is a small square around that point: without it the
@@ -70,7 +60,7 @@ const readStoredFilters = (): StoredMapFilters => {
 
 const addressFeatureCollection3346 = (geometry: AddressSuggestion['geometry']) => {
   const [lng, lat] = geometry.coordinates;
-  const [cx, cy] = proj4('EPSG:4326', 'EPSG:3346', [lng, lat]);
+  const [cx, cy] = toLks94(lng, lat);
   const r = ADDRESS_EXTENT_M;
   return {
     type: 'FeatureCollection',
