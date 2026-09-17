@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import styled from 'styled-components';
 import { Menu, MenuItem } from '../ui/Menu';
 import { font } from '../../styles';
 import { AddressSuggestion, IconName, useRecentAddresses } from '../../utils';
+import { formatCoordinate, parseCoordinate } from '../../utils/coordinates';
 import api from '../../utils/api';
 import Icon from '../Icons';
 
@@ -36,12 +37,31 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
     return () => clearTimeout(t);
   }, [value]);
 
-  const { data: suggestions = [], isFetching } = useQuery({
+  // A coordinate pair is a place the registry cannot be asked about, so it is
+  // resolved here and the address lookup is skipped entirely — otherwise every
+  // keystroke of "54.6872, 25.2797" is a search for a street by that name.
+  const coordinate = useMemo(() => parseCoordinate(debounced), [debounced]);
+
+  const { data: addressSuggestions = [], isFetching } = useQuery({
     queryKey: ['address-suggest', debounced],
     queryFn: () => api.suggestAddresses(debounced),
-    enabled: debounced.length >= 3,
+    enabled: debounced.length >= 3 && !coordinate,
     staleTime: 5 * 60 * 1000,
   });
+
+  const suggestions: AddressSuggestion[] = useMemo(
+    () =>
+      coordinate
+        ? [
+            {
+              code: 0,
+              label: formatCoordinate(coordinate),
+              geometry: { type: 'Point', coordinates: [coordinate.lng, coordinate.lat] },
+            },
+          ]
+        : addressSuggestions,
+    [coordinate, addressSuggestions],
+  );
 
   // Close on outside click.
   useEffect(() => {
@@ -112,6 +132,7 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
               }}
             >
               {s.label}
+              {coordinate && <System>{coordinate.system === 'LKS94' ? 'LKS-94' : 'WGS84'}</System>}
             </Option>
           ))}
         </Dropdown>
@@ -199,6 +220,15 @@ const Dropdown = styled(Menu)`
 `;
 
 const Option = MenuItem;
+
+// Names the system the pair was read as. Both orders are accepted, so without
+// this the only way to tell a misread apart from a mistyped coordinate is to
+// look at where the pin landed.
+const System = styled.span`
+  ${font('sm')};
+  margin-left: 8px;
+  color: ${({ theme }) => theme.colors.grey[600]};
+`;
 
 const Empty = styled.div`
   ${font('base')};
