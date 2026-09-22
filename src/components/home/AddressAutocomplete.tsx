@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import styled from 'styled-components';
 import { Menu, MenuItem } from '../ui/Menu';
 import { font } from '../../styles';
@@ -42,11 +42,19 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
   // keystroke of "54.6872, 25.2797" is a search for a street by that name.
   const coordinate = useMemo(() => parseCoordinate(debounced), [debounced]);
 
-  const { data: addressSuggestions = [], isFetching } = useQuery({
+  const {
+    data: addressSuggestions = [],
+    isFetching,
+    isPlaceholderData,
+  } = useQuery({
     queryKey: ['address-suggest', debounced],
-    queryFn: () => api.suggestAddresses(debounced),
+    queryFn: ({ signal }) => api.suggestAddresses(debounced, signal),
     enabled: debounced.length >= 3 && !coordinate,
     staleTime: 5 * 60 * 1000,
+    // Every debounce tick is a new key, so without this the list emptied and the
+    // dropdown fell back to "Ieškoma…" between each pause in typing — half the
+    // search read as waiting even when the registry answered in half a second.
+    placeholderData: keepPreviousData,
   });
 
   const suggestions: AddressSuggestion[] = useMemo(
@@ -118,7 +126,9 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
       </InputRow>
 
       {open && debounced.length >= 3 && (
-        <Dropdown>
+        /* Dimmed while the list on screen belongs to the previous query: kept
+           legible (0.55 of black is still AA on white), but visibly not final. */
+        <Dropdown $stale={isPlaceholderData && isFetching}>
           {isFetching && suggestions.length === 0 && <Empty>Ieškoma…</Empty>}
           {!isFetching && suggestions.length === 0 && <Empty>Nieko nerasta</Empty>}
           {suggestions.map((s, i) => (
@@ -206,11 +216,15 @@ const Input = styled.input`
   color: ${({ theme }) => theme.colors.text.primary};
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.grey[500]};
+    /* grey[600], not grey[500]: #BCBCBC on white is 1.9:1, under half the 4.5:1
+       WCAG AA asks of text, and it read as an empty field rather than a hint. */
+    color: ${({ theme }) => theme.colors.grey[600]};
   }
 `;
 
-const Dropdown = styled(Menu)`
+const Dropdown = styled(Menu)<{ $stale?: boolean }>`
+  opacity: ${({ $stale }) => ($stale ? 0.55 : 1)};
+  transition: opacity 0.12s ease;
   position: absolute;
   top: calc(100% + 12px);
   left: 0;

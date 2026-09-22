@@ -731,7 +731,7 @@ const SearchInput = styled.input`
   outline: none;
 
   &::placeholder {
-    color: ${({ theme }) => theme.colors.grey[500]};
+    color: ${({ theme }) => theme.colors.grey[600]};
   }
 `;
 

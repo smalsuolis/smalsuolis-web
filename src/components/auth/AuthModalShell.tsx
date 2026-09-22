@@ -117,7 +117,7 @@ const Card = styled.div<{ $wide?: boolean }>`
 
   input::placeholder {
     ${font('base')};
-    color: ${({ theme }) => theme.colors.grey[500]};
+    color: ${({ theme }) => theme.colors.grey[600]};
   }
 
   div:has(+ div > input:not([type='checkbox'])) {
