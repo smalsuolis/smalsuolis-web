@@ -101,7 +101,11 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
       setHighlight((h) => Math.max(h - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (highlight >= 0) pick(suggestions[highlight]);
+      // The list can refresh under the highlight — arrowing to row 8 of
+      // "Gedimino" and then narrowing to "Gedimino pr. 9" leaves the index past
+      // the end — so an Enter with nothing under it searches instead of throwing.
+      const highlighted = highlight >= 0 ? suggestions[highlight] : undefined;
+      if (highlighted) pick(highlighted);
       else onSubmit?.();
     } else if (e.key === 'Escape') {
       setOpen(false);
@@ -127,8 +131,9 @@ const AddressAutocomplete = ({ value, onChange, onSelect, placeholder, onSubmit 
 
       {open && debounced.length >= 3 && (
         /* Dimmed while the list on screen belongs to the previous query: kept
-           legible (0.55 of black is still AA on white), but visibly not final. */
-        <Dropdown $stale={isPlaceholderData && isFetching}>
+           legible (0.55 of black on the panel's white is still AA), but visibly
+           not final. */
+        <Dropdown $stale={isPlaceholderData}>
           {isFetching && suggestions.length === 0 && <Empty>Ieškoma…</Empty>}
           {!isFetching && suggestions.length === 0 && <Empty>Nieko nerasta</Empty>}
           {suggestions.map((s, i) => (
@@ -223,8 +228,13 @@ const Input = styled.input`
 `;
 
 const Dropdown = styled(Menu)<{ $stale?: boolean }>`
-  opacity: ${({ $stale }) => ($stale ? 0.55 : 1)};
-  transition: opacity 0.12s ease;
+  /* The rows fade, never the panel: on the map this sits over tiles, and fading
+     the container let them show through the list. */
+  & > * {
+    opacity: ${({ $stale }) => ($stale ? 0.55 : 1)};
+    transition: opacity 0.12s ease;
+  }
+
   position: absolute;
   top: calc(100% + 12px);
   left: 0;
