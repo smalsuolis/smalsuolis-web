@@ -16,6 +16,11 @@ import BreakdownCard, { BreakdownRow } from '../components/stats/BreakdownCard';
 import CityCard, { CityRow } from '../components/stats/CityCard';
 import SourceCard from '../components/stats/SourceCard';
 import SubscribeBanner from '../components/stats/SubscribeBanner';
+import MetricToggle from '../components/stats/MetricToggle';
+import Tooltip from '../components/Tooltip';
+import Icon from '../components/Icons';
+import { IconName } from '../utils/constants';
+import { buildTagRows, formatStatValue, type StatMetric, type TagStats } from '../utils/statsRows';
 
 const resolveQueryFromKey = (key: string): { $gte: string; $lt: string } => {
   if (/^\d{4}$/.test(key)) return yearQuery(Number(key));
@@ -127,21 +132,15 @@ const Stats = () => {
   ];
 
   // ---- "Suskirstymas pagal tipą" cards ---------------------------------
-  // Build sorted rows from a byTag map, attaching previous counts for deltas.
-  const tagRows = (
-    tagMap?: Record<string, { count: number }>,
-    prevMap?: Record<string, { count: number }>,
-  ): BreakdownRow[] => {
-    if (!tagMap) return [];
-    const total = Object.values(tagMap).reduce((s, v) => s + (v.count || 0), 0);
-    const rows = Object.entries(tagMap).map(([label, v]) => ({
-      label,
-      count: v.count || 0,
-      previousCount: prevMap?.[label]?.count,
-      total,
-    }));
-    return orderBy(rows, (r) => r.count, 'desc');
-  };
+  // Only Kirtimai has hectares to switch to; every other card stays on counts.
+  const [kirtimaiMetric, setKirtimaiMetric] = useState<StatMetric>('count');
+
+  const tagRows = (tagMap?: TagStats, prevMap?: TagStats, metric: StatMetric = 'count') =>
+    buildTagRows(tagMap, prevMap, metric);
+
+  const kirtimaiTags = byApp?.miskoKirtimai?.byTag;
+  const sumBy = (key: 'area' | 'calculatedArea') =>
+    Object.values(kirtimaiTags ?? {}).reduce((sum, stat) => sum + (stat[key] || 0), 0);
 
   const byMunicipality = data?.byMunicipality || {};
   const prevByMunicipality = previousData?.byMunicipality || {};
@@ -172,8 +171,13 @@ const Stats = () => {
     {
       app: 'miskoKirtimai',
       title: 'Kirtimų leidimai',
-      total: byApp?.miskoKirtimai?.count || 0,
-      rows: tagRows(byApp?.miskoKirtimai?.byTag, prevByApp?.miskoKirtimai?.byTag),
+      // In hectares the header total is the sum of the rows, not the permit
+      // count — and it only covers permits that declared an area, so one
+      // without a `kertamas_plotas` adds nothing, as it should.
+      total: kirtimaiMetric === 'area' ? sumBy('area') : byApp?.miskoKirtimai?.count || 0,
+      rows: tagRows(kirtimaiTags, prevByApp?.miskoKirtimai?.byTag, kirtimaiMetric),
+      metric: kirtimaiMetric,
+      estimatedArea: sumBy('calculatedArea'),
     },
     {
       app: 'infostatyba',
@@ -311,6 +315,7 @@ const Stats = () => {
               // the rows name themselves ("Vilniaus r. sav."), so nothing has to
               // announce which cut this is.
               const rows = c.rows.length ? c.rows : c.fallbackRows?.() ?? [];
+              const metric: StatMetric = c.metric ?? 'count';
               return (
                 <BreakdownCard
                   key={c.title}
@@ -321,6 +326,42 @@ const Stats = () => {
                   rows={rows}
                   showComparison={isComparisonEnabled}
                   isFetching={isPreviousFetching}
+                  formatValue={(value) => formatStatValue(value, metric)}
+                  deltaSuffix={metric === 'area' ? ' ha' : undefined}
+                  toolbar={
+                    c.metric ? (
+                      <MetricToggle value={metric} onChange={setKirtimaiMetric} />
+                    ) : undefined
+                  }
+                  footer={
+                    metric === 'area' ? (
+                      <EstimateRow>
+                        <EstimateLabel>
+                          Preliminarus iškirstas plotas pagal kirtimo intensyvumą
+                        </EstimateLabel>
+                        <EstimateValue>
+                          {formatStatValue(c.estimatedArea ?? 0, 'area')}
+                          <Tooltip
+                            content={
+                              <div>
+                                Apskaičiuojama pagal kirtimo leidimų tipus ir jiems priskirtą
+                                procentinę dalį nuo numatomo ploto.
+                                <br />
+                                <br />
+                                Plyni ir miško lydimo kirtimai – 100%
+                                <br />
+                                Atvejiniai kirtimai – 50%
+                                <br />
+                                Kiti kirtimai – 25%
+                              </div>
+                            }
+                          >
+                            <EstimateIcon name={IconName.info} />
+                          </Tooltip>
+                        </EstimateValue>
+                      </EstimateRow>
+                    ) : undefined
+                  }
                 />
               );
             })}
@@ -597,6 +638,37 @@ const ToggleContainer = styled.div`
   align-items: center;
   gap: 8px;
   cursor: pointer;
+`;
+
+// The footnote under the Kirtimai rows: an estimate is not a row, so it does
+// not join the hairline-separated list — it sits beneath it, muted.
+const EstimateRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 8px;
+  font-size: 1.4rem;
+  line-height: 2.1rem;
+  color: ${({ theme }) => theme.colors.grey[600]};
+`;
+
+const EstimateLabel = styled.span`
+  min-width: 0;
+`;
+
+const EstimateValue = styled.span`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-weight: 700;
+`;
+
+const EstimateIcon = styled(Icon)`
+  font-size: 1.6rem;
+  display: flex;
 `;
 
 const ToggleLabel = styled.span`

@@ -22,10 +22,15 @@ const Delta = ({
   if (rounded === 0) return null;
 
   const positive = rounded > 0;
+  // Hectare deltas carry decimals, and Lithuanian writes those with a comma —
+  // the row beside them already reads "22,50 ha". Whole numbers are left alone,
+  // so the count cards render exactly as before.
+  const text = rounded % 1 !== 0 ? rounded.toLocaleString('lt-LT') : `${rounded}`;
+
   return (
     <Value $positive={positive}>
       {positive ? '+' : ''}
-      {rounded}
+      {text}
       {suffix}
     </Value>
   );

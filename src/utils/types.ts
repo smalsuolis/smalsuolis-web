@@ -304,7 +304,11 @@ export interface Stats {
     };
     miskoKirtimai: {
       count: number;
-      byTag: Record<string, { count: number; area: number }>;
+      // `area` is the felling area the permits declare, in hectares.
+      // `calculatedArea` weights it by how much of the stand each kind of cut
+      // actually clears — see lumberingIntensity in the API.
+      // Both are absent for a permit whose feed gave no `kertamas_plotas`.
+      byTag: Record<string, { count: number; area?: number; calculatedArea?: number }>;
     };
     zemetvarkosPlanavimas: {
       count: number;

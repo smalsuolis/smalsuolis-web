@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import styled from 'styled-components';
 import Delta from './Delta';
 import {
@@ -36,6 +36,10 @@ const BreakdownCard = ({
   showComparison,
   isFetching,
   initialVisible = 5,
+  formatValue = (value: number) => value.toLocaleString('lt-LT'),
+  deltaSuffix,
+  toolbar,
+  footer,
 }: {
   icon: string;
   iconBg: string;
@@ -45,6 +49,14 @@ const BreakdownCard = ({
   showComparison?: boolean;
   isFetching?: boolean;
   initialVisible?: number;
+  // How a row value and the card total are written. Defaults to a plain grouped
+  // number, which is what every card but Kirtimai uses.
+  formatValue?: (value: number) => string;
+  deltaSuffix?: string;
+  // Rendered between the header and the rows — the metric switch.
+  toolbar?: ReactNode;
+  // Rendered under the rows, above the Rodyti daugiau button.
+  footer?: ReactNode;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? rows : rows.slice(0, initialVisible);
@@ -58,8 +70,10 @@ const BreakdownCard = ({
           </IconCircle>
           <CardHeading>{title}</CardHeading>
         </TitleGroup>
-        <CardTotal as="div">{total.toLocaleString('lt-LT')}</CardTotal>
+        <CardTotal as="div">{formatValue(total)}</CardTotal>
       </CardHeader>
+
+      {toolbar}
 
       <RowList>
         {rows.length === 0 && <EmptyRow>Šiuo laikotarpiu įvykių nėra</EmptyRow>}
@@ -71,9 +85,14 @@ const BreakdownCard = ({
               <RowValues>
                 <Percent>{pct.toFixed(1)}%</Percent>
                 <RowCount>
-                  {r.count.toLocaleString('lt-LT')}
+                  {formatValue(r.count)}
                   {showComparison && (
-                    <Delta current={r.count} previous={r.previousCount} isFetching={isFetching} />
+                    <Delta
+                      current={r.count}
+                      previous={r.previousCount}
+                      isFetching={isFetching}
+                      suffix={deltaSuffix}
+                    />
                   )}
                 </RowCount>
               </RowValues>
@@ -81,6 +100,8 @@ const BreakdownCard = ({
           );
         })}
       </RowList>
+
+      {footer}
 
       {rows.length > initialVisible && (
         <MoreButton onClick={() => setExpanded((v) => !v)}>
