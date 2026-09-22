@@ -402,9 +402,11 @@ class Api {
 
   // Address autocomplete backed by the boundaries registry (see the API's
   // boundaries.service). Returns suggestions with a GeoJSON Point geometry.
-  suggestAddresses = async (search: string): Promise<AddressSuggestion[]> => {
+  // `signal` is react-query's: a lookup the user has already typed past is
+  // aborted rather than left to race the one that replaced it.
+  suggestAddresses = async (search: string, signal?: AbortSignal): Promise<AddressSuggestion[]> => {
     return this.errorWrapper(() =>
-      this.AuthApiAxios.get('/addresses/suggest', { params: { search } }),
+      this.AuthApiAxios.get('/addresses/suggest', { params: { search }, signal }),
     );
   };
 
