@@ -1,18 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import styled from 'styled-components';
 import { device, font } from '../../styles';
 import { Event, slugs } from '../../utils';
 import api from '../../utils/api';
-import EventModal from '../EventModal';
 import EventRow from '../EventRow';
 
 // "Naujausi įvykiai" — a flat list of the most recent events, rendered with the
 // same row the events feed uses. Only the spacing between rows differs.
 const RecentEvents = () => {
   const navigate = useNavigate();
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const { data } = useQuery({
     queryKey: ['home-recent-events'],
     queryFn: () => api.getEvents({ page: 1, query: undefined }),
@@ -33,11 +30,13 @@ const RecentEvents = () => {
 
       <List>
         {events.map((event: Event) => (
-          <EventRow key={event.id} event={event} onSelect={setSelectedEvent} />
+          <EventRow
+            key={event.id}
+            event={event}
+            onSelect={(e) => navigate(`${slugs.map}?event=${e.id}`)}
+          />
         ))}
       </List>
-
-      {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </Wrap>
   );
 };

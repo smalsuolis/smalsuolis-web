@@ -163,6 +163,15 @@ const MapPage = () => {
     return { appIds, categoriesByApp };
   });
   const [filterOpen, setFilterOpen] = useState(false);
+  // A list row hands the map one event to land on; the frame zooms to it and
+  // opens its own popup, so the reader gets the map rather than a dialog over it.
+  const eventId = searchParams.get('event');
+  const { data: focusedEvent } = useQuery({
+    queryKey: ['event', eventId],
+    queryFn: () => api.getEvent({ id: eventId }),
+    enabled: !!eventId,
+    staleTime: Infinity,
+  });
   // The phone frame replaces the register pill with a dismissible card over the
   // map. Dismissing it sticks: it is a prompt, and re-covering a third of the
   // map on every visit after the user said no is what made it feel intrusive.
@@ -243,6 +252,7 @@ const MapPage = () => {
     if (appIds.length) next.app = appIds.join(',');
     if (selectedCategoryIds.length) next.categories = selectedCategoryIds.join(',');
     if (periodKey) next.range = periodKey;
+    if (eventId) next.event = eventId;
     if (periodKey === TimeRanges.CUSTOM && customRange) {
       next.from = customRange.$gte;
       next.to = customRange.$lt;
@@ -265,7 +275,7 @@ const MapPage = () => {
       // Storage blocked: the URL still carries everything between the two views.
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, selected, appIds, selectedCategoryIds, periodKey, customRange]);
+  }, [address, selected, appIds, selectedCategoryIds, periodKey, customRange, eventId]);
 
   // Switch to the list view, carrying the current filters. The events page uses
   // different param names than the map (?apps= vs ?app=), and reads them via
@@ -351,7 +361,18 @@ const MapPage = () => {
       </Controls>
 
       <MapWrap>
-        <MapView key={mapKey} geom={geom} filters={filters} height="100%" hideFullscreen />
+        <MapView
+          key={mapKey}
+          geom={geom}
+          filters={filters}
+          feature={
+            focusedEvent?.id && focusedEvent?.geom
+              ? { id: focusedEvent.id, geom: focusedEvent.geom }
+              : undefined
+          }
+          height="100%"
+          hideFullscreen
+        />
       </MapWrap>
 
       {/* Bottom controls (Figma): register CTA left, list-view toggle right. On
