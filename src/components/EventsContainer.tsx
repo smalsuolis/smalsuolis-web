@@ -24,7 +24,6 @@ import { TimeRanges } from '../utils/types';
 import api from '../utils/api';
 import EmptyState from './EmptyState';
 import EventRow, { EventRowList } from './EventRow';
-import EventModal from './EventModal';
 import SritysFilterModal, { SritysValue } from './home/SritysFilterModal';
 import Pagination from './Pagination';
 import PeriodDropdown from './PeriodDropdown';
@@ -54,7 +53,6 @@ const EventsContainer = ({
   emptyStateDescription?: string;
   emptyStateTitle: string;
 }) => {
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -401,7 +399,11 @@ const EventsContainer = ({
       <InnerContainer>
         <EventRowList>
           {events?.rows.map((event: Event) => (
-            <EventRow key={event.id} event={event} onSelect={setSelectedEvent} />
+            <EventRow
+              key={event.id}
+              event={event}
+              onSelect={(e) => navigate(`${slugs.map}?event=${e.id}`)}
+            />
           ))}
         </EventRowList>
         {isFetching && <LoaderComponent />}
@@ -533,7 +535,6 @@ const EventsContainer = ({
         onApply={() => setSritysOpen(false)}
         onClose={() => setSritysOpen(false)}
       />
-      {selectedEvent && <EventModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </Page>
   );
 };

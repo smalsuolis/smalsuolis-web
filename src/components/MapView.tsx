@@ -18,6 +18,8 @@ interface MapProps {
   preview?: boolean;
   filters?: any;
   geom?: any;
+  // One event to land on: the frame zooms to it and opens its popup.
+  feature?: { id: number | string; geom: any };
   // Non-fullscreen iframe height. Defaults to 60vh (events-feed usage); the
   // dedicated map page passes 100% to fill its container.
   height?: string;
@@ -28,7 +30,7 @@ interface MapProps {
 
 const src = `${mapsHost}/smalsuolis?preview=1`;
 
-const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapProps) => {
+const MapView = ({ error, filters, geom, feature, height = '60vh', hideFullscreen }: MapProps) => {
   const iframeRef = useRef<any>(null);
   const [showModal, setShowModal] = useState(false);
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
@@ -42,6 +44,7 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
   // message to the iframe on each one.
   const geomKey = JSON.stringify(geom);
   const filtersKey = JSON.stringify(filters);
+  const featureKey = JSON.stringify(feature);
 
   useEffect(() => {
     if (!iframeRef?.current || !isIframeLoaded) return;
@@ -51,13 +54,14 @@ const MapView = ({ error, filters, geom, height = '60vh', hideFullscreen }: MapP
     const message: any = {};
     if (geom) message.geom = geom;
     if (filters) message.filters = filters;
+    if (feature) message.feature = feature;
 
     if (Object.keys(message).length > 0) {
       iframe.contentWindow?.postMessage(message, mapsOrigin);
     }
-    // geom/filters are read here but intentionally tracked via their keys.
+    // geom/filters/feature are read here but intentionally tracked via their keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geomKey, filtersKey, iframeRef, isIframeLoaded]);
+  }, [geomKey, filtersKey, featureKey, iframeRef, isIframeLoaded]);
 
   return (
     <Container $showModal={showModal} $error={!!error}>
