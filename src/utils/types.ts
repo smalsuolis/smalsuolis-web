@@ -200,10 +200,11 @@ export const timeRangeQuery = {
  * The periods every surface offers: rolling windows, then the calendar year,
  * then a range of your own.
  *
- * They used to be calendar buckets — this day, this week, this month, upcoming,
- * all time — which answered "when" rather than "how recently", and left the
- * reader converting in their head. Rolling windows compare like with like: the
- * statistics page's own comparison is the same window shifted back.
+ * They used to be calendar buckets — this day, this week, this month, upcoming —
+ * which answered "when" rather than "how recently", and left the reader
+ * converting in their head. Rolling windows compare like with like: the
+ * statistics page's own comparison is the same window shifted back. Every window
+ * is a cut of the whole, so the whole is on the list too.
  *
  * Named without the "Paskutinės" they read with in prose: the map's period pill
  * is 206px wide, and the full phrase was cut to "Paskutinės 365 die…" — a
@@ -234,6 +235,11 @@ export const timeRangeItems: TimeRangeItem[] = [
     key: TimeRanges.THIS_YEAR,
     query: timeRangeQuery[TimeRanges.THIS_YEAR],
     name: 'Šie metai',
+  },
+  {
+    key: TimeRanges.ALL_TIME,
+    query: timeRangeQuery[TimeRanges.ALL_TIME],
+    name: 'Visas laikotarpis',
   },
   {
     key: TimeRanges.CUSTOM,
@@ -271,14 +277,13 @@ export const statsTimeRangeItems: TimeRangeItem[] = [
 ];
 
 /**
- * What every surface opens on: the widest window still on offer.
- *
- * It was all time, back when the dropdown offered it. What matters is that the
- * label and the events agree — the map once opened on 28 days beside a filter
- * that counted every event, so a screen with 76 pins claimed 12,513.
+ * What every surface opens on: everything there is, so nobody is shown a cut of
+ * the data they did not ask for. What matters is that the label and the events
+ * agree — the map once opened on 28 days beside a filter that counted every
+ * event, so a screen with 76 pins claimed 12,513.
  */
 export const defaultTimeRange: TimeRangeItem = timeRangeItems.find(
-  (i) => i.key === TimeRanges.LAST_365_DAYS,
+  (i) => i.key === TimeRanges.ALL_TIME,
 )!;
 
 export interface Filters {

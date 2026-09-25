@@ -25,15 +25,11 @@ const PeriodDropdown = ({
   options,
   value,
   onChange,
-  placeholder = 'Pasirinkite',
   selectedDates,
 }: {
   options: PeriodOption[];
   value: string;
   onChange: (option: PeriodOption) => void;
-  // Shown when nothing is selected. The events filters pass a meaningful
-  // label ("Sritys", "Data") rather than a generic prompt.
-  placeholder?: string;
   // The range behind a CUSTOM selection, so the trigger can name it and the
   // picker can open on it.
   selectedDates?: { $gte: string; $lt: string };
@@ -67,7 +63,7 @@ const PeriodDropdown = ({
           start: new Date(selectedDates.$gte),
           end: new Date(selectedDates.$lt),
         })
-      : current?.name ?? placeholder;
+      : current?.name ?? '';
 
   const commitRange = (start: Date, end: Date) =>
     onChange({
@@ -173,7 +169,9 @@ const Popover = styled(Menu)`
   min-width: 100%;
   width: max-content;
   max-width: min(320px, calc(100vw - 32px));
-  max-height: 320px;
+  /* The seven shared windows stand without scrolling: a 48px row apiece and the
+     hairline between them. The statistics list adds whole years and scrolls. */
+  max-height: 344px;
   z-index: 30;
 `;
 
