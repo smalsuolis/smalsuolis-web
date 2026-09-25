@@ -317,7 +317,10 @@ const MapPage = () => {
     if (appIds.length) f.app = { $in: appIds };
     if (selectedCategoryIds.length) f.category = { $in: selectedCategoryIds };
     if (period && period.key !== TimeRanges.ALL_TIME) f.startAt = period.query;
-    return Object.keys(f).length ? f : undefined;
+    // An empty set is an instruction too — "show everything" — and the frame
+    // only hears what is posted to it. Collapsing it to undefined left the map
+    // on the last window a reader had picked.
+    return f;
   }, [appIds, selectedCategoryIds, period]);
 
   // Named and counted the same way as on the homepage and in the feed. It used
