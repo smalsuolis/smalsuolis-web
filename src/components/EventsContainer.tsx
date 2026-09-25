@@ -15,6 +15,7 @@ import {
   slugs,
   Subscription,
   TimeRangeItem,
+  defaultTimeRange,
   timeRangeItems,
   useGetCurrentRoute,
   sritysFieldLabel,
@@ -271,7 +272,8 @@ const EventsContainer = ({
       // categoryGroup expands selected categories' subtrees server-side, so a
       // user picking 'pastatai' transparently matches all leaves under it.
       ...(categories?.length ? { categoryGroup: categories.map((c) => c.id) } : null),
-      ...(timeRange ? { startAt: timeRange.query } : null),
+      // Every event ever is no filter at all — the same way the map reads it.
+      ...(timeRange && timeRange.key !== TimeRanges.ALL_TIME ? { startAt: timeRange.query } : null),
       ...(search
         ? {
             $raw: {
@@ -511,10 +513,12 @@ const EventsContainer = ({
             <SritysLabel>{sritysLabel}</SritysLabel>
             <Icon name={IconName.dropdownArrow} size={20} />
           </SritysTrigger>
+          {/* No window picked is every window, so the control says so rather
+              than naming the filter — the map and the statistics page open on
+              the same words. */}
           <PeriodDropdown
-            placeholder="Data"
             options={timeRangeItems}
-            value={filters.value.timeRange?.key ?? ''}
+            value={filters.value.timeRange?.key ?? defaultTimeRange.key}
             selectedDates={filters.value.timeRange?.query}
             onChange={(option) =>
               filters.setValue({
